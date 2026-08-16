@@ -1,0 +1,81 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "plan",
+  "plugin": ["opencode-mem", "@xberg-io/opencode-xberg"],
+  "permission": {
+    // .env reads without prompts
+    "read": {
+      ".env": "allow",
+      ".env.*": "allow",
+      ".env-*": "allow",
+    },
+    "*": "allow",
+    "edit": "allow",
+    "webfetch": "allow",
+    "external_directory": "allow",
+    "bash": {
+      "git push *": "ask",
+      "git checkout *": "allow",
+      // Only deny the truly catastrophic - everything else just runs
+      "sudo *": "deny",
+      "rm -rf /": "deny",
+      "rm -rf /*": "deny",
+      "rm -rf ~": "deny",
+      "rm -rf ~/*": "deny",
+      ":(){:|:&};:": "deny", // fork bomb, just in case
+    },
+  },
+  "formatter": {
+    "prettier": {
+      "command": ["npx", "prettier", "--write", "$FILE"],
+      "extensions": [".ts", ".js", ".json", ".md", ".yaml", ".yml", ".html"],
+    },
+    "uv": {
+      "command": ["uv", "run", "ruff", "format", "$FILE"],
+      "extensions": [".py", ".pyi"],
+    },
+  },
+  "instructions": ["~/.config/opencode/docs/index.md"],
+  "compaction": {
+    "prune": true,
+  },
+  "mcp": {
+    // copy and enable in project config
+    /*
+    "zig-mcp": {
+      "type": "local",
+      "enabled": false,
+      "command": ["/Users/leo/learn/zig/srcs/zig-mcp/zig-out/bin/zig-mcp"],
+    },
+    "astro": {
+      "type": "remote",
+      "enabled": false,
+      "url": "https://mcp.docs.astro.build/mcp",
+    },
+    "playwright": {
+      "enabled": false,
+      "type": "local",
+      "command": ["bunx", "@playwright/mcp@latest", "--headless"],
+    },
+    "fetch": {
+      "enabled": false,
+      "type": "local",
+      "command": ["xberg", "mcp", "--log-level", "error"],
+    },
+    "chrome-devtools": {
+      "enabled": false,
+      "type": "local",
+      "command": ["npx", "-y", "chrome-devtools-mcp@latest"],
+    },
+    */
+  },
+  "watcher": {
+    "ignore": [
+      "node_modules/**",
+      "dist/**",
+      ".git/**",
+      ".venv/**",
+      "__pycache__/**",
+    ],
+  },
+}
