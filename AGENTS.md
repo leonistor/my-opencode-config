@@ -7,13 +7,6 @@
 ## Communication
 
 - Keep responses concise and to the point - unless the user asks otherwise
-- Be concise. Don't oversell changes or use fancy words like "comprehensive", "utilize", "streamline", or "leverage".
-- Never use em dashes. Use commas, colons, or separate sentences instead.
-- If your last message included URLs, list them at the end so I can open them easily.
-
-## Writing
-
-- When writing pull request descriptions, start with "This PR..." and keep it to 2-3 sentences.
 - Add doc comments to the code, explain in comments design decisions or tricky stuff
 
 ## Working with Git
@@ -21,12 +14,19 @@
 - Always use semantic commit prefixes (feat:, fix:, docs:, etc.).
 - Push to a feature branch when more than 5 files are planned to be added or changed, othewise commit on main
 - Run the project's lint script before committing, if one exists.
+- Never commit, push, or open a PR unless asked.
 
 ## Planning mode
 
 - Always ask clarifying questions
 - Use deep-dive sub-agents to assist with research
 - Use deep-dive sub-agents to review the different aspects of your plan before presenting to the user
+
+## Code style
+
+- Follow the patterns already in neighboring files.
+- Do not add comments that restate the code.
+- Do not reformat code you are not otherwise changing.
 
 ## Change / edit mode
 
@@ -35,6 +35,13 @@
 - When using sub-agents to implement features, act as a coordinator only
 - Use the best model for the task - premium models for complex tasks (like coding) and mid-tier models for simpler tasks, like documentation
 - After completing features (large or small), always run commands like lint, type check and next build to check code quality
+
+## Boundaries
+
+- Do not modify unrelated files or widen scope beyond the request without asking permission.
+- Do not add dependencies without asking.
+- Never commit secrets, API keys, or .env files.
+- If a command fails, report the failure. Do not guess or present assumptions as confirmed results.
 
 ## Testing
 
