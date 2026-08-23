@@ -13,6 +13,7 @@
     "*": "allow",
     "edit": "allow",
     "webfetch": "allow",
+    "websearch": "allow",
     "external_directory": "allow",
     "bash": {
       "git push *": "ask",

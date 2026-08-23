@@ -12,7 +12,7 @@
 ## Working with Git
 
 - Always use semantic commit prefixes (feat:, fix:, docs:, etc.).
-- Push to a feature branch when more than 5 files are planned to be added or changed, othewise commit on main
+- Push to a feature branch when more than 10 files are planned to be added or changed, othewise commit on main
 - Run the project's lint script before committing, if one exists.
 - Never commit, push, or open a PR unless asked.
 
