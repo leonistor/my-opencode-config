@@ -2,7 +2,7 @@
   "$schema": "https://opencode.ai/config.json",
   "default_agent": "plan",
   "lsp": true,
-  "plugin": ["opencode-mem", "@xberg-io/opencode-xberg"],
+  "plugin": ["opencode-mem"],
   "permission": {
     // .env reads without prompts
     "read": {
@@ -25,16 +25,6 @@
       "rm -rf ~": "deny",
       "rm -rf ~/*": "deny",
       ":(){:|:&};:": "deny", // fork bomb, just in case
-    },
-  },
-  "formatter": {
-    "prettier": {
-      "command": ["npx", "prettier", "--write", "$FILE"],
-      "extensions": [".ts", ".js", ".json", ".md", ".yaml", ".yml", ".html"],
-    },
-    "uv": {
-      "command": ["uv", "run", "ruff", "format", "$FILE"],
-      "extensions": [".py", ".pyi"],
     },
   },
   "instructions": ["~/.config/opencode/docs/index.md"],
