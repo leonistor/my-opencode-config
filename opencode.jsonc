@@ -3,6 +3,7 @@
   "default_agent": "plan",
   "lsp": true,
   "plugin": ["opencode-mem"],
+  "disabled_providers": ["github-copilot", "huggingface"],
   "permission": {
     // .env reads without prompts
     "read": {
