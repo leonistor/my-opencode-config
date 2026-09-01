@@ -2,7 +2,14 @@
   "$schema": "https://opencode.ai/config.json",
   "default_agent": "plan",
   "lsp": true,
-  "plugin": ["opencode-mem"],
+  // OpenCode Quota: tuiCommandDisplay chooses whether native TUI command output appears in the session transcript or a local popup dialog.
+  // OpenCode Quota: loads the server plugin for slash commands and quota checks.
+  "plugin": [
+    "opencode-mem",
+    "opencode-history-search",
+    "@slkiser/opencode-quota@latest",
+    "opencode-pty",
+  ],
   "disabled_providers": ["github-copilot", "huggingface"],
   "permission": {
     // .env reads without prompts
@@ -17,6 +24,8 @@
     "websearch": "allow",
     "external_directory": "allow",
     "bash": {
+      "bun *": "allow",
+      "bunx *": "allow",
       "git push *": "ask",
       "git checkout *": "allow",
       // Only deny the truly catastrophic - everything else just runs
