@@ -7,7 +7,7 @@
   "plugin": [
     "opencode-mem",
     "opencode-history-search",
-    "@slkiser/opencode-quota@latest",
+    // "@slkiser/opencode-quota@latest",
     "opencode-pty",
   ],
   "disabled_providers": ["github-copilot", "huggingface"],
