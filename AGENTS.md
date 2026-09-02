@@ -1,8 +1,7 @@
 ## About me
 
-- My name is Leo. I'm a frontend developer based in Brasov, Romania.
+- My name is Leo. I'm a fullstack developer based in Brasov, Romania.
 - My GitHub username is `leonistor` and my email is `leo.nistor@gmail.com`.
-- I primarily work in TypeScript and Python.
 
 ## Communication
 
@@ -59,6 +58,18 @@
 - **Standards:** @~/.config/opencode/docs/index.md (Python, Docker, tooling)
 - **Packages:** @~/.config/opencode/docs/tooling/package-management.md (`uv`)
 - **Testing:** @~/.config/opencode/docs/python/testing.md (`pytest`, coverage)
+
+## Tools Provided
+
+Use pty_spawn for any task that needs to run in the background, is long-running, requires interactive input later, or should persist beyond the current response. Examples: dev servers, watch modes, REPLs, builds, database servers. Use the built-in bash tool ONLY for quick synchronous commands that complete immediately (ls, git status, cat, echo, etc.).
+
+| Tool        | Description                                                                 |
+| ----------- | --------------------------------------------------------------------------- |
+| `pty_spawn` | Create a new PTY session (command, args, workdir, env, title, notifyOnExit, timeoutSeconds) |
+| `pty_write` | Send input to a PTY (text, escape sequences like `\x03` for Ctrl+C)         |
+| `pty_read`  | Read output buffer with pagination and optional regex filtering             |
+| `pty_list`  | List all PTY sessions with status, PID, line count                          |
+| `pty_kill`  | Terminate a PTY, optionally cleanup the buffer                              |
 
 ---
 
