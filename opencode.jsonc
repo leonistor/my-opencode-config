@@ -80,4 +80,10 @@
       "__pycache__/**",
     ],
   },
+  "provider": {
+    // Detected openrouter authentication; opencode-quota added this global provider declaration.
+    "openrouter": {},
+    // Detected opencode-go authentication; opencode-quota added this global provider declaration.
+    "opencode-go": {}
+  },
 }
