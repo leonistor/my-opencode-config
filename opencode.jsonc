@@ -5,7 +5,7 @@
   "plugin": [
     "opencode-mem",
     "opencode-history-search",
-    "@slkiser/opencode-quota@latest",
+    // "@slkiser/opencode-quota@latest",
     "opencode-pty",
   ],
   "disabled_providers": ["github-copilot", "huggingface"],
@@ -81,6 +81,6 @@
     // Detected openrouter authentication; opencode-quota added this global provider declaration.
     "openrouter": {},
     // Detected opencode-go authentication; opencode-quota added this global provider declaration.
-    "opencode-go": {}
+    "opencode-go": {},
   },
 }

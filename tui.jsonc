@@ -6,9 +6,9 @@
     "notifications": true,
     "sound": true,
     "volume": 0.6,
-    "sound_pack": "opencode.default"
+    "sound_pack": "opencode.default",
   },
   "plugin": [
-    "@slkiser/opencode-quota@latest"
-  ]
+    // "@slkiser/opencode-quota@latest"
+  ],
 }
