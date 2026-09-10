@@ -1,6 +1,6 @@
 # Leo's OpenCode Config
 
-## srcs/tools
+## plugins
 
 - https://basemind.ai/start/installation/
 
@@ -13,6 +13,7 @@ in case basemind no go:
 
 - basemind scan
 - DESIGN.md tools https://oh-my-design.kr/docs/en
+- https://github.com/Goldziher/ai-rulez
 
 ## skills
 
@@ -25,6 +26,14 @@ in case basemind no go:
 ## to investigate
 
 - bug scanner: https://github.com/Dicklesworthstone/ultimate_bug_scanner installed but not configured for opencode
+
+---
+
+## convex
+
+https://github.com/waynesutton/convexskills
+
+---
 
 ## tips
 

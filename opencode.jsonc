@@ -7,6 +7,7 @@
     "opencode-history-search",
     // "@slkiser/opencode-quota@latest",
     "opencode-pty",
+    "basemind-opencode@latest",
   ],
   "disabled_providers": ["github-copilot", "huggingface"],
   "permission": {
