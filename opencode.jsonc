@@ -5,8 +5,8 @@
   "plugin": [
     "opencode-history-search",
     "opencode-pty",
-    "basemind-opencode@latest",
-    "oh-my-openagent@latest"
+    // "basemind-opencode@latest",
+    "oh-my-openagent@latest",
   ],
   "disabled_providers": ["github-copilot", "huggingface"],
   "permission": {
