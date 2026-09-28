@@ -8,6 +8,8 @@
     // "basemind-opencode@latest",
     "@upstash/context7-opencode",
     "oh-my-openagent@latest",
+    "open-plan-annotator@latest",
+    // "opencode-agents-sidebar@latest",
   ],
   "disabled_providers": ["github-copilot", "huggingface"],
   "permission": {
