@@ -11,7 +11,5 @@
   },
   "plugin": [
     "oh-my-openagent@latest",
-    // "opencode-agents-sidebar@latest",
-    // "@slkiser/opencode-quota@latest"
   ],
 }
