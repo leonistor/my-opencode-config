@@ -6,7 +6,7 @@
     "opencode-history-search",
     "opencode-pty",
     "@upstash/context7-opencode",
-    "oh-my-openagent@latest",
+    // "oh-my-openagent@latest",
     "open-plan-annotator@latest",
   ],
   "disabled_providers": ["github-copilot", "huggingface"],
@@ -35,7 +35,7 @@
       ":(){:|:&};:": "deny", // fork bomb, just in case
     },
   },
-  "instructions": ["~/.config/opencode/docs/index.md"],
+  // "instructions": ["~/.config/opencode/docs/index.md"],
   "compaction": {
     "prune": true,
   },
