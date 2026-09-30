@@ -1,6 +1,11 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
   "preset": "opencode-go",
+  "multiplexer": {
+    "type": "auto",
+    "layout": "main-vertical",
+    "main_pane_size": 60
+  },
   "presets": {
     "openai": {
       "orchestrator": {
