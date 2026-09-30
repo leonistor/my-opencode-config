@@ -82,12 +82,4 @@
     "openrouter": {},
     "opencode-go": {},
   },
-  "agent": {
-    "explore": {
-      "disable": true
-    },
-    "general": {
-      "disable": true
-    }
-  },
 }

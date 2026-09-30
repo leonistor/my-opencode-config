@@ -10,6 +10,6 @@
     "sound_pack": "opencode.default",
   },
   "plugin": [
-    "oh-my-opencode-slim"
+    // "oh-my-openagent@latest",
   ],
 }
