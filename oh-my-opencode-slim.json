@@ -2,7 +2,7 @@
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
   "preset": "synthetic",
   "multiplexer": {
-    "type": "auto",
+    "type": "cmux-tui",
     "layout": "main-vertical",
     "main_pane_size": 60
   },
