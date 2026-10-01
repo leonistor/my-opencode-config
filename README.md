@@ -1,5 +1,9 @@
 # Leo's OpenCode Config
 
+## fixes
+
+run `node ~/.cache/opencode/packages/open-plan-annotator@latest/node_modules/open-plan-annotator/scripts/install-runtime.mjs` to fix open-plan-annotator
+
 ## plugins
 
 - https://basemind.ai/start/installation/
