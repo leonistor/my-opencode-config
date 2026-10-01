@@ -12,35 +12,31 @@
 
 - Always use semantic commit prefixes (feat:, fix:, docs:, etc.).
 - Run the project's lint script before committing, if one exists.
-- Never commit, push, or open a PR unless asked.
+- Commit autonomously when a unit of work is complete and verified (lint/tests pass) — no need to ask. Keep commits small and logical; one concern per commit.
+- Never push without explicit user approval, every time. Never force-push or amend commits that were already pushed.
+- Only open a PR when asked.
+- If the user asks to hold off, leave work uncommitted.
 
 ## Planning mode
 
 - Ask clarifying questions when missing information could materially change the implementation or plan.
 - Do not ask questions whose answers can be determined by inspecting the codebase, documentation, configuration, or existing patterns.
-- Before planning changes, inspect the relevant parts of the existing codebase.
-- Look for existing utilities, hooks, services, components, abstractions, tests, and dependencies that already solve part of the problem.
+- Before planning changes, inspect the relevant parts of the existing codebase, looking for existing utilities, hooks, services, components, abstractions, tests, and dependencies that already solve part of the problem.
 - Search the repository for similar functionality before creating new abstractions.
 - Use deep-dive sub-agents to assist with research.
-- Before proposing a custom implementation for a non-trivial problem, research whether a mature open-source package, library, framework feature, or existing project already solves it.
 - Use deep-dive sub-agents to review the different aspects of your plan before presenting to the user.
-- Prefer established packages and existing project patterns over implementing substantial infrastructure or abstractions from scratch.
-- When an existing package could solve the problem, present it as an option and explain the trade-offs before implementing a custom solution.
-- Do not rush to add abstractions, utilities, frameworks, or dependencies. Prefer the simplest solution that fits the existing architecture.
 
 ## Reuse before implementation
 
-- Do not implement substantial infrastructure from scratch when an established package or project can reasonably provide it.
+- Do not implement substantial infrastructure from scratch when an established package, library, framework feature, or existing project pattern can reasonably provide it.
 - Before implementing functionality involving synchronization, persistence, caching, state management, validation, authentication, authorization, parsing, queues, scheduling, retry logic, storage, offline support, or similar infrastructure, check for existing solutions.
 - Prefer small, composable packages over large frameworks when only a small capability is needed.
 - Prefer extending existing patterns over introducing parallel implementations.
-- Avoid speculative abstractions. Do not introduce generalized infrastructure for hypothetical future requirements.
-- Prefer solving the requested problem with the smallest appropriate abstraction.
+- Avoid speculative abstractions. Do not introduce generalized infrastructure for hypothetical future requirements; prefer the smallest appropriate abstraction.
 - Do not add a dependency merely to avoid a few lines of straightforward application code.
-- If no suitable package exists, or an existing package introduces disproportionate complexity, explain why a custom implementation is preferable.
+- When an existing package could solve the problem, present it as an option and explain the trade-offs before implementing a custom solution. If no suitable package exists, or one introduces disproportionate complexity, explain why a custom implementation is preferable.
 - When evaluating a new dependency, consider its maintenance status, activity, license, documentation, API quality, TypeScript support, ecosystem fit, bundle/runtime cost, and compatibility with the project.
-- Do not introduce a dependency without asking the user.
-- When proposing a new dependency, explain briefly why it is preferable to the relevant alternatives.
+- Do not introduce a dependency without asking the user; when proposing one, explain briefly why it is preferable to the relevant alternatives.
 
 ## Code style
 
@@ -95,7 +91,6 @@ Use pty_spawn for any task that needs to run in the background, is long-running,
 
 | Tool        | Description                                                                                 |
 | ----------- | ------------------------------------------------------------------------------------------- |
-| ----------- | ------------------------------------------------------------------------------------------- |
 | `pty_spawn` | Create a new PTY session (command, args, workdir, env, title, notifyOnExit, timeoutSeconds) |
 | `pty_write` | Send input to a PTY (text, escape sequences like `\x03` for Ctrl+C)                         |
 | `pty_read`  | Read output buffer with pagination and optional regex filtering                             |
@@ -114,8 +109,7 @@ Skills are reusable knowledge packages. Load them on-demand for specialized task
 
 ### Usage
 
-```bash
-skills_list()                              # See available skills
-skills_use(name="swarm-coordination")
-skills_use(name="cli-builder", context="building a new CLI") # With context
-```
+Load a skill with the built-in `skill` tool before starting matching work:
+
+- `skill(name="jevgrep")` — plain load
+- `skill(name="shadcn")` — with optional `context` describing the task
