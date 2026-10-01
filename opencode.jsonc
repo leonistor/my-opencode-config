@@ -6,8 +6,9 @@
     "opencode-history-search",
     "opencode-pty",
     "@upstash/context7-opencode",
+    "opencode-mem",
     "open-plan-annotator@latest",
-    "oh-my-opencode-slim"
+    "oh-my-opencode-slim",
   ],
   "disabled_providers": ["github-copilot", "huggingface"],
   "permission": {
@@ -84,19 +85,19 @@
     "synthetic": {
       "models": {
         // context = current alias target's limit; may drift when Synthetic retargets aliases
-        "syn:large:text": { "context": 512000 },
-        "syn:small:text": { "context": 192000 },
-        "syn:large:vision": { "context": 512000 },
-        "syn:small:vision": { "context": 256000 },
+        "syn:large:text": { "options": { "context": 512000 } },
+        "syn:small:text": { "options": { "context": 192000 } },
+        "syn:large:vision": { "options": { "context": 512000 } },
+        "syn:small:vision": { "options": { "context": 256000 } },
       },
     },
   },
   "agent": {
     "explore": {
-      "disable": true
+      "disable": true,
     },
     "general": {
-      "disable": true
-    }
+      "disable": true,
+    },
   },
 }
