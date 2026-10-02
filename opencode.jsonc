@@ -1,0 +1,54 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "plan",
+  "lsp": true,
+  "plugin": [
+    "opencode-history-search",
+    "opencode-pty",
+    "@upstash/context7-opencode",
+    "open-plan-annotator@latest",
+    "oh-my-opencode-slim",
+  ],
+  "disabled_providers": ["github-copilot", "huggingface"],
+  "permission": {
+    "read": {
+      ".env": "allow",
+      ".env.*": "allow",
+      ".env-*": "allow",
+    },
+    "*": "allow",
+    "edit": "allow",
+    "webfetch": "allow",
+    "websearch": "allow",
+    "external_directory": "allow",
+    "bash": {
+      "bun *": "allow",
+      "bunx *": "allow",
+      "git push *": "ask",
+      "git checkout *": "allow",
+      // Only deny the truly catastrophic - everything else just runs
+      "sudo *": "deny",
+      "rm -rf /": "deny",
+      "rm -rf /*": "deny",
+      "rm -rf ~": "deny",
+      "rm -rf ~/*": "deny",
+      ":(){:|:&};:": "deny", // fork bomb, just in case
+    },
+  },
+  "compaction": {
+    "prune": true,
+  },
+  "watcher": {
+    "ignore": [
+      "node_modules/**",
+      "dist/**",
+      ".git/**",
+      ".venv/**",
+      "__pycache__/**",
+    ],
+  },
+  "provider": {
+    "openrouter": {},
+    "opencode-go": {},
+  },
+}
