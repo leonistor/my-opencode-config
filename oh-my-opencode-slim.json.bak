@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
-  "preset": "synthetic",
+  "preset": "openrouter",
   "multiplexer": {
     "type": "cmux-tui",
     "layout": "main-vertical",
@@ -11,20 +11,30 @@
       "orchestrator": {
         "model": "openai/gpt-6-sol",
         "variant": "high",
-        "skills": ["*"],
-        "mcps": ["*", "!context7"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*",
+          "!context7"
+        ]
       },
       "oracle": {
         "model": "openai/gpt-6-astra",
         "variant": "high",
-        "skills": ["simplify"],
+        "skills": [
+          "simplify"
+        ],
         "mcps": []
       },
       "librarian": {
         "model": "openai/gpt-6-luna",
         "variant": "low",
         "skills": [],
-        "mcps": ["context7", "gh_grep"]
+        "mcps": [
+          "context7",
+          "gh_grep"
+        ]
       },
       "explorer": {
         "model": "openai/gpt-6-luna",
@@ -49,13 +59,20 @@
       "orchestrator": {
         "model": "synthetic/syn:large:text",
         "variant": "high",
-        "skills": ["*"],
-        "mcps": ["*", "!context7"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*",
+          "!context7"
+        ]
       },
       "oracle": {
         "model": "synthetic/syn:large:text",
         "variant": "max",
-        "skills": ["simplify"],
+        "skills": [
+          "simplify"
+        ],
         "mcps": []
       },
       "explorer": {
@@ -68,7 +85,10 @@
         "model": "synthetic/syn:small:text",
         "variant": "high",
         "skills": [],
-        "mcps": ["context7", "gh_grep"]
+        "mcps": [
+          "context7",
+          "gh_grep"
+        ]
       },
       "designer": {
         "model": "synthetic/syn:large:vision",
@@ -91,12 +111,19 @@
       "orchestrator": {
         "model": "openrouter/z-ai/glm-5.3",
         "variant": "high",
-        "skills": ["*"],
-        "mcps": ["*", "!context7"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*",
+          "!context7"
+        ]
       },
       "oracle": {
         "model": "openrouter/moonshotai/kimi-k2.7-code",
-        "skills": ["simplify"],
+        "skills": [
+          "simplify"
+        ],
         "mcps": []
       },
       "explorer": {
@@ -109,7 +136,10 @@
         "model": "openrouter/z-ai/glm-5.3-flash",
         "variant": "high",
         "skills": [],
-        "mcps": ["context7", "gh_grep"]
+        "mcps": [
+          "context7",
+          "gh_grep"
+        ]
       },
       "designer": {
         "model": "openrouter/google/gemini-3.8-flash",
@@ -134,13 +164,20 @@
       "orchestrator": {
         "model": "opencode-go/minimax-m3",
         "variant": "thinking",
-        "skills": ["*"],
-        "mcps": ["*", "!context7"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*",
+          "!context7"
+        ]
       },
       "oracle": {
         "model": "opencode-go/qwen3.7-max",
         "variant": "max",
-        "skills": ["simplify"],
+        "skills": [
+          "simplify"
+        ],
         "mcps": []
       },
       "explorer": {
@@ -153,7 +190,10 @@
         "model": "opencode-go/deepseek-v4-flash",
         "variant": "high",
         "skills": [],
-        "mcps": ["context7", "gh_grep"]
+        "mcps": [
+          "context7",
+          "gh_grep"
+        ]
       },
       "designer": {
         "model": "opencode-go/kimi-k2.7-code",
