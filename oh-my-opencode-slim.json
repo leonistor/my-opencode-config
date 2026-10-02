@@ -1,6 +1,8 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
-  "preset": "opencode-go",
+  "preset": "synthetic",
+  "disabled_agents": [],
+  "image_routing": "auto",
   "multiplexer": {
     "type": "cmux-tui",
     "layout": "main-vertical",
@@ -11,30 +13,20 @@
       "orchestrator": {
         "model": "openai/gpt-6-sol",
         "variant": "high",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*",
-          "!context7"
-        ]
+        "skills": ["*"],
+        "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "openai/gpt-6-astra",
         "variant": "high",
-        "skills": [
-          "simplify"
-        ],
+        "skills": ["simplify"],
         "mcps": []
       },
       "librarian": {
         "model": "openai/gpt-6-luna",
         "variant": "low",
         "skills": [],
-        "mcps": [
-          "context7",
-          "gh_grep"
-        ]
+        "mcps": ["context7", "gh_grep"]
       },
       "explorer": {
         "model": "openai/gpt-6-luna",
@@ -59,51 +51,41 @@
       "orchestrator": {
         "model": "synthetic/syn:large:text",
         "variant": "high",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*",
-          "!context7"
-        ]
+        "skills": ["*"],
+        "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "synthetic/syn:large:text",
         "variant": "max",
-        "skills": [
-          "simplify"
-        ],
+        "skills": ["simplify"],
         "mcps": []
       },
       "explorer": {
         "model": "synthetic/syn:large:text",
         "variant": "high",
-        "skills": [],
+        "skills": ["*"],
         "mcps": []
       },
       "librarian": {
         "model": "synthetic/syn:small:text",
         "variant": "high",
-        "skills": [],
-        "mcps": [
-          "context7",
-          "gh_grep"
-        ]
+        "skills": ["*"],
+        "mcps": ["context7", "gh_grep"]
       },
       "designer": {
         "model": "synthetic/syn:large:vision",
-        "skills": [],
+        "skills": ["*"],
         "mcps": []
       },
       "fixer": {
         "model": "synthetic/syn:large:text",
         "variant": "high",
-        "skills": [],
+        "skills": ["*"],
         "mcps": []
       },
       "observer": {
         "model": "synthetic/syn:small:text",
-        "skills": [],
+        "skills": ["*"],
         "mcps": []
       }
     },
@@ -111,19 +93,12 @@
       "orchestrator": {
         "model": "openrouter/z-ai/glm-5.3",
         "variant": "default",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*",
-          "!context7"
-        ]
+        "skills": ["*"],
+        "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "openrouter/moonshotai/kimi-k2.7-code",
-        "skills": [
-          "simplify"
-        ],
+        "skills": ["simplify"],
         "mcps": []
       },
       "explorer": {
@@ -136,10 +111,7 @@
         "model": "openrouter/z-ai/glm-5.3-flash",
         "variant": "default",
         "skills": [],
-        "mcps": [
-          "context7",
-          "gh_grep"
-        ]
+        "mcps": ["context7", "gh_grep"]
       },
       "designer": {
         "model": "openrouter/google/gemini-3.8-flash",
@@ -164,20 +136,13 @@
       "orchestrator": {
         "model": "opencode-go/minimax-m3",
         "variant": "default",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*",
-          "!context7"
-        ]
+        "skills": ["*"],
+        "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "opencode-go/qwen3.7-max",
         "variant": "default",
-        "skills": [
-          "simplify"
-        ],
+        "skills": ["simplify"],
         "mcps": []
       },
       "explorer": {
@@ -190,10 +155,7 @@
         "model": "opencode-go/deepseek-v4-flash",
         "variant": "default",
         "skills": [],
-        "mcps": [
-          "context7",
-          "gh_grep"
-        ]
+        "mcps": ["context7", "gh_grep"]
       },
       "designer": {
         "model": "opencode-go/kimi-k2.7-code",

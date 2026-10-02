@@ -2,50 +2,50 @@
   // ============================================
   // OpenCode Memory Plugin Configuration
   // ============================================
-  
+
   // Storage location for vector database
   "storagePath": "~/.opencode-mem/data",
 
   "userEmailOverride": "",
   "userNameOverride": "",
-  
+
   // ============================================
   // Embedding Model (for similarity search)
   // ============================================
   // Local = Hugging Face / ONNX via @huggingface/transformers (not Apple MLX).
   // Remote = set BOTH embeddingApiUrl and embeddingApiKey (OpenAI-compatible /embeddings).
-  
+
   // Default: Nomic Embed v1 (768 dimensions, 8192 context, multilingual)
   "embeddingModel": "Xenova/nomic-embed-text-v1",
 
   // Opt-in Nomic task prefixes (search_document: / search_query:). After enabling,
   // re-index existing memories so store and query vectors stay aligned.
   // "embeddingUseTaskPrefixes": true,
-  
+
   // Auto-detected dimensions (no need to set manually)
   // "embeddingDimensions": 768,
-  
+
   // Other recommended local models:
   // "embeddingModel": "Xenova/jina-embeddings-v2-base-en",  // 768 dims, English-only, 8192 context
   // "embeddingModel": "Xenova/jina-embeddings-v2-small-en", // 512 dims, faster, 8192 context
   // "embeddingModel": "Xenova/all-MiniLM-L6-v2",            // 384 dims, very fast, 512 context
   // "embeddingModel": "Xenova/all-mpnet-base-v2",           // 768 dims, good quality, 512 context
-  
+
   // Optional: OpenAI-compatible API for embeddings (both URL and key required)
   // "embeddingApiUrl": "https://api.openai.com/v1",
   // "embeddingApiKey": "env://OPENAI_API_KEY",  // or "sk-..." / "file:///path/to/key"
   // "embeddingModel": "text-embedding-3-small",  // 1536 dims, auto-detected
- 
+
   // ============================================
   // Web Server Settings
   // ============================================
-  
+
   // Enable web UI for managing memories (accessible at http://localhost:4747)
-  "webServerEnabled": true,
-  
+  "webServerEnabled": false,
+
   // Port for web UI server
   "webServerPort": 4747,
-  
+
   // Host address for web UI (use 127.0.0.1 for local only, 0.0.0.0 for network access)
   "webServerHost": "127.0.0.1",
 
@@ -55,26 +55,26 @@
 
   // Required when webServerHost is not loopback. Protects /api/* with Bearer / X-Opencode-Mem-Token.
   // "webServerApiToken": "env://OPENCODE_MEM_WEB_TOKEN",
-  
+
   // ============================================
   // Database Settings
   // ============================================
-  
+
   // Maximum vectors per database shard (auto-creates new shard when limit reached)
   "maxVectorsPerShard": 50000,
-  
+
   // Automatically delete old memories based on retention period
   "autoCleanupEnabled": true,
-  
+
   // Days to keep memories before auto-cleanup (only if autoCleanupEnabled is true)
   "autoCleanupRetentionDays": 30,
-  
+
   // Automatically detect and remove duplicate memories
   "deduplicationEnabled": true,
-  
-   // Similarity threshold (0-1) for detecting duplicates (higher = stricter)
-   "deduplicationSimilarityThreshold": 0.90,
-   
+
+  // Similarity threshold (0-1) for detecting duplicates (higher = stricter)
+  "deduplicationSimilarityThreshold": 0.9,
+
   // ============================================
   // Memory Scope Settings
   // ============================================
@@ -82,48 +82,51 @@
   // Default scope for memory list/search queries
   // "project" keeps queries within the current project, "all-projects" searches across all project shards
   "memory": {
-    "defaultScope": "project"
+    "defaultScope": "project",
   },
 
   // ============================================
   // OpenCode Provider Settings (RECOMMENDED)
   // ============================================
 
-   // Use any provider that is already authenticated in opencode for auto-capture
-   // and user profile learning. The plugin calls opencode's session.prompt API
-   // (with structured output) instead of talking to provider HTTPS endpoints
-   // directly, so opencode owns the auth, token refresh, and provider routing.
-   //
-   // No separate API key is needed in this plugin — whatever you configured in
-   // opencode (OAuth like Claude Pro/Max, GitHub Copilot personal/business,
-   // bring-your-own API key, custom provider, ...) just works.
-   //
-   // If NOT set, falls back to the manual config (memoryApiKey/memoryApiUrl/memoryModel below).
-   //
-   // Examples (the provider name must be one returned by 'opencode providers list'):
-   //   Anthropic (OAuth/API key): "opencodeProvider": "anthropic",      "opencodeModel": "claude-haiku-4-5-20251001"
-   //   OpenAI (API key):          "opencodeProvider": "openai",          "opencodeModel": "gpt-4o-mini"
-   //   GitHub Copilot:            "opencodeProvider": "github-copilot",  "opencodeModel": "gpt-4o-mini"
-   //
-   // "opencodeProvider": "anthropic",
-   // "opencodeModel": "claude-haiku-4-5-20251001",
+  // Use any provider that is already authenticated in opencode for auto-capture
+  // and user profile learning. The plugin calls opencode's session.prompt API
+  // (with structured output) instead of talking to provider HTTPS endpoints
+  // directly, so opencode owns the auth, token refresh, and provider routing.
+  //
+  // No separate API key is needed in this plugin — whatever you configured in
+  // opencode (OAuth like Claude Pro/Max, GitHub Copilot personal/business,
+  // bring-your-own API key, custom provider, ...) just works.
+  //
+  // If NOT set, falls back to the manual config (memoryApiKey/memoryApiUrl/memoryModel below).
+  //
+  // Examples (the provider name must be one returned by 'opencode providers list'):
+  //   Anthropic (OAuth/API key): "opencodeProvider": "anthropic",      "opencodeModel": "claude-haiku-4-5-20251001"
+  //   OpenAI (API key):          "opencodeProvider": "openai",          "opencodeModel": "gpt-4o-mini"
+  //   GitHub Copilot:            "opencodeProvider": "github-copilot",  "opencodeModel": "gpt-4o-mini"
+  //
+  // "opencodeProvider": "anthropic",
+  // "opencodeModel": "claude-haiku-4-5-20251001",
 
-   // ============================================
-   // Auto-Capture Settings
-   // ============================================
-  
+  // ============================================
+  // Auto-Capture Settings
+  // ============================================
+
   // IMPORTANT: Auto-capture only runs after either opencodeProvider/opencodeModel
   // above is configured, or the manual fallback below is uncommented with real values.
   // It runs in background without blocking your main session
   // Note: Ollama may not support tool calling. Use OpenAI, Anthropic, or Groq for best results.
-  
+
   "autoCaptureEnabled": true,
-  
+
   // Provider type: "openai-chat" | "openai-responses" | "anthropic" | "minimax" | "orcarouter"
   // Note: "openai-chat" is a generic OpenAI API-compatible mode.
   // Any service that follows the OpenAI Chat Completions API can use it via custom "memoryApiUrl".
   "memoryProvider": "openai-chat",
-  
+
+  "opencodeProvider": "synthetic",
+  "opencodeModel": "syn:small:text",
+
   // Manual fallback. Uncomment all 3 lines and replace memoryApiKey before use:
   // "memoryModel": "gpt-4o-mini",
   // "memoryApiUrl": "https://api.openai.com/v1",
@@ -133,7 +136,7 @@
   // Direct value:        "sk-..."
   // From file:           "file://~/.config/litellm-key.txt"
   // From env variable:   "env://LITELLM_API_KEY"
-  
+
   // Examples for different providers:
   // Any OpenAI-compatible endpoint can use the "openai-chat" provider pattern below.
   // Common examples: DeepSeek, Qwen (via Alibaba Cloud ModelStudio),
@@ -150,13 +153,13 @@
   //   "memoryModel": "deepseek-chat"
   //   "memoryApiUrl": "https://api.deepseek.com/v1"
   //   "memoryApiKey": "sk-..."
-  
+
   // OpenAI Responses API (recommended, with session support):
   //   "memoryProvider": "openai-responses"
   //   "memoryModel": "gpt-4o"
   //   "memoryApiUrl": "https://api.openai.com/v1"
   //   "memoryApiKey": "sk-..."
-  
+
   // Anthropic (with session support):
   //   "memoryProvider": "anthropic"
   //   "memoryModel": "claude-3-5-haiku-20241022"
@@ -186,10 +189,10 @@
   //   "memoryModel": "llama-3.3-70b-versatile"
   //   "memoryApiUrl": "https://api.groq.com/openai/v1"
   //   "memoryApiKey": "gsk_..."
-  
+
   // Maximum iterations for multi-turn AI analysis (for openai-responses, anthropic, and minimax)
   "autoCaptureMaxIterations": 5,
-   
+
   // Timeout per iteration in milliseconds (30 seconds default)
   "autoCaptureIterationTimeout": 30000,
 
@@ -200,7 +203,7 @@
   // Prevents HTTP 400 context overflows on models with ~131K token windows (e.g. Groq Llama).
   // Rough guide: tokens ≈ bytes / 4 for mixed code/prose.
   "autoCaptureMaxContextBytes": 131072,
-   
+
   // Days to keep AI session history before cleanup
   "aiSessionRetentionDays": 7,
 
@@ -249,27 +252,27 @@
 
   // Number of preferences shown in UI
   "userProfileDisplayPreferences": 20,
-  
+
   // Number of patterns shown in UI
   "userProfileDisplayPatterns": 15,
-  
+
   // Number of workflows shown in UI
   "userProfileDisplayWorkflows": 10,
-  
+
   // Number of preferences injected into LLM conversation context
   // Keep this small — the strongest signals are enough; more dilute LLM attention
   "userProfileInjectPreferences": 5,
-  
+
   // Number of patterns injected into LLM conversation context
   "userProfileInjectPatterns": 5,
-  
+
   // Number of workflows injected into LLM conversation context
   "userProfileInjectWorkflows": 3,
-  
+
   // Days before preference confidence starts to decay (if not reinforced)
   // Preferences that aren't seen again will gradually lose confidence and be removed
   "userProfileConfidenceDecayDays": 30,
-  
+
   // Number of profile versions to keep in changelog (for rollback/debugging)
   // Older versions are automatically cleaned up
   "userProfileChangelogRetentionCount": 5,
@@ -291,7 +294,7 @@
   // ============================================
   // Search Settings
   // ============================================
-  
+
   // Minimum similarity score (0-1) for memory search results
   "similarityThreshold": 0.6,
 
@@ -301,7 +304,7 @@
   // ============================================
   // Advanced Settings
   // ============================================
-  
+
   // Inject user profile into AI context (preferences, patterns, workflows)
-  "injectProfile": true
+  "injectProfile": true,
 }
