@@ -71,7 +71,7 @@
       "designer": {
         "model": "opencode-go/kimi-k2.7-code",
         "skills": ["*"],
-        "mcps": ["*"]
+        "mcps": ["*", "!crawlberg"]
       },
       "fixer": {
         "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
