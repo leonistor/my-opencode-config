@@ -1,0 +1,1 @@
+You have no shell access: `bash`/PTY tools are unavailable and calling them wastes a turn. Work only with `read`/`glob`/`grep` and your listed MCP tools. If you need command output, say so in your final report instead of attempting it.
