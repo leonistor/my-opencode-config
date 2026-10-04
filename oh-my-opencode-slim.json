@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
-  "preset": "synthetic",
+  "preset": "opencode-go",
   "disabled_agents": [],
   "image_routing": "auto",
   "multiplexer": {
@@ -13,20 +13,30 @@
       "orchestrator": {
         "model": "openai/gpt-6-sol",
         "variant": "high",
-        "skills": ["*"],
-        "mcps": ["*", "!context7"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*",
+          "!context7"
+        ]
       },
       "oracle": {
         "model": "openai/gpt-6-astra",
         "variant": "high",
-        "skills": ["simplify"],
+        "skills": [
+          "simplify"
+        ],
         "mcps": []
       },
       "librarian": {
         "model": "openai/gpt-6-luna",
         "variant": "low",
         "skills": [],
-        "mcps": ["context7", "gh_grep"]
+        "mcps": [
+          "context7",
+          "gh_grep"
+        ]
       },
       "explorer": {
         "model": "openai/gpt-6-luna",
@@ -50,50 +60,86 @@
     "synthetic": {
       "orchestrator": {
         "model": "synthetic/hf:zai-org/GLM-5.3-Flash",
-        "skills": ["*"],
-        "mcps": ["*"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*"
+        ]
       },
       "oracle": {
         "model": "synthetic/hf:moonshotai/Kimi-K3",
-        "skills": ["*"],
-        "mcps": ["*"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*"
+        ]
       },
       "explorer": {
         "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
-        "skills": ["*"],
-        "mcps": ["*"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*"
+        ]
       },
       "librarian": {
         "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
-        "skills": ["*"],
-        "mcps": ["*"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*"
+        ]
       },
       "designer": {
         "model": "synthetic/hf:moonshotai/Kimi-K3",
-        "skills": ["*"],
-        "mcps": ["*", "!crawlberg"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*",
+          "!crawlberg"
+        ]
       },
       "fixer": {
         "model": "synthetic/hf:moonshotai/Kimi-K3",
-        "skills": ["*"],
-        "mcps": ["*"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*"
+        ]
       },
       "observer": {
         "model": "synthetic/hf:nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-NVFP4",
-        "skills": ["*"],
-        "mcps": ["*"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*"
+        ]
       }
     },
     "openrouter": {
       "orchestrator": {
         "model": "openrouter/z-ai/glm-5.3",
         "variant": "default",
-        "skills": ["*"],
-        "mcps": ["*", "!context7"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*",
+          "!context7"
+        ]
       },
       "oracle": {
         "model": "openrouter/moonshotai/kimi-k2.7-code",
-        "skills": ["simplify"],
+        "skills": [
+          "simplify"
+        ],
         "mcps": []
       },
       "explorer": {
@@ -106,7 +152,10 @@
         "model": "openrouter/z-ai/glm-5.3-flash",
         "variant": "default",
         "skills": [],
-        "mcps": ["context7", "gh_grep"]
+        "mcps": [
+          "context7",
+          "gh_grep"
+        ]
       },
       "designer": {
         "model": "openrouter/google/gemini-3.8-flash",
@@ -130,43 +179,66 @@
     "opencode-go": {
       "orchestrator": {
         "model": "opencode-go/minimax-m3",
-        "variant": "default",
-        "skills": ["*"],
-        "mcps": ["*", "!context7"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*",
+          "!context7"
+        ]
       },
       "oracle": {
         "model": "opencode-go/qwen3.7-max",
-        "variant": "default",
-        "skills": ["simplify"],
-        "mcps": []
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*"
+        ]
       },
       "explorer": {
         "model": "opencode-go/deepseek-v4-flash",
-        "variant": "default",
-        "skills": [],
-        "mcps": []
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*"
+        ]
       },
       "librarian": {
         "model": "opencode-go/deepseek-v4-flash",
-        "variant": "default",
         "skills": [],
-        "mcps": ["context7", "gh_grep"]
+        "mcps": [
+          "context7",
+          "gh_grep"
+        ]
       },
       "designer": {
         "model": "opencode-go/kimi-k2.7-code",
-        "skills": [],
-        "mcps": []
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*"
+        ]
       },
       "fixer": {
         "model": "opencode-go/deepseek-v4-flash",
-        "variant": "default",
-        "skills": [],
-        "mcps": []
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*"
+        ]
       },
       "observer": {
         "model": "opencode-go/mimo-v2.5",
-        "skills": [],
-        "mcps": []
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*"
+        ]
       }
     }
   }
