@@ -94,43 +94,36 @@
     "openrouter": {
       "orchestrator": {
         "model": "openrouter/z-ai/glm-5.3-flash:floor",
-        "options": { "promptCaching": true },
         "skills": ["*"],
         "mcps": ["*"]
       },
       "oracle": {
         "model": "openrouter/xiaomi/mimo-v2.6-flash:floor",
-        "options": { "promptCaching": true },
         "skills": ["*"],
         "mcps": ["*"]
       },
       "explorer": {
         "model": "openrouter/deepseek/deepseek-v4-flash-0731:floor",
-        "options": { "promptCaching": true },
         "skills": ["*"],
         "mcps": ["*"]
       },
       "librarian": {
         "model": "openrouter/deepseek/deepseek-v4-flash-0731:floor",
-        "options": { "promptCaching": true },
         "skills": ["*"],
         "mcps": ["*"]
       },
       "designer": {
         "model": "openrouter/google/gemini-3.8-flash:floor",
-        "options": { "promptCaching": true },
         "skills": ["*"],
         "mcps": ["*"]
       },
       "fixer": {
         "model": "openrouter/moonshotai/kimi-k2.7-code:floor",
-        "options": { "promptCaching": true },
         "skills": ["*"],
         "mcps": ["*"]
       },
       "observer": {
         "model": "openrouter/deepseek/deepseek-v4-flash-0731:floor",
-        "options": { "promptCaching": true },
         "skills": ["*"],
         "mcps": ["*"]
       }
