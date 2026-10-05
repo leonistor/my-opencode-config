@@ -50,5 +50,30 @@
   "provider": {
     "openrouter": {},
     "opencode-go": {},
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama",
+      "options": {
+        "baseURL": "http://localhost:11434/v1",
+      },
+      "models": {
+        "llama3.2:latest": {
+          "reasoning": true,
+          "tool_call": true,
+        },
+        "qwen3.5:9b": {
+          "reasoning": true,
+          "tool_call": true,
+        },
+        "qwen2.5-coder:7b-base": {
+          "reasoning": true,
+          "tool_call": true,
+        },
+        "gemma2:9b": {
+          "reasoning": true,
+          "tool_call": true,
+        },
+      },
+    },
   },
 }
