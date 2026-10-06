@@ -15,6 +15,15 @@
     "layout": "main-vertical",
     "main_pane_size": 60
   },
+
+  "agents": {
+    "tester": {
+      "model": "openrouter/qwen/qwen3-coder-30b-a3b-instruct:floor",
+      "skills": ["*"],
+      "mcps": ["*"]
+    }
+  },
+
   "presets": {
     "openai": {
       "orchestrator": {
