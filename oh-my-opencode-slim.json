@@ -18,7 +18,7 @@
 
   "agents": {
     "tester": {
-      "model": "openrouter/qwen/qwen3-coder-30b-a3b-instruct:floor",
+      "model": "openrouter/moonshotai/kimi-k2.7-code:floor",
       "skills": ["*"],
       "mcps": ["*"]
     }
