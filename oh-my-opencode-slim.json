@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
-  "preset": "synthetic",
+  "preset": "opencode-go",
   "disabled_agents": [],
   "image_routing": "auto",
   "autoUpdate": true,
@@ -14,13 +14,8 @@
   },
   "agents": {
     "tester": {
-      "model": "openrouter/moonshotai/kimi-k2.7-code:floor",
-      "skills": [
-        "*"
-      ],
-      "mcps": [
-        "*"
-      ]
+      "skills": ["*"],
+      "mcps": ["*"]
     }
   },
   "presets": {
@@ -28,30 +23,20 @@
       "orchestrator": {
         "model": "openai/gpt-6-sol",
         "variant": "high",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*",
-          "!context7"
-        ]
+        "skills": ["*"],
+        "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "openai/gpt-6-astra",
         "variant": "high",
-        "skills": [
-          "simplify"
-        ],
+        "skills": ["simplify"],
         "mcps": []
       },
       "librarian": {
         "model": "openai/gpt-6-luna",
         "variant": "low",
         "skills": [],
-        "mcps": [
-          "context7",
-          "gh_grep"
-        ]
+        "mcps": ["context7", "gh_grep"]
       },
       "explorer": {
         "model": "openai/gpt-6-luna",
@@ -75,271 +60,162 @@
     "synthetic": {
       "orchestrator": {
         "model": "synthetic/hf:zai-org/GLM-5.3-Flash",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "oracle": {
         "model": "synthetic/hf:moonshotai/Kimi-K3",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "explorer": {
         "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "librarian": {
         "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "designer": {
         "model": "synthetic/hf:moonshotai/Kimi-K3",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*",
-          "!crawlberg"
-        ]
+        "skills": ["*"],
+        "mcps": ["*", "!crawlberg"]
       },
       "fixer": {
         "model": "synthetic/hf:moonshotai/Kimi-K3",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "tester": {
-        "model": "synthetic/hf:Qwen/Qwen3.6-27B",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "observer": {
         "model": "synthetic/hf:nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-NVFP4",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       }
     },
     "openrouter": {
       "orchestrator": {
         "model": "openrouter/z-ai/glm-5.3-flash:floor",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "oracle": {
         "model": "openrouter/xiaomi/mimo-v2.6-flash:floor",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "explorer": {
         "model": "openrouter/deepseek/deepseek-v4-flash-0731:floor",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "librarian": {
         "model": "openrouter/deepseek/deepseek-v4-flash-0731:floor",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "designer": {
         "model": "openrouter/google/gemini-3.8-flash:floor",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "fixer": {
         "model": "openrouter/moonshotai/kimi-k2.7-code:floor",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
+      },
+      "tester": {
+        "model": "openrouter/moonshotai/kimi-k2.7-code:floor",
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "observer": {
         "model": "openrouter/deepseek/deepseek-v4-flash-0731:floor",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       }
     },
     "opencode-go": {
       "orchestrator": {
         "model": "opencode-go/minimax-m3",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*",
-          "!context7"
-        ]
+        "skills": ["*"],
+        "mcps": ["*", "!context7"]
       },
       "oracle": {
         "model": "opencode-go/qwen3.7-max",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "explorer": {
         "model": "opencode-go/deepseek-v4-flash",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "librarian": {
         "model": "opencode-go/deepseek-v4-flash",
         "skills": [],
-        "mcps": [
-          "context7",
-          "gh_grep"
-        ]
+        "mcps": ["context7", "gh_grep"]
       },
       "designer": {
         "model": "opencode-go/kimi-k2.7-code",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "fixer": {
         "model": "opencode-go/deepseek-v4-flash",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
+      },
+      "tester": {
+        "model": "opencode-go/deepseek-v4-flash"
       },
       "observer": {
         "model": "opencode-go/mimo-v2.5",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       }
     },
     "ollama": {
       "orchestrator": {
         "model": "ollama/qwen3.5:9b",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "oracle": {
         "model": "ollama/gemma2:9b",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "explorer": {
         "model": "ollama/qwen2.5-coder:7b-base",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "librarian": {
         "model": "ollama/qwen2.5-coder:7b-base",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "designer": {
         "model": "ollama/qwen3.5:9b",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "fixer": {
         "model": "ollama/qwen2.5-coder:7b-base",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "observer": {
         "model": "ollama/qwen2.5-coder:7b-base",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*"
-        ]
+        "skills": ["*"],
+        "mcps": ["*"]
       }
     }
   }

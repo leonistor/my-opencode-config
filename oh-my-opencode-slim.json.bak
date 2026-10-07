@@ -1,29 +1,23 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
-  "preset": "openrouter",
+  "preset": "synthetic",
   "disabled_agents": [],
   "image_routing": "auto",
-
   "autoUpdate": true,
-
   "backgroundJobs": {
     "maxSessionsPerAgent": 4
   },
-
   "multiplexer": {
     "type": "cmux-tui",
     "layout": "main-vertical",
     "main_pane_size": 60
   },
-
   "agents": {
     "tester": {
-      "model": "openrouter/moonshotai/kimi-k2.7-code:floor",
       "skills": ["*"],
       "mcps": ["*"]
     }
   },
-
   "presets": {
     "openai": {
       "orchestrator": {
@@ -95,7 +89,7 @@
         "mcps": ["*"]
       },
       "tester": {
-        "model": "synthetic/hf:Qwen/Qwen3.6-27B",
+        "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
         "skills": ["*"],
         "mcps": ["*"]
       },
@@ -136,6 +130,12 @@
         "skills": ["*"],
         "mcps": ["*"]
       },
+      "tester": {
+        "model": "openrouter/moonshotai/kimi-k2.7-code:floor",
+        "skills": ["*"],
+        "mcps": ["*"]
+      },
+
       "observer": {
         "model": "openrouter/deepseek/deepseek-v4-flash-0731:floor",
         "skills": ["*"],
