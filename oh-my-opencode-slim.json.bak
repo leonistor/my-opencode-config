@@ -1,13 +1,29 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
-  "preset": "synthetic",
+  "preset": "openrouter",
   "disabled_agents": [],
   "image_routing": "auto",
+
+  "autoUpdate": true,
+
+  "backgroundJobs": {
+    "maxSessionsPerAgent": 4
+  },
+
   "multiplexer": {
     "type": "cmux-tui",
     "layout": "main-vertical",
     "main_pane_size": 60
   },
+
+  "agents": {
+    "tester": {
+      "model": "openrouter/moonshotai/kimi-k2.7-code:floor",
+      "skills": ["*"],
+      "mcps": ["*"]
+    }
+  },
+
   "presets": {
     "openai": {
       "orchestrator": {
@@ -78,6 +94,11 @@
         "skills": ["*"],
         "mcps": ["*"]
       },
+      "tester": {
+        "model": "synthetic/hf:Qwen/Qwen3.6-27B",
+        "skills": ["*"],
+        "mcps": ["*"]
+      },
       "observer": {
         "model": "synthetic/hf:nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-NVFP4",
         "skills": ["*"],
@@ -86,45 +107,39 @@
     },
     "openrouter": {
       "orchestrator": {
-        "model": "openrouter/z-ai/glm-5.3",
-        "variant": "default",
+        "model": "openrouter/z-ai/glm-5.3-flash:floor",
         "skills": ["*"],
-        "mcps": ["*", "!context7"]
+        "mcps": ["*"]
       },
       "oracle": {
-        "model": "openrouter/moonshotai/kimi-k2.7-code",
-        "skills": ["simplify"],
-        "mcps": []
+        "model": "openrouter/xiaomi/mimo-v2.6-flash:floor",
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "explorer": {
-        "model": "openrouter/z-ai/glm-5.3-flash",
-        "variant": "default",
-        "skills": [],
-        "mcps": []
+        "model": "openrouter/deepseek/deepseek-v4-flash-0731:floor",
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "librarian": {
-        "model": "openrouter/z-ai/glm-5.3-flash",
-        "variant": "default",
-        "skills": [],
-        "mcps": ["context7", "gh_grep"]
+        "model": "openrouter/deepseek/deepseek-v4-flash-0731:floor",
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "designer": {
-        "model": "openrouter/google/gemini-3.8-flash",
-        "variant": "default",
-        "skills": [],
-        "mcps": []
+        "model": "openrouter/google/gemini-3.8-flash:floor",
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "fixer": {
-        "model": "openrouter/z-ai/glm-5.3-flash",
-        "variant": "default",
-        "skills": [],
-        "mcps": []
+        "model": "openrouter/moonshotai/kimi-k2.7-code:floor",
+        "skills": ["*"],
+        "mcps": ["*"]
       },
       "observer": {
-        "model": "openrouter/z-ai/glm-5.3-flash",
-        "variant": "low",
-        "skills": [],
-        "mcps": []
+        "model": "openrouter/deepseek/deepseek-v4-flash-0731:floor",
+        "skills": ["*"],
+        "mcps": ["*"]
       }
     },
     "opencode-go": {
@@ -160,6 +175,43 @@
       },
       "observer": {
         "model": "opencode-go/mimo-v2.5",
+        "skills": ["*"],
+        "mcps": ["*"]
+      }
+    },
+    "ollama": {
+      "orchestrator": {
+        "model": "ollama/qwen3.5:9b",
+        "skills": ["*"],
+        "mcps": ["*"]
+      },
+      "oracle": {
+        "model": "ollama/gemma2:9b",
+        "skills": ["*"],
+        "mcps": ["*"]
+      },
+      "explorer": {
+        "model": "ollama/qwen2.5-coder:7b-base",
+        "skills": ["*"],
+        "mcps": ["*"]
+      },
+      "librarian": {
+        "model": "ollama/qwen2.5-coder:7b-base",
+        "skills": ["*"],
+        "mcps": ["*"]
+      },
+      "designer": {
+        "model": "ollama/qwen3.5:9b",
+        "skills": ["*"],
+        "mcps": ["*"]
+      },
+      "fixer": {
+        "model": "ollama/qwen2.5-coder:7b-base",
+        "skills": ["*"],
+        "mcps": ["*"]
+      },
+      "observer": {
+        "model": "ollama/qwen2.5-coder:7b-base",
         "skills": ["*"],
         "mcps": ["*"]
       }
