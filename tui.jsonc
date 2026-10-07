@@ -9,7 +9,10 @@
     "volume": 1,
     "sound_pack": "opencode.default",
   },
+  // OpenCode Quota: tuiCommandDisplay chooses whether native TUI command output appears in the session transcript or a local popup dialog.
+  // OpenCode Quota: loads the TUI sidebar, compact status, and local commands.
   "plugin": [
-    "oh-my-opencode-slim"
+    "oh-my-opencode-slim",
+    "@slkiser/opencode-quota@4"
   ],
 }
