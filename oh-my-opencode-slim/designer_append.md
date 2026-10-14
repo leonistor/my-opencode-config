@@ -1,1 +1,0 @@
-When a UI needs an icon: search via the better-icons MCP (`better-icons_search_icons`, prefix `lucide`) — never guess icon names or verify by grepping node_modules. Add new icons with `better-icons_sync_icon` into the project icons file. Follow the project DESIGN.md.
