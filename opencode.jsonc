@@ -1,8 +1,7 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "default_agent": "plan",
-  "lsp": true,
-  "plugin": [
+  "plugins": [
     // "opencode-history-search",
     // "opencode-pty",
     // "@upstash/context7-opencode",
@@ -10,35 +9,33 @@
     // "oh-my-opencode-slim",
     // "@slkiser/opencode-quota@4",
   ],
-  "disabled_providers": ["github-copilot", "huggingface"],
-  "permission": {
-    "read": {
-      ".env": "allow",
-      ".env.*": "allow",
-      ".env-*": "allow",
-    },
-    "*": "allow",
-    "edit": "allow",
-    "webfetch": "allow",
-    "websearch": "allow",
-    "external_directory": "allow",
-    "bash": {
-      "bun *": "allow",
-      "bunx *": "allow",
-      "git push *": "ask",
-      "git checkout *": "allow",
-      // Only deny the truly catastrophic - everything else just runs
-      "sudo *": "deny",
-      "rm -rf /": "deny",
-      "rm -rf /*": "deny",
-      "rm -rf ~": "deny",
-      "rm -rf ~/*": "deny",
-      ":(){:|:&};:": "deny", // fork bomb, just in case
-    },
-  },
-  "compaction": {
-    "prune": true,
-  },
+  "policies": [
+    { "action": "provider.use", "resource": "github-copilot", "effect": "deny" },
+    { "action": "provider.use", "resource": "huggingface", "effect": "deny" },
+  ],
+  "permissions": [
+    // Broad default (mirrors V1 `permission["*"] = "allow"`).
+    { "action": "*", "resource": "*", "effect": "allow" },
+    { "action": "external_directory", "resource": "*", "effect": "allow" },
+    // V2 defaults to `ask` for `.env`/`.env.*` reads; keep them allowed.
+    { "action": "read", "resource": "*.env", "effect": "allow" },
+    { "action": "read", "resource": "*.env.*", "effect": "allow" },
+    { "action": "read", "resource": "*.env-*", "effect": "allow" },
+    { "action": "edit", "resource": "*", "effect": "allow" },
+    { "action": "webfetch", "resource": "*", "effect": "allow" },
+    { "action": "websearch", "resource": "*", "effect": "allow" },
+    // Shell rules (V1 `permission.bash`). Only deny the truly catastrophic.
+    { "action": "shell", "resource": "bun *", "effect": "allow" },
+    { "action": "shell", "resource": "bunx *", "effect": "allow" },
+    { "action": "shell", "resource": "git checkout *", "effect": "allow" },
+    { "action": "shell", "resource": "git push *", "effect": "ask" },
+    { "action": "shell", "resource": "sudo *", "effect": "deny" },
+    { "action": "shell", "resource": "rm -rf /", "effect": "deny" },
+    { "action": "shell", "resource": "rm -rf /*", "effect": "deny" },
+    { "action": "shell", "resource": "rm -rf ~", "effect": "deny" },
+    { "action": "shell", "resource": "rm -rf ~/*", "effect": "deny" },
+    { "action": "shell", "resource": ":(){:|:&};:", "effect": "deny" }, // fork bomb, just in case
+  ],
   "watcher": {
     "ignore": [
       "node_modules/**",
@@ -48,115 +45,88 @@
       "__pycache__/**",
     ],
   },
-  "provider": {
+  "providers": {
     "openrouter": {
       "models": {
         "z-ai/glm-5.3-flash:floor": {
-          "id": "z-ai/glm-5.3-flash:floor",
+          "modelID": "z-ai/glm-5.3-flash:floor",
           "name": "GLM-5.3-Flash (:floor)",
-          "reasoning": true,
-          "tool_call": true,
-          "attachment": true,
-          "temperature": true,
-          "limit": { "context": 1048576, "output": 943717 },
-          "cost": { "input": 0.15, "output": 0.5, "cache_read": 0.03 },
-          "modalities": {
+          "capabilities": {
+            "tools": true,
             "input": ["text", "image", "video"],
             "output": ["text"],
           },
+          "limit": { "context": 1048576, "output": 943717 },
+          "cost": { "input": 0.15, "output": 0.5, "cache": { "read": 0.03 } },
         },
         "xiaomi/mimo-v2.6-flash:floor": {
-          "id": "xiaomi/mimo-v2.6-flash:floor",
+          "modelID": "xiaomi/mimo-v2.6-flash:floor",
           "name": "MiMo-V2.6-Flash (:floor)",
-          "reasoning": true,
-          "tool_call": true,
-          "attachment": true,
-          "temperature": true,
-          "limit": { "context": 1050000, "output": 131072 },
-          "cost": { "input": 0.14, "output": 0.28, "cache_read": 0.0028 },
-          "modalities": {
+          "capabilities": {
+            "tools": true,
             "input": ["text", "image", "audio", "video"],
             "output": ["text"],
           },
+          "limit": { "context": 1050000, "output": 131072 },
+          "cost": { "input": 0.14, "output": 0.28, "cache": { "read": 0.0028 } },
         },
         "deepseek/deepseek-v4-flash-0731:floor": {
-          "id": "deepseek/deepseek-v4-flash-0731:floor",
+          "modelID": "deepseek/deepseek-v4-flash-0731:floor",
           "name": "DeepSeek V4 Flash 0731 (:floor)",
-          "reasoning": true,
-          "tool_call": true,
-          "temperature": true,
+          "capabilities": {
+            "tools": true,
+            "input": ["text"],
+            "output": ["text"],
+          },
           "limit": { "context": 1048576, "output": 943718 },
-          "cost": { "input": 0.0152, "output": 1.28, "cache_read": 0.0152 },
-          "modalities": { "input": ["text"], "output": ["text"] },
+          "cost": { "input": 0.0152, "output": 1.28, "cache": { "read": 0.0152 } },
         },
         "google/gemini-3.8-flash:floor": {
-          "id": "google/gemini-3.8-flash:floor",
+          "modelID": "google/gemini-3.8-flash:floor",
           "name": "Gemini 3.8 Flash (:floor)",
-          "reasoning": true,
-          "tool_call": true,
-          "attachment": true,
-          "temperature": true,
+          "capabilities": {
+            "tools": true,
+            "input": ["text", "image", "video", "audio", "pdf"],
+            "output": ["text"],
+          },
           "limit": { "context": 1048576, "output": 65536 },
           "cost": {
             "input": 0.75,
             "output": 3.75,
-            "cache_read": 0.075,
-            "cache_write": 0.041667,
-          },
-          "modalities": {
-            "input": ["text", "image", "video", "audio", "pdf"],
-            "output": ["text"],
+            "cache": { "read": 0.075, "write": 0.041667 },
           },
         },
         "moonshotai/kimi-k2.7-code:floor": {
-          "id": "moonshotai/kimi-k2.7-code:floor",
+          "modelID": "moonshotai/kimi-k2.7-code:floor",
           "name": "Kimi K2.7 Code (:floor)",
-          "reasoning": true,
-          "tool_call": true,
-          "attachment": true,
-          "temperature": true,
+          "capabilities": {
+            "tools": true,
+            "input": ["text", "image"],
+            "output": ["text"],
+          },
           "limit": { "context": 262144, "output": 235929 },
-          "cost": { "input": 0.6712, "output": 3.35, "cache_read": 0.18 },
-          "modalities": { "input": ["text", "image"], "output": ["text"] },
+          "cost": { "input": 0.6712, "output": 3.35, "cache": { "read": 0.18 } },
         },
         "qwen/qwen3-coder-30b-a3b-instruct:floor": {
-          "id": "qwen/qwen3-coder-30b-a3b-instruct:floor",
+          "modelID": "qwen/qwen3-coder-30b-a3b-instruct:floor",
           "name": "Qwen3 Coder 30B MoE (:floor)",
-          "reasoning": true,
-          "tool_call": true,
-          "temperature": true,
+          "capabilities": {
+            "tools": true,
+            "input": ["text"],
+            "output": ["text"],
+          },
           "limit": { "context": 262144, "output": 65536 },
           "cost": { "input": 0.07, "output": 0.28 },
-          "modalities": { "input": ["text"], "output": ["text"] },
         },
       },
     },
     "opencode-go": {},
+    "synthetic": {},
+    // V2 discovers pulled Ollama models automatically.
     "ollama": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "Ollama",
-      "options": {
+      "settings": {
         "baseURL": "http://localhost:11434/v1",
       },
-      "models": {
-        "llama3.2:latest": {
-          "reasoning": true,
-          "tool_call": true,
-        },
-        "qwen3.5:9b": {
-          "reasoning": true,
-          "tool_call": true,
-        },
-        "qwen2.5-coder:7b-base": {
-          "reasoning": true,
-          "tool_call": true,
-        },
-        "gemma2:9b": {
-          "reasoning": true,
-          "tool_call": true,
-        },
-      },
     },
-    "synthetic": {},
   },
 }
