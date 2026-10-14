@@ -6,13 +6,10 @@
 ## Communication
 
 - Keep responses concise and to the point - unless the user asks otherwise
-- Add doc comments to the code, explain in comments design decisions or tricky stuff
 
 ## Working with Git
 
 - Always use semantic commit prefixes (feat:, fix:, docs:, etc.).
-- Run the project's lint script before committing, if one exists.
-- Commit autonomously when a unit of work is complete and verified (lint/tests pass) — no need to ask. Keep commits small and logical; one concern per commit.
 - Never push without explicit user approval, every time. Never force-push or amend commits that were already pushed.
 - Only open a PR when asked.
 - If the user asks to hold off, leave work uncommitted.
@@ -38,12 +35,6 @@
 - When evaluating a new dependency, consider its maintenance status, activity, license, documentation, API quality, TypeScript support, ecosystem fit, bundle/runtime cost, and compatibility with the project.
 - Do not introduce a dependency without asking the user; when proposing one, explain briefly why it is preferable to the relevant alternatives.
 
-## Code style
-
-- Follow the patterns already in neighboring files.
-- Do not add comments that restate the code.
-- Do not reformat code you are not otherwise changing.
-
 ## Change / edit mode
 
 - Use sub-agents when they materially improve implementation quality, research depth, or parallelism.
@@ -55,7 +46,6 @@
 
 ## Boundaries
 
-- Do not modify unrelated files or widen scope beyond the request without asking permission.
 - Do not refactor surrounding code unless it is necessary for the requested change or clearly reduces complexity or risk.
 - Never commit secrets, API keys, or .env files.
 - If a command fails, report the failure. Do not guess or present assumptions as confirmed results.
@@ -66,24 +56,10 @@
 - Test behavior, business rules, regressions, and important integration boundaries - not implementation details.
 - Before adding a new test, check whether an existing test can be extended instead.
 - Prefer updating existing tests over creating duplicate tests covering the same behavior.
-- Do not create tests solely to increase coverage or exercise trivial implementation details.
 - Avoid testing framework behavior, library behavior, generated code, or simple pass-through code unless there is project-specific logic involved.
 - Keep tests close to the behavior they verify and follow the project's existing testing patterns.
 - When a feature changes existing behavior, update obsolete tests rather than preserving tests for the old behavior.
-- After implementation, run the most relevant existing test suite and other project quality checks.
-- Never assume your changes simply work, always test!
 - If the project does not have any testing tools, scripts, MCP tools, skills, etc. available for testing, ask the user whether testing should be skipped.
-
-## UI design
-
-- Always follow the UI design system when creating or reviewing components or pages.
-- Design System: @DESIGN.md
-
-### Python workflow
-
-- **Standards:** @~/.config/opencode/docs/index.md (Python, Docker, tooling)
-- **Packages:** @~/.config/opencode/docs/tooling/package-management.md (`uv`)
-- **Testing:** @~/.config/opencode/docs/python/testing.md (`pytest`, coverage)
 
 ## Tools Provided
 
