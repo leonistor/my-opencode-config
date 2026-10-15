@@ -2,12 +2,15 @@
   "$schema": "https://opencode.ai/config.json",
   "default_agent": "plan",
   "plugins": [
+    // Not V2-ready yet (no upstream V2 variant):
     // "opencode-history-search",
-    // "opencode-pty",
-    // "@upstash/context7-opencode",
     // "open-plan-annotator@latest",
-    // "oh-my-opencode-slim",
-    // "@slkiser/opencode-quota@4",
+    // opencode-pty: cannot load as a package spec on V2 (its V2 build is a
+    // subpath export, `opencode-pty/v2`, which OpenCode parses as a git spec).
+    // Loaded via a local plugin package instead: plugins/opencode-pty/
+    "@upstash/context7-opencode",
+    "oh-my-opencode-slim",
+    "@slkiser/opencode-quota@5", // v5 = OpenCode 2 (v4 = OpenCode 1)
   ],
   "policies": [
     { "action": "provider.use", "resource": "github-copilot", "effect": "deny" },
