@@ -9,9 +9,9 @@
     // subpath export, `opencode-pty/v2`, which OpenCode parses as a git spec).
     // Loaded via a local plugin package instead: plugins/opencode-pty/
     "@upstash/context7-opencode",
-    "oh-my-opencode-slim",
     "@slkiser/opencode-quota@5", // v5 = OpenCode 2 (v4 = OpenCode 1)
     "./plugins/cmux",
+    "oh-my-opencode-slim",
   ],
   "agents": {
     // oh-my-opencode-slim provides its own `explorer` subagent and the
@@ -20,6 +20,13 @@
     "general": { "disabled": true },
   },
   "policies": [
+    // `cmux hooks setup` unconditionally regenerates two loose V1-era plugin
+    // files whose default export reuses the id of the real V2 package at
+    // ./plugins/cmux. Three entries sharing one plugin id makes the TUI report
+    // "2 plugins failed: cmux.server, cmux.server". Denying the loose files
+    // keeps cmux's V2 integration (./plugins/cmux, loaded above) working.
+    { "action": "integration.use", "resource": "plugin:/Users/leo/.config/opencode/plugins/cmux-feed.js", "effect": "deny" },
+    { "action": "integration.use", "resource": "plugin:/Users/leo/.config/opencode/plugins/cmux-session.js", "effect": "deny" },
     {
       "action": "provider.use",
       "resource": "github-copilot",
