@@ -11,20 +11,33 @@
     "@upstash/context7-opencode",
     "oh-my-opencode-slim",
     "@slkiser/opencode-quota@5", // v5 = OpenCode 2 (v4 = OpenCode 1)
+    "./plugins/cmux",
   ],
+  "agents": {
+    // oh-my-opencode-slim provides its own `explorer` subagent and the
+    // `orchestrator`; disable the built-in explore/general agents.
+    "explore": { "disabled": true },
+    "general": { "disabled": true },
+  },
   "policies": [
-    { "action": "provider.use", "resource": "github-copilot", "effect": "deny" },
+    {
+      "action": "provider.use",
+      "resource": "github-copilot",
+      "effect": "deny",
+    },
     { "action": "provider.use", "resource": "huggingface", "effect": "deny" },
   ],
   "permissions": [
-    // Broad default (mirrors V1 `permission["*"] = "allow"`).
-    { "action": "*", "resource": "*", "effect": "allow" },
+    // V2 rules resolve last-match-wins, and these user rules are appended
+    // AFTER shipped agent rules. Do NOT add blanket allow rules here such as
+    // `{ "action": "*" }` or `{ "action": "edit" }`: they would override
+    // agent-level denials, e.g. the read-only `plan` agent. Every agent
+    // already starts from a built-in allow-everything base policy.
     { "action": "external_directory", "resource": "*", "effect": "allow" },
     // V2 defaults to `ask` for `.env`/`.env.*` reads; keep them allowed.
     { "action": "read", "resource": "*.env", "effect": "allow" },
     { "action": "read", "resource": "*.env.*", "effect": "allow" },
     { "action": "read", "resource": "*.env-*", "effect": "allow" },
-    { "action": "edit", "resource": "*", "effect": "allow" },
     { "action": "webfetch", "resource": "*", "effect": "allow" },
     { "action": "websearch", "resource": "*", "effect": "allow" },
     // Shell rules (V1 `permission.bash`). Only deny the truly catastrophic.
@@ -71,7 +84,11 @@
             "output": ["text"],
           },
           "limit": { "context": 1050000, "output": 131072 },
-          "cost": { "input": 0.14, "output": 0.28, "cache": { "read": 0.0028 } },
+          "cost": {
+            "input": 0.14,
+            "output": 0.28,
+            "cache": { "read": 0.0028 },
+          },
         },
         "deepseek/deepseek-v4-flash-0731:floor": {
           "modelID": "deepseek/deepseek-v4-flash-0731:floor",
@@ -82,7 +99,11 @@
             "output": ["text"],
           },
           "limit": { "context": 1048576, "output": 943718 },
-          "cost": { "input": 0.0152, "output": 1.28, "cache": { "read": 0.0152 } },
+          "cost": {
+            "input": 0.0152,
+            "output": 1.28,
+            "cache": { "read": 0.0152 },
+          },
         },
         "google/gemini-3.8-flash:floor": {
           "modelID": "google/gemini-3.8-flash:floor",
@@ -108,7 +129,11 @@
             "output": ["text"],
           },
           "limit": { "context": 262144, "output": 235929 },
-          "cost": { "input": 0.6712, "output": 3.35, "cache": { "read": 0.18 } },
+          "cost": {
+            "input": 0.6712,
+            "output": 3.35,
+            "cache": { "read": 0.18 },
+          },
         },
         "qwen/qwen3-coder-30b-a3b-instruct:floor": {
           "modelID": "qwen/qwen3-coder-30b-a3b-instruct:floor",

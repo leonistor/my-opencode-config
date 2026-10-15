@@ -1,0 +1,19 @@
+node_modules
+package.json
+bun.lock
+.gitignore
+**/*.lock
+**/*.bak
+*.bak
+
+# Contains the live OpenCode background-service password. Never commit it.
+service.json
+
+# Keep the opencode-pty local plugin package manifest (its dependency on the
+# opencode-pty package is needed to install/reproduce the plugin).
+!plugins/opencode-pty/package.json
+
+# cmux-generated OpenCode plugin. cmux marks these "DO NOT EDIT MANUALLY"
+# because it rewrites them in place, but this repo tracks them so a fresh
+# clone reproduces the working cmux integration.
+!plugins/cmux/package.json
