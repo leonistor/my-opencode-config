@@ -18,6 +18,7 @@ import { dirname, join } from "node:path";
 
 const HOME = homedir();
 const CONFIG = join(HOME, ".config/opencode/oh-my-opencode-slim.json");
+const OPENCODE_CONFIG = join(HOME, ".config/opencode/opencode.jsonc");
 const CACHE = join(HOME, ".cache/opencode/models-dev.json");
 const MODELS_DEV_URL = "https://models.dev/api.json";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -118,6 +119,32 @@ async function loadModelsDev(): Promise<Record<string, { models?: Record<string,
 
 type ModelRecord = { name?: string; limit?: { context?: number }; cost?: { input?: number; output?: number; cache_read?: number } };
 
+/**
+ * Prices for models OpenCode knows only because they are hand-declared in
+ * `opencode.jsonc` (e.g. OpenRouter `:floor` variants, absent from models.dev).
+ * Keyed by `provider/modelID`.
+ */
+type DeclaredModel = { name?: string; limit?: { context?: number }; cost?: { input?: number; output?: number; cache?: { read?: number } } };
+
+async function loadDeclaredModels(): Promise<Record<string, DeclaredModel>> {
+  const out: Record<string, DeclaredModel> = {};
+  try {
+    const config = parseLoose(await Bun.file(OPENCODE_CONFIG).text()) as {
+      providers?: Record<string, { models?: Record<string, DeclaredModel & { modelID?: string }> }>;
+    };
+    for (const [providerId, provider] of Object.entries(config.providers ?? {})) {
+      for (const [key, model] of Object.entries(provider?.models ?? {})) {
+        const alias = model.modelID ?? key;
+        out[`${providerId}/${alias}`] = model;
+        out[`${providerId}/${key}`] = model;
+      }
+    }
+  } catch {
+    // Missing or unparseable opencode config just means no declared fallback.
+  }
+  return out;
+}
+
 // ------------------------------------------------------------------ helpers
 
 function pick(text: string) {
@@ -180,6 +207,7 @@ if (!presetNames.length) {
 }
 
 const modelsDev = await loadModelsDev();
+const declared = await loadDeclaredModels();
 
 const rows: Row[] = [];
 for (const presetName of presetNames) {
@@ -198,17 +226,18 @@ for (const presetName of presetNames) {
     const provider = slash === -1 ? "" : id.slice(0, slash);
     const remainder = slash === -1 ? id : id.slice(slash + 1);
     const record = provider ? modelsDev[provider]?.models?.[remainder] : undefined;
+    const fallback = declared[id];
 
     rows.push({
       preset: presetName,
       agent,
       model: id,
-      name: record?.name ?? "",
+      name: record?.name ?? fallback?.name ?? "",
       variant: variant ?? "—",
-      context: context(record?.limit?.context),
-      input: money(record?.cost?.input),
-      output: money(record?.cost?.output),
-      cacheRead: money(record?.cost?.cache_read),
+      context: context(record?.limit?.context ?? fallback?.limit?.context),
+      input: money(record?.cost?.input ?? fallback?.cost?.input),
+      output: money(record?.cost?.output ?? fallback?.cost?.output),
+      cacheRead: money(record?.cost?.cache_read ?? fallback?.cost?.cache?.read),
     });
   }
 }

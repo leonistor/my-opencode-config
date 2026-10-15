@@ -81,6 +81,44 @@
         "skills": [],
         "mcps": []
       }
+    },
+    "openrouter": {
+      "orchestrator": {
+        "model": "openrouter/deepseek/deepseek-v4.1-flash:floor",
+        "variant": "high",
+        "skills": ["*"],
+        "mcps": ["*", "!context7"]
+      },
+      "oracle": {
+        "model": "openrouter/z-ai/glm-5.3:floor",
+        "variant": "high",
+        "skills": ["simplify"],
+        "mcps": []
+      },
+      "explorer": {
+        "model": "openrouter/z-ai/glm-5.3-flash:floor",
+        "variant": "low",
+        "skills": [],
+        "mcps": []
+      },
+      "librarian": {
+        "model": "openrouter/z-ai/glm-5.3-flash:floor",
+        "variant": "low",
+        "skills": [],
+        "mcps": ["context7", "gh_grep"]
+      },
+      "designer": {
+        "model": "openrouter/minimax/minimax-m3:floor",
+        "variant": "medium",
+        "skills": [],
+        "mcps": []
+      },
+      "fixer": {
+        "model": "openrouter/z-ai/glm-5.3-flash:floor",
+        "variant": "high",
+        "skills": [],
+        "mcps": []
+      }
     }
   }
 }
