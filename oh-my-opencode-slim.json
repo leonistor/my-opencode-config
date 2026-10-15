@@ -1,18 +1,25 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
-  "preset": "opencode-go",
+  "preset": "synthetic",
   "presets": {
     "opencode-go": {
       "orchestrator": {
         "model": "opencode-go/minimax-m3",
         "variant": "thinking",
-        "skills": ["*"],
-        "mcps": ["*", "!context7"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*",
+          "!context7"
+        ]
       },
       "oracle": {
         "model": "opencode-go/qwen3.8-max",
         "variant": "xhigh",
-        "skills": ["simplify"],
+        "skills": [
+          "simplify"
+        ],
         "mcps": []
       },
       "explorer": {
@@ -25,7 +32,10 @@
         "model": "opencode-go/deepseek-v4.1-flash",
         "variant": "high",
         "skills": [],
-        "mcps": ["context7", "gh_grep"]
+        "mcps": [
+          "context7",
+          "gh_grep"
+        ]
       },
       "designer": {
         "model": "opencode-go/kimi-k2.7-code",
@@ -48,13 +58,20 @@
       "orchestrator": {
         "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
         "variant": "xhigh",
-        "skills": ["*"],
-        "mcps": ["*", "!context7"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*",
+          "!context7"
+        ]
       },
       "oracle": {
         "model": "synthetic/hf:zai-org/GLM-5.3",
         "variant": "high",
-        "skills": ["simplify"],
+        "skills": [
+          "simplify"
+        ],
         "mcps": []
       },
       "explorer": {
@@ -67,11 +84,14 @@
         "model": "synthetic/hf:zai-org/GLM-5.3-Flash",
         "variant": "low",
         "skills": [],
-        "mcps": ["context7", "gh_grep"]
+        "mcps": [
+          "context7",
+          "gh_grep"
+        ]
       },
       "designer": {
-        "model": "synthetic/hf:MiniMaxAI/MiniMax-M3",
-        "variant": "medium",
+        "model": "synthetic/hf:moonshotai/Kimi-K3",
+        "variant": "high",
         "skills": [],
         "mcps": []
       },
@@ -86,13 +106,20 @@
       "orchestrator": {
         "model": "openrouter/deepseek/deepseek-v4.1-flash:floor",
         "variant": "high",
-        "skills": ["*"],
-        "mcps": ["*", "!context7"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*",
+          "!context7"
+        ]
       },
       "oracle": {
         "model": "openrouter/z-ai/glm-5.3:floor",
         "variant": "high",
-        "skills": ["simplify"],
+        "skills": [
+          "simplify"
+        ],
         "mcps": []
       },
       "explorer": {
@@ -105,7 +132,10 @@
         "model": "openrouter/z-ai/glm-5.3-flash:floor",
         "variant": "low",
         "skills": [],
-        "mcps": ["context7", "gh_grep"]
+        "mcps": [
+          "context7",
+          "gh_grep"
+        ]
       },
       "designer": {
         "model": "openrouter/minimax/minimax-m3:floor",

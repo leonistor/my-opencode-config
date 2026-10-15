@@ -32,7 +32,7 @@ quality; volume lanes stay on the cheapest capable model.
 | oracle | `synthetic/hf:zai-org/GLM-5.3` | `high` | 1.40 / 4.40 | The one lane worth paying up for: rare, read-only, hard reasoning. Well below Kimi-K3 ($3/$15); gives diversity from the orchestrator model. |
 | explorer | `synthetic/hf:zai-org/GLM-5.3-Flash` | `low` | 0.15 / 0.50 | High-volume scouting; cheapest model with reasoning + 524k ctx + vision. |
 | librarian | `synthetic/hf:zai-org/GLM-5.3-Flash` | `low` | 0.15 / 0.50 | Same profile; keeps context7 + gh_grep MCPs. |
-| designer | `synthetic/hf:MiniMaxAI/MiniMax-M3` | `medium` | 0.60 / 1.20 | Mid-cheap; plugin lists it as designer-grade. Buys UI/UX judgment without reaching for Kimi. |
+| designer | `synthetic/hf:moonshotai/Kimi-K3` | `high` | 3.00 / 15.00 | Vision-capable UI/UX work; the one lane where judgment is worth paying for. Stepped up from MiniMax-M3, which Synthetic retired. |
 | fixer | `synthetic/hf:zai-org/GLM-5.3-Flash` | `high` | 0.15 / 0.50 | Scoped implementation from a concrete plan — the lane where a cheap model is safest. |
 
 Observer is **left at its default (disabled)**: the DeepSeek orchestrator is
@@ -44,7 +44,9 @@ spend.
 - Cheaper overall: orchestrator → `GLM-5.3-Flash @ high` (biggest saving,
   biggest risk — it is the instruction-follower).
 - More performant: oracle → `Kimi-K3 @ high`; orchestrator → `GLM-5.3 @ high`.
-- Designer step-up: `Kimi-K2.7-Code @ high`.
+- Designer step-down: `GLM-5.3-Flash @ high` (the only other vision-capable
+  model besides DeepSeek and Kimi-K3), or `DeepSeek-V4.1-Flash @ high` to unify
+  with the orchestrator at the cost of lane diversity.
 - Explorer/librarian floor: `openai/gpt-oss-120b @ low` (128k ctx) or
   `GLM-4.7-Flash` (192k, no reasoning variants).
 
