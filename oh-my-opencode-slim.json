@@ -75,13 +75,13 @@
         "mcps": []
       },
       "explorer": {
-        "model": "synthetic/hf:zai-org/GLM-5.3-Flash",
+        "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
         "variant": "low",
         "skills": [],
         "mcps": []
       },
       "librarian": {
-        "model": "synthetic/hf:zai-org/GLM-5.3-Flash",
+        "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
         "variant": "low",
         "skills": [],
         "mcps": [
@@ -96,7 +96,7 @@
         "mcps": []
       },
       "fixer": {
-        "model": "synthetic/hf:zai-org/GLM-5.3-Flash",
+        "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
         "variant": "high",
         "skills": [],
         "mcps": []

@@ -30,25 +30,35 @@ quality; volume lanes stay on the cheapest capable model.
 | --- | --- | --- | --- | --- |
 | orchestrator | `synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash` | `xhigh` | 0.60 / 1.20 (cache 0.03) | Highest-token lane. 524k ctx, vision-capable (so no Observer lane needed), cheapest model Synthetic recommends for the "large text" tier, near-Fable capability. |
 | oracle | `synthetic/hf:zai-org/GLM-5.3` | `high` | 1.40 / 4.40 | The one lane worth paying up for: rare, read-only, hard reasoning. Well below Kimi-K3 ($3/$15); gives diversity from the orchestrator model. |
-| explorer | `synthetic/hf:zai-org/GLM-5.3-Flash` | `low` | 0.15 / 0.50 | High-volume scouting; cheapest model with reasoning + 524k ctx + vision. |
-| librarian | `synthetic/hf:zai-org/GLM-5.3-Flash` | `low` | 0.15 / 0.50 | Same profile; keeps context7 + gh_grep MCPs. |
+| explorer | `synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash` | `low` | 0.60 / 1.20 (cache 0.03) | High-volume scouting; 524k ctx + vision, and the catalog's cheapest cache read ($0.03/M) — the rate that actually governs cost on repeated context. Upgraded from GLM-5.3-Flash for reasoning/instruction-following. |
+| librarian | `synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash` | `low` | 0.60 / 1.20 (cache 0.03) | Same profile; keeps context7 + gh_grep MCPs. |
 | designer | `synthetic/hf:moonshotai/Kimi-K3` | `high` | 3.00 / 15.00 | Vision-capable UI/UX work; the one lane where judgment is worth paying for. Stepped up from MiniMax-M3, which Synthetic retired. |
-| fixer | `synthetic/hf:zai-org/GLM-5.3-Flash` | `high` | 0.15 / 0.50 | Scoped implementation from a concrete plan — the lane where a cheap model is safest. |
+| fixer | `synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash` | `high` | 0.60 / 1.20 (cache 0.03) | Scoped implementation from a concrete plan. Quality upgrade from GLM-5.3-Flash; `xhigh` is available if more reasoning effort is worth the output spend. |
 
 Observer is **left at its default (disabled)**: the DeepSeek orchestrator is
 vision-capable, so images ride inline and a separate reader would be wasted
 spend.
 
+**Diversity note:** `DeepSeek-V4.1-Flash` now fills four lanes (orchestrator,
+explorer, librarian, fixer). That is deliberate — the quality brief outweighed
+per-lane diversity — but it means a DeepSeek outage or a capability regression
+hits most of the preset at once. `Kimi-K3` (designer) and `GLM-5.3` (oracle)
+are the only independent families left.
+
 ### Alternates, if the balance needs re-tuning
 
-- Cheaper overall: orchestrator → `GLM-5.3-Flash @ high` (biggest saving,
-  biggest risk — it is the instruction-follower).
+- Cost floor for the volume lanes: explorer/librarian/fixer →
+  `openai/gpt-oss-120b @ low|medium|high` ($0.10/$0.10, but 131k ctx and no
+  vision).
+- Cheaper 524k + vision + reasoning: revert to `GLM-5.3-Flash` ($0.15/$0.50) —
+  still the cheapest model in the catalog with that profile; use `low` for
+  explorer/librarian, `high` for fixer.
+- Fixer, different family: `Kimi-K2.7-Code @ high` (code specialist; 262k ctx,
+  but no cache discount at $0.95/M) or `MiniMax-M3 @ high` (524k + vision; cache
+  read $0.60/M is punitive at volume).
 - More performant: oracle → `Kimi-K3 @ high`; orchestrator → `GLM-5.3 @ high`.
-- Designer step-down: `GLM-5.3-Flash @ high` (the only other vision-capable
-  model besides DeepSeek and Kimi-K3), or `DeepSeek-V4.1-Flash @ high` to unify
-  with the orchestrator at the cost of lane diversity.
-- Explorer/librarian floor: `openai/gpt-oss-120b @ low` (128k ctx) or
-  `GLM-4.7-Flash` (192k, no reasoning variants).
+- Explorer/librarian floor: `GLM-4.7-Flash` ($0.10/$0.50, 196k ctx, no reasoning
+  variants) — the cheapest non-vision option.
 
 ## The `openrouter` preset (all `:floor`)
 
