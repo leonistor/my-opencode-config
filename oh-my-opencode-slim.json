@@ -43,6 +43,44 @@
         "skills": [],
         "mcps": []
       }
+    },
+    "synthetic": {
+      "orchestrator": {
+        "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
+        "variant": "xhigh",
+        "skills": ["*"],
+        "mcps": ["*", "!context7"]
+      },
+      "oracle": {
+        "model": "synthetic/hf:zai-org/GLM-5.3",
+        "variant": "high",
+        "skills": ["simplify"],
+        "mcps": []
+      },
+      "explorer": {
+        "model": "synthetic/hf:zai-org/GLM-5.3-Flash",
+        "variant": "low",
+        "skills": [],
+        "mcps": []
+      },
+      "librarian": {
+        "model": "synthetic/hf:zai-org/GLM-5.3-Flash",
+        "variant": "low",
+        "skills": [],
+        "mcps": ["context7", "gh_grep"]
+      },
+      "designer": {
+        "model": "synthetic/hf:MiniMaxAI/MiniMax-M3",
+        "variant": "medium",
+        "skills": [],
+        "mcps": []
+      },
+      "fixer": {
+        "model": "synthetic/hf:zai-org/GLM-5.3-Flash",
+        "variant": "high",
+        "skills": [],
+        "mcps": []
+      }
     }
   }
 }
