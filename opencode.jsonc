@@ -12,7 +12,7 @@
     "@slkiser/opencode-quota@5", // v5 = OpenCode 2 (v4 = OpenCode 1)
     "./plugins/cmux",
     "oh-my-opencode-slim",
-    "@plannotator/opencode@latest",
+    "open-plan-annotator@latest",
   ],
   "agents": {
     // oh-my-opencode-slim provides its own `explorer` subagent and the
