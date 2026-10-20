@@ -30,30 +30,67 @@ codebase recon and external docs research are now a single lane.
 
 ## The `opencode-go` preset (active)
 
-Unlike the two alternates below, `opencode-go` is **not token-priced**: it bills
-against a subscription with rolling percentage quotas, so spend is governed by
-the quota windows rather than by per-token rates. The models.dev rates in the
-table are **reference only** — they are what these models cost elsewhere, not
-what you pay here.
+`opencode-go` is a **subscription**, not token-priced. Quota is granted as a
+**separate monthly dollar limit per model**, and consumption is weighted by that
+model's price (input / output / cache-read / cache-write). The 5h, weekly and
+monthly windows are 20% / 50% / 100% of each model's monthly limit. So the
+binding question is not "is this model cheap" but **which model's limit is
+exhausted first** — and because agent context is re-sent every turn, the
+**cache-read rate** dominates the burn, not the fresh-input rate.
+
+The models.dev rates in the table are **reference only** — they are what these
+models cost elsewhere, and they are exactly what the quota weighting uses, so
+they are a faithful proxy for relative burn.
 
 Quota windows, as reported by the Console usage API via `/quota_status`:
 
 | Window | Reset | Notes |
 | --- | --- | --- |
-| 5h | rolling | Shortest window; throttles first |
-| Weekly | Monday 00:00 UTC | |
-| Monthly | anchored to the subscription period | Not calendar-aligned |
+| 5h | rolling | 20% of each model's monthly limit; throttles first |
+| Weekly | Monday 00:00 UTC | 50% of each model's monthly limit |
+| Monthly | anchored to the subscription period | 100% of each model's monthly limit; not calendar-aligned |
 
-| Agent | Model | Variant | Reference rate (per M) | Why |
-| --- | --- | --- | --- | --- |
-| orchestrator | `opencode-go/minimax-m3` | `thinking` | 0.30 / 1.20 (cache 0.06) | Highest-token lane, so reasoning is kept on. 512k ctx tier steps up to 0.60 / 2.40 (cache 0.12). |
-| oracle | `opencode-go/qwen3.8-max` | `xhigh` | 2.00 / 6.00 (cache 0.25) | The one lane worth paying up for: rare, read-only, hard reasoning; highest reasoning effort in the preset. |
-| explorer | `opencode-go/deepseek-v4.1-flash` | `high` | 0.15 / 0.60 (cache 0.003) | Volume lane — codebase recon plus external docs research. Cheapest cache read in the preset ($0.003/M), the rate that governs repeated context; carries context7 + gh_grep MCPs. |
-| designer | `opencode-go/kimi-k2.7-code` | — (none listed) | 0.95 / 4.00 (cache 0.19) | Code specialist for UI/UX work. The model exposes no reasoning variants, so no `variant` is set. |
-| fixer | `opencode-go/deepseek-v4.1-flash` | `high` | 0.15 / 0.60 (cache 0.003) | Scoped implementation from a concrete plan; same cheap volume profile as explorer. |
+Limits are ~2x higher on Go Plus ($40/mo) than Go ($10/mo); the relative
+ordering below is identical on both.
 
-Observer is **not configured**: `opencode-go/minimax-m3` declares image input, so
-images ride inline and a separate reader would waste quota.
+| Agent | Model | Variant | Reference rate (per M) | Monthly limit (Go / Plus) | Why |
+| --- | --- | --- | --- | --- | --- |
+| orchestrator | `opencode-go/deepseek-v4.1-flash` | `high` | 0.15 / 0.60 (cache 0.003) | $80 / $160 | Highest-token lane. Cache read $0.003/M — 20x cheaper than MiniMax-M3's $0.06 — so the repeated-context burn collapses; 1M ctx, vision, `low|high|max` effort. |
+| oracle | `opencode-go/qwen3.8-flash` | `xhigh` | 0.15 / 0.47 (cache 0.016) | $30 / $90 | Rare, read-only, hard reasoning. 13x cheaper in/out and 15x cheaper cache read than Qwen3.8-Max, with 2x the limit; keeps the `xhigh` effort scale. |
+| explorer | `opencode-go/deepseek-v4.1-flash` | `low` | 0.15 / 0.60 (cache 0.003) | $80 / $160 | Volume lane — codebase recon plus external docs research. `low` trims reasoning tokens on a read-only lane; carries context7 + gh_grep MCPs. |
+| designer | `opencode-go/minimax-m3` | `thinking` | 0.30 / 1.20 (cache 0.06) | $60 / $180 | Multimodal UI/UX work. Replaces Kimi-K2.7-Code, whose $0.19/M cache read was burning ~$20/week and would exceed its $60 limit within the month. |
+| fixer | `opencode-go/deepseek-v4.1-flash` | `high` | 0.15 / 0.60 (cache 0.003) | $80 / $160 | Scoped implementation from a concrete plan; same cheap volume profile as explorer. |
+
+Observer is **not configured**: `opencode-go/deepseek-v4.1-flash` declares image
+input, so images ride inline and a separate reader would waste quota.
+
+### Why the earlier picks were too expensive
+
+Recorded usage (one week) at reference rates:
+
+| Lane | Old model | Est. $/week | Projected $/mo | Old limit | Verdict |
+| --- | --- | --- | --- | --- | --- |
+| orchestrator | `minimax-m3` (cache 0.06) | ~10.9 | ~47 | $60 | tight — throttles before month end |
+| designer | `kimi-k2.7-code` (cache 0.19) | ~20.6 | ~86 | $60 | over limit |
+
+Cache reads were ~151M (orchestrator) and ~92M (designer) tokens against ~5M
+and ~2.4M fresh input respectively — hence the cache-read rate, not the input
+rate, drove the spend.
+
+### Alternates, if the balance needs re-tuning
+
+- Family diversity (avoids three lanes on DeepSeek): orchestrator →
+  `glm-5.3-flash @ high` (0.15 / 0.50, cache 0.03; $60/$180). ~$5.4/week, still
+  well inside its limit.
+- Protect oracle quality: `deepseek-v4-pro @ high` (0.66 / 1.98, cache 0.022;
+  $15/$60) — 3x cheaper than Qwen3.8-Max and stronger than Qwen3.8-Flash, but
+  keeps the small limit.
+- Cheaper designer: `qwen3.8-flash @ medium` (~$1.9/week).
+- Cheapest volume floor: `mimo-v2.6-flash` (0.14 / 0.28, cache 0.0028) or
+  `muse-spark-1.3-contributor` (0.10 / 0.20, cache 0.002) — note the
+  "Contributor" models train on your data. The free unlimited models
+  (`minimax-m3.1-flash-free`, `beam-free`, `longcat-2.5-preview-free`) are
+  "limited time" and unvetted for agentic use.
 
 ## The `synthetic` preset
 

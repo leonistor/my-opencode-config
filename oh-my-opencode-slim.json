@@ -4,8 +4,8 @@
   "presets": {
     "opencode-go": {
       "orchestrator": {
-        "model": "opencode-go/minimax-m3",
-        "variant": "thinking",
+        "model": "opencode-go/deepseek-v4.1-flash",
+        "variant": "high",
         "skills": [
           "*"
         ],
@@ -15,7 +15,7 @@
         ]
       },
       "oracle": {
-        "model": "opencode-go/qwen3.8-max",
+        "model": "opencode-go/qwen3.8-flash",
         "variant": "xhigh",
         "skills": [
           "simplify"
@@ -24,7 +24,7 @@
       },
       "explorer": {
         "model": "opencode-go/deepseek-v4.1-flash",
-        "variant": "high",
+        "variant": "low",
         "skills": [],
         "mcps": [
           "context7",
@@ -32,7 +32,8 @@
         ]
       },
       "designer": {
-        "model": "opencode-go/kimi-k2.7-code",
+        "model": "opencode-go/minimax-m3",
+        "variant": "thinking",
         "skills": [],
         "mcps": []
       },
