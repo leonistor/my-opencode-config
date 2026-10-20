@@ -57,8 +57,8 @@ ordering below is identical on both.
 | --- | --- | --- | --- | --- | --- |
 | orchestrator | `opencode-go/deepseek-v4.1-flash` | `high` | 0.15 / 0.60 (cache 0.003) | $80 / $160 | Highest-token lane. Cache read $0.003/M — 20x cheaper than MiniMax-M3's $0.06 — so the repeated-context burn collapses; 1M ctx, vision, `low|high|max` effort. |
 | oracle | `opencode-go/qwen3.8-flash` | `xhigh` | 0.15 / 0.47 (cache 0.016) | $30 / $90 | Rare, read-only, hard reasoning. 13x cheaper in/out and 15x cheaper cache read than Qwen3.8-Max, with 2x the limit; keeps the `xhigh` effort scale. |
-| explorer | `opencode-go/deepseek-v4.1-flash` | `low` | 0.15 / 0.60 (cache 0.003) | $80 / $160 | Volume lane — codebase recon plus external docs research. `low` trims reasoning tokens on a read-only lane; carries context7 + gh_grep MCPs. |
-| designer | `opencode-go/minimax-m3` | `thinking` | 0.30 / 1.20 (cache 0.06) | $60 / $180 | Multimodal UI/UX work. Replaces Kimi-K2.7-Code, whose $0.19/M cache read was burning ~$20/week and would exceed its $60 limit within the month. |
+| explorer | `opencode-go/muse-spark-1.3-contributor` | `low` | 0.10 / 0.20 (cache 0.002) | $80 / $160 | Volume lane — codebase recon plus external docs research. Cheapest model in the catalog on all three rates (2x cheaper input, 3x cheaper output, 1.5x cheaper cache read than DeepSeek-V4.1-Flash). Only cheap-tier model exposing `minimal`, so the effort trim has more room than `low`. Read-only recon is the lane least exposed to Contributor-tier quality risk. **Contributes training data.** |
+| designer | `opencode-go/claude-haiku-5-5` | `medium` | 0.10 / 0.50 (cache 0.01) | $60 / $180 | Multimodal UI/UX work. Replaces MiniMax-M3: 3x cheaper input, 2.4x cheaper output, **6x cheaper cache read** ($0.06 → $0.01) — the designer lane was previously the most expensive in the preset on the rate that actually governs burn. `medium` keeps effort above `low` for UI judgment; escalate to `high` if polish suffers. |
 | fixer | `opencode-go/deepseek-v4.1-flash` | `high` | 0.15 / 0.60 (cache 0.003) | $80 / $160 | Scoped implementation from a concrete plan; same cheap volume profile as explorer. |
 
 Observer is **not configured**: `opencode-go/deepseek-v4.1-flash` declares image
@@ -77,6 +77,19 @@ Cache reads were ~151M (orchestrator) and ~92M (designer) tokens against ~5M
 and ~2.4M fresh input respectively — hence the cache-read rate, not the input
 rate, drove the spend.
 
+### Contributor models are permitted
+
+Owner decision: models whose names end in `-contributor` may be used anywhere.
+`muse-spark-1.3-contributor` trains on this account's traffic, which is an
+accepted trade for its 0.002/M cache read. `gemini-4-argon-contributor` is
+also available (4.00 / 20.00 — far too expensive to be worth the data trade)
+and stays unused.
+
+Muse is currently on **explorer only**. It is deliberately *not* on
+orchestrator or fixer: Contributor-tier quality is unvetted for agentic work,
+and those two lanes write the plans and the code. Revisit only if explorer
+proves stable and a measured need appears.
+
 ### Alternates, if the balance needs re-tuning
 
 - Family diversity (avoids three lanes on DeepSeek): orchestrator →
@@ -85,12 +98,17 @@ rate, drove the spend.
 - Protect oracle quality: `deepseek-v4-pro @ high` (0.66 / 1.98, cache 0.022;
   $15/$60) — 3x cheaper than Qwen3.8-Max and stronger than Qwen3.8-Flash, but
   keeps the small limit.
-- Cheaper designer: `qwen3.8-flash @ medium` (~$1.9/week).
-- Cheapest volume floor: `mimo-v2.6-flash` (0.14 / 0.28, cache 0.0028) or
-  `muse-spark-1.3-contributor` (0.10 / 0.20, cache 0.002) — note the
-  "Contributor" models train on your data. The free unlimited models
+- Cheaper designer: `qwen3.8-flash @ medium` (~$1.9/week), or drop Claude
+  Haiku to `low` if `medium` is still too rich.
+- Cheapest volume floor: `muse-spark-1.3-contributor @ minimal` (0.10 / 0.20,
+  cache 0.002) — now live on explorer; `mimo-v2.6-flash` (0.14 / 0.28, cache
+  0.0028) is the non-Contributor alternative but declares **no variants**, so it
+  loses the effort trim. The free unlimited models
   (`minimax-m3.1-flash-free`, `beam-free`, `longcat-2.5-preview-free`) are
   "limited time" and unvetted for agentic use.
+- Output-rate floor for the coding lanes: `claude-haiku-5-5 @ high`
+  (0.10 / 0.50, cache 0.01) is 20% cheaper on output than DeepSeek-V4.1-Flash
+  at a worse cache rate; worth it only on a lane whose context is re-sent less.
 
 ## The `synthetic` preset
 
