@@ -42,8 +42,6 @@
       "effect": "deny",
     },
     { "action": "provider.use", "resource": "huggingface", "effect": "deny" },
-    // opencode-go under attack
-    { "action": "provider.use", "resource": "opencode-go", "effect": "deny" },
   ],
   "permissions": [
     // V2 rules resolve last-match-wins, and these user rules are appended
