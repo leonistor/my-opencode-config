@@ -26,12 +26,6 @@
         "model": "opencode-go/deepseek-v4.1-flash",
         "variant": "high",
         "skills": [],
-        "mcps": []
-      },
-      "librarian": {
-        "model": "opencode-go/deepseek-v4.1-flash",
-        "variant": "high",
-        "skills": [],
         "mcps": [
           "context7",
           "gh_grep"
@@ -78,12 +72,6 @@
         "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
         "variant": "low",
         "skills": [],
-        "mcps": []
-      },
-      "librarian": {
-        "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
-        "variant": "low",
-        "skills": [],
         "mcps": [
           "context7",
           "gh_grep"
@@ -123,12 +111,6 @@
         "mcps": []
       },
       "explorer": {
-        "model": "openrouter/z-ai/glm-5.3-flash:floor",
-        "variant": "low",
-        "skills": [],
-        "mcps": []
-      },
-      "librarian": {
         "model": "openrouter/z-ai/glm-5.3-flash:floor",
         "variant": "low",
         "skills": [],
