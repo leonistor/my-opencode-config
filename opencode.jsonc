@@ -218,4 +218,8 @@
       },
     },
   },
+  "provider": {
+    // Detected opencode authentication; opencode-quota added this global provider declaration.
+    "opencode": {}
+  },
 }
