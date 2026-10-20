@@ -41,11 +41,6 @@
         "variant": "high",
         "skills": [],
         "mcps": []
-      },
-      "observer": {
-        "model": "opencode-go/mimo-v2.5",
-        "skills": [],
-        "mcps": []
       }
     },
     "synthetic": {
