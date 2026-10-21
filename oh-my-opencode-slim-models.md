@@ -112,12 +112,15 @@ proves stable and a measured need appears.
 
 ## The `synthetic` preset
 
+Measured cost behaviour, and the reasoning behind the current picks, are in
+[`SYNTHETIC-PRICE.md`](./SYNTHETIC-PRICE.md).
+
 | Agent | Model | Variant | In/Out (per M) | Why |
 | --- | --- | --- | --- | --- |
-| orchestrator | `synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash` | `xhigh` | 0.60 / 1.20 (cache 0.03) | Highest-token lane. 524k ctx, vision-capable (so no Observer lane needed), cheapest model Synthetic recommends for the "large text" tier, near-Fable capability. |
-| oracle | `synthetic/hf:zai-org/GLM-5.3` | `high` | 1.40 / 4.40 | The one lane worth paying up for: rare, read-only, hard reasoning. Well below Kimi-K3 ($3/$15); gives diversity from the orchestrator model. |
+| orchestrator | `synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash` | `high` | 0.60 / 1.20 (cache 0.03) | Highest-token lane. 524k ctx, vision-capable (so no Observer lane needed), cheapest model Synthetic recommends for the "large text" tier, near-Fable capability. Cheapest cache read on the provider ($0.03/M) — the rate that governs a lane re-sending its context every turn. `high` matches the `opencode-go` orchestrator; `xhigh`/`max` are available if judgment suffers. |
+| oracle | `synthetic/hf:zai-org/GLM-5.3` | `high` | 1.40 / 4.40 (cache 0.26) | The one lane worth paying up for: rare, read-only, hard reasoning — $1.52 lifetime, 1.5% of synthetic spend. Synthetic has no cheap equivalent of the `opencode-go` oracle (`qwen3.8-flash`); every alternative is worse (see below). |
 | explorer | `synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash` | `low` | 0.60 / 1.20 (cache 0.03) | High-volume scouting and external docs research; 524k ctx + vision, and the catalog's cheapest cache read ($0.03/M) — the rate that actually governs cost on repeated context. Upgraded from GLM-5.3-Flash for reasoning/instruction-following; carries context7 + gh_grep MCPs. |
-| designer | `synthetic/hf:moonshotai/Kimi-K3` | `high` | 3.00 / 15.00 | Vision-capable UI/UX work; the one lane where judgment is worth paying for. Stepped up from MiniMax-M3, which Synthetic retired. |
+| designer | `synthetic/hf:zai-org/GLM-5.3-Flash` | `high` | 0.15 / 0.50 (cache 0.04) | Vision-capable UI/UX work. Replaces `Kimi-K3` (3.00 / 15.00 / cache 0.45), which was **34% of all synthetic spend from 5% of the messages**; the same recorded token volume costs $2.53 here instead of $34.35 (13.6x). Still 524k ctx, vision, `low|high|max` effort. |
 | fixer | `synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash` | `high` | 0.60 / 1.20 (cache 0.03) | Scoped implementation from a concrete plan. Quality upgrade from GLM-5.3-Flash; `xhigh` is available if more reasoning effort is worth the output spend. |
 
 Observer is **left at its default (disabled)** and is configured in no preset:
@@ -127,17 +130,34 @@ separate reader would be wasted spend.
 **Diversity note:** `DeepSeek-V4.1-Flash` fills three lanes (orchestrator,
 explorer, fixer). That is deliberate — the quality brief outweighed per-lane
 diversity — but it means a DeepSeek outage or a capability regression hits most
-of the preset at once. `Kimi-K3` (designer) and `GLM-5.3` (oracle) are the only
-independent families left.
+of the preset at once. `GLM-5.3-Flash` (designer) and `GLM-5.3` (oracle) are now
+both Z.ai, so the preset has **two** independent families rather than three. The
+trade was accepted because `GLM-5.3-Flash` is the only cheap vision-capable
+model on the provider: every other vision option is priced on cache read at
+$0.45–0.95/M (`MiniMax-M3` 0.60, `Qwen3.6-27B` 0.45, `Kimi-K2.7-Code` 0.95),
+which is punitive on a lane that re-sends its context every turn.
+
+### Why not move the oracle too
+
+The `opencode-go` oracle is `qwen3.8-flash` (0.15 / 0.47, cache 0.016) — 9x
+cheaper than `GLM-5.3`. Synthetic has no equivalent:
+
+- `GLM-5.3-Flash` (0.15 / 0.50, cache 0.04) — cheapest option, but it is now the
+  designer lane, and Flash-tier reasoning is a step down for architecture and
+  hard debugging.
+- `Kimi-K3` (3.00 / 15.00) — dearer than `GLM-5.3` on every rate.
+- `Qwen3.6-27B` (0.45 / 3.60, cache 0.45) — worse on output *and* cache read.
+- A fourth `DeepSeek-V4.1-Flash` lane — cheapest on paper, but loses the last
+  strong non-DeepSeek family and duplicates the orchestrator exactly.
 
 ### Alternates, if the balance needs re-tuning
 
 - Cost floor for the volume lanes: explorer/fixer →
   `openai/gpt-oss-120b @ low|medium|high` ($0.10/$0.10, but 131k ctx and no
   vision).
-- Cheaper 524k + vision + reasoning: revert to `GLM-5.3-Flash` ($0.15/$0.50) —
-  still the cheapest model in the catalog with that profile; use `low` for
-  explorer, `high` for fixer.
+- Cheaper oracle: `GLM-5.3-Flash @ high` (0.15 / 0.50, cache 0.04) — ~$0.13 for
+  the recorded oracle volume; accept the duplicate family and the Flash-tier
+  reasoning, or promote the designer to `Kimi-K2.7-Code` to keep them apart.
 - Fixer, different family: `Kimi-K2.7-Code @ high` (code specialist; 262k ctx,
   but no cache discount at $0.95/M) or `MiniMax-M3 @ high` (524k + vision; cache
   read $0.60/M is punitive at volume).
