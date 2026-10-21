@@ -62,10 +62,12 @@
     { "action": "shell", "resource": "git checkout *", "effect": "allow" },
     { "action": "shell", "resource": "git push *", "effect": "ask" },
     { "action": "shell", "resource": "sudo *", "effect": "deny" },
+    // Deny only exact root/home wipes. Do NOT add `rm -rf /*` or `rm -rf ~/*`:
+    // the glob `*` matches across `/`, so those rules also block routine
+    // cleanup of absolute paths (e.g. `rm -rf /tmp/x`) and surface to agents as
+    // "Permission denied: shell" / a missing shell tool.
     { "action": "shell", "resource": "rm -rf /", "effect": "deny" },
-    { "action": "shell", "resource": "rm -rf /*", "effect": "deny" },
     { "action": "shell", "resource": "rm -rf ~", "effect": "deny" },
-    { "action": "shell", "resource": "rm -rf ~/*", "effect": "deny" },
     { "action": "shell", "resource": ":(){:|:&};:", "effect": "deny" }, // fork bomb, just in case
   ],
   "watcher": {
