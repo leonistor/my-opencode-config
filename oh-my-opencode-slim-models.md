@@ -1,8 +1,8 @@
 # oh-my-opencode-slim: model presets and rationale
 
 Preset rationale for `~/.config/opencode/oh-my-opencode-slim.json`. The active
-preset is `openrouter`; the `opencode-go` and `synthetic` presets are documented
-below as alternates.
+preset is `openrouter-no-floor`; the `opencode-go`, `synthetic`, and `openrouter`
+presets are documented below as alternates.
 
 Run `/models` (or `bun ~/.config/opencode/model-table.ts --preset synthetic`)
 for the live table with current models.dev pricing.
@@ -28,7 +28,7 @@ codebase recon and external docs research are now a single lane.
 | fixer | Scoped implementation from a concrete plan | High — high volume | Reliable coding, cheap |
 | observer | Reads images/screenshots/PDFs for a non-vision orchestrator | n/a | Vision; disabled by default and configured in no preset |
 
-## The `opencode-go` preset (active)
+## The `opencode-go` preset
 
 `opencode-go` is a **subscription**, not token-priced. Quota is granted as a
 **separate monthly dollar limit per model**, and consumption is weighted by that
@@ -252,8 +252,44 @@ Caveats:
 - `:floor` picks the cheapest *eligible* provider, so throughput/latency varies
   by request; it is a cost lever, not a quality lever.
 
-## Gotchas (Synthetic)
+## The `openrouter-no-floor` preset (active)
 
+Same provider and pricing as `openrouter`, but every model is a plain catalogue
+ID — nothing to hand-declare in `opencode.jsonc`, and prices come from models.dev
+instead of the local declarations. The brief is **cheap over performance**, with
+large context on the orchestrator and a vision-capable designer.
+
+| Agent | Model | Variant | In/Out (per M) | Why |
+| --- | --- | --- | --- | --- |
+| orchestrator | `openrouter/z-ai/glm-5.3-flash` | `high` | 0.0052 / 0.1985 (cache 0.0052) | Cheapest model in the catalogue with 1M context *and* vision, and it wins on every recorded lane mix: 29x cheaper input than DeepSeek V4.1 Flash. No context-tier pricing. |
+| oracle | `openrouter/deepseek/deepseek-v4-pro` | `high` | 0.4427 / 0.8853 (cache 0.0369) | Flagship MoE for the rare reasoning lane — cheaper than the old `GLM-5.3` pick (0.70 / 2.20 / cache 0.13) while staying a tier above Flash. 1M ctx. |
+| explorer | `openrouter/deepseek/deepseek-v4-flash-0731` | `low` | 0.0444 / 0.1333 (cache 0.0014) | Cheapest cache read of any 1M model ($0.0014/M) — the rate that governs recon. A coin flip with GLM-5.3-Flash on today's mix; wins as sessions lengthen. Text-only is fine, the orchestrator reads images. |
+| designer | `openrouter/z-ai/glm-5.3-flash` | `high` | 0.0052 / 0.1985 (cache 0.0052) | Vision + 1M ctx at the lowest rate in the catalogue. Image input is the hard requirement here. |
+| fixer | `openrouter/z-ai/glm-5.3-flash` | `high` | 0.0052 / 0.1985 (cache 0.0052) | At the 17:1 cache-to-input ratio these lanes run at, GLM is ~2.4x cheaper than `deepseek-v4.1-flash-1017`; DeepSeek only wins past ~590M cache tokens per 6M input. |
+
+Projected on the recorded OpenRouter volumes: **$2.83** versus **$9.83** at the
+`openrouter` preset's declared floor rates, and **$4.11** at live
+cheapest-endpoint rates (≈31% below the real current cost). All five lanes get
+1,049k context; orchestrator, designer, and fixer are vision-capable.
+
+**Excluded despite low headline prices:**
+
+- `qwen/qwen3.7-flash` (0.03 / 0.13) tiers to 0.10 / 0.40 above 32k context and
+  0.20 / 0.80 above 256k — agent sessions pass 32k immediately.
+- `anthropic/claude-haiku-5.5` (0.10 / 0.50) tiers to 0.50 / 2.50 past 100k.
+- `openai/gpt-6-luna` tiers at 272k; `openrouter/free` is 200k ctx with an
+  unvetted free router behind it.
+
+**Concentration:** three lanes share `GLM-5.3-Flash`, so a Z.ai regression hits
+most of the preset. Cheapest diversification: designer → `xiaomi/mimo-v2.6-flash`
+(1.05M, vision, 0.14 / 0.28 / cache 0.0028) or explorer → `z-ai/glm-5.3-flash`
+(removes the second family but is marginally cheaper today). If orchestration
+judgment suffers, orchestrator → `deepseek-v4.1-flash-1017` (+$0.89 on the
+recorded mix). If fixer quality suffers, `deepseek-v4.1-flash-1017 @ high`
+(+$1.06). No fallback chains are configured in this preset — add a second entry
+per lane if you want cross-family failover.
+
+## Gotchas (Synthetic)
 - Use **`hf:` model IDs**, not `syn:` aliases. OpenCode resolves Synthetic via
   models.dev, which only lists the `hf:` names; `synthetic/syn:small:text` is not
   resolvable unless added to `providers.synthetic.models` in `opencode.jsonc`.

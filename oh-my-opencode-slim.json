@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
-  "preset": "openrouter",
+  "preset": "openrouter-no-floor",
   "presets": {
     "opencode-go": {
       "orchestrator": {
@@ -183,6 +183,48 @@
             "variant": "high"
           }
         ],
+        "variant": "high",
+        "skills": [],
+        "mcps": []
+      }
+    },
+    "openrouter-no-floor": {
+      "orchestrator": {
+        "model": "openrouter/z-ai/glm-5.3-flash",
+        "variant": "high",
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*",
+          "!context7"
+        ]
+      },
+      "oracle": {
+        "model": "openrouter/deepseek/deepseek-v4-pro",
+        "variant": "high",
+        "skills": [
+          "simplify"
+        ],
+        "mcps": []
+      },
+      "explorer": {
+        "model": "openrouter/deepseek/deepseek-v4-flash-0731",
+        "variant": "low",
+        "skills": [],
+        "mcps": [
+          "context7",
+          "gh_grep"
+        ]
+      },
+      "designer": {
+        "model": "openrouter/z-ai/glm-5.3-flash",
+        "variant": "high",
+        "skills": [],
+        "mcps": []
+      },
+      "fixer": {
+        "model": "openrouter/z-ai/glm-5.3-flash",
         "variant": "high",
         "skills": [],
         "mcps": []
