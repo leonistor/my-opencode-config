@@ -195,6 +195,41 @@ in models.dev, so they are declared in `opencode.jsonc`; OpenCode cannot see a
 Observer stays disabled and unconfigured — the orchestrator model is
 vision-capable.
 
+### Failover chains
+
+Every openrouter lane is an ordered model chain (entry 1 is primary). Fallback
+entries may be plain catalogue IDs — they need no `opencode.jsonc` declaration,
+only `:floor` does:
+
+| lane | chain |
+| --- | --- |
+| orchestrator | `deepseek-v4.1-flash:floor` `high` → `deepseek-v4.1-flash` `high` → `qwen3.8-flash` |
+| oracle | `glm-5.3:floor` `high` → `glm-5.3` `high` → `qwen3.8-flash` |
+| explorer | `glm-5.3-flash:floor` `low` → `glm-5.3-flash` `low` → `mimo-v2.6-flash` |
+| designer | `minimax-m3:floor` `medium` → `minimax-m3` → `qwen3.8-flash` |
+| fixer | `glm-5.3-flash:floor` `high` → `glm-5.3-flash` `high` → `deepseek-v4.1-flash` `high` |
+
+The pattern is floor primary → same model plain (identical capability, real price
+known) → cheap cross-family model for a model-wide failure. Behaviour comes from
+the plugin's foreground-fallback hook: entries advance on transient errors
+(429/403/401/410, 5xx/524, queue-full, spent allowance, empty response), not on
+quality. Retry budget is top-level `fallback.maxRetries` (default 3) and is shared
+across the chain; `fallback.continuationPolicy` defaults to `retry-primary`.
+
+Caveats:
+
+- All entries share the `openrouter` provider ID, so a dead key or spent
+  OpenRouter allowance skips the remaining entries. Only a cross-provider entry
+  would cover that, and it would break the single-provider rule.
+- Set `variant` only where the model declares effort levels. `qwen3.8-flash`,
+  `mimo-v2.6-flash`, and `minimax-m3` expose toggle/budget reasoning, so their
+  chain entries carry no variant.
+- Plain fallback prices (live OpenRouter, per M): DeepSeek 0.30 / 1.20
+  (cache 0.006) · GLM-5.3-Flash 0.0052 / 0.1985 (cache 0.0052) · GLM-5.3 0.70 /
+  2.20 (cache 0.13) · Qwen3.8-Flash 0.15 / 0.47 (cache 0.016) · MiMo-V2.6-Flash
+  0.14 / 0.28 (cache 0.0028). They bill only when a fallback actually runs.
+- `model-table.ts` prints the primary only; the chain lives in the JSON.
+
 ### OpenRouter gotchas
 
 - **`:floor` must be hand-declared.** It is a routing variant, not a catalogue
@@ -206,7 +241,14 @@ vision-capable.
 - Declared models expose `low|medium|high` variants; reasoning `effort` is
   accepted by the floor endpoints at every level.
 - The declared `cost` values drive OpenCode's own cost accounting — keep them in
-  sync with the real floor price when it changes.
+  sync with the real floor price when it changes. A 2026-10-22 check of
+  `GET /api/v1/models/{id}/endpoints` found `z-ai/glm-5.3-flash` cheapest at
+  0.0052 / 0.1985 (cache 0.0052), far below the declared `:floor` rate, while
+  `deepseek/deepseek-v4.1-flash` input is declared below the cheapest standard
+  endpoint (0.07). Floor can undercut standard endpoints via its flex tier, but
+  a floor declaration *above* the cheapest eligible endpoint means local cost
+  accounting is overstating spend — re-check both before trusting preset cost
+  comparisons.
 - `:floor` picks the cheapest *eligible* provider, so throughput/latency varies
   by request; it is a cost lever, not a quality lever.
 
