@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
-  "preset": "opencode-go",
+  "preset": "openrouter",
   "presets": {
     "opencode-go": {
       "orchestrator": {
@@ -57,7 +57,7 @@
         ]
       },
       "oracle": {
-        "model": "synthetic/hf:zai-org/GLM-5.3",
+        "model": "synthetic/hf:zai-org/GLM-5.3-Flash",
         "variant": "high",
         "skills": [
           "simplify"
@@ -65,7 +65,7 @@
         "mcps": []
       },
       "explorer": {
-        "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
+        "model": "synthetic/hf:zai-org/GLM-5.3-Flash",
         "variant": "low",
         "skills": [],
         "mcps": [
@@ -80,7 +80,7 @@
         "mcps": []
       },
       "fixer": {
-        "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
+        "model": "synthetic/hf:zai-org/GLM-5.3-Flash",
         "variant": "high",
         "skills": [],
         "mcps": []

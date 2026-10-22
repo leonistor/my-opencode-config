@@ -68,7 +68,8 @@ Synthetic lifetime spend of **$101.80** splits as:
 Agent context is re-sent every turn, so cache reads dominate by volume. At 10×
 `opencode-go`'s cache-read rate, that volume is most of the bill. The `opencode-go`
 preset was rebalanced on exactly this reasoning (`oh-my-opencode-slim-models.md`,
-"The `opencode-go` preset"); the `synthetic` preset never got the equivalent pass.
+"The `opencode-go` preset"); the `synthetic` preset never got the equivalent pass
+until §8.
 
 ## 4. Model and variant choices inflate it further
 
@@ -143,7 +144,7 @@ window is not the window it claims to be. **The per-token figures in this
 document are list-price meters** — faithful for comparing presets against each
 other, but not necessarily what is drawn from the plan.
 
-## 7. What changed
+## 7. What changed in the first pass (2026-10-21)
 
 `oh-my-opencode-slim.json`, `synthetic` preset:
 
@@ -161,20 +162,66 @@ would be the natural picks here — `claude-haiku-5-5` for designer,
 `qwen3.8-flash` for oracle — are out of scope. They are listed below as the
 cross-provider alternative if the single-provider rule is ever relaxed.
 
-## 8. Other levers, in order of effect
+Superseded in part by §8: `oracle`, `explorer`, and `fixer` moved to
+`GLM-5.3-Flash` in the second pass.
+
+## 8. What changed in the second pass (2026-10-22)
+
+After the first pass the preset was already near its floor: `Kimi-K3` was gone,
+and the remaining candidates are `DeepSeek-V4.1-Flash` (0.60 / 1.20 / cache
+0.03) and `GLM-5.3-Flash` (0.15 / 0.50 / cache 0.04). Comparing list prices
+alone is misleading because they disagree on which term dominates. Ignoring
+output, DeepSeek is cheaper only when cache reads exceed ~45x fresh input
+(0.45i < 0.01c); with output included the crossover moves further in GLM-5.3-
+Flash's favour (2.4x cheaper output). The measured mixes sit below that line.
+
+Recorded synthetic tokens for the five preset lanes, priced on each lane's
+before/after model:
+
+| lane | fresh in (M) | out (M) | cache read (M) | before | after | delta |
+| --- | --- | --- | --- | --- | --- | --- |
+| orchestrator | 11.69 | 1.57 | 305.20 | $18.06 | $18.06 | — |
+| oracle | 0.92 | 0.22 | 12.72 | $5.55 | $0.76 | **−$4.80** |
+| explorer | 2.81 | 0.38 | 18.33 | $2.69 | $1.34 | **−$1.35** |
+| designer | 0.69 | 0.11 | 20.07 | $0.96 | $0.96 | — |
+| fixer | 5.23 | 1.08 | 120.60 | $8.05 | $6.15 | **−$1.90** |
+| **total** | | | | **$35.31** | **$23.96** | **−$11.36 (−32%)** |
+
+The applied change is the quality-balanced subset: `oracle`, `explorer`, and
+`fixer` move to `GLM-5.3-Flash`, for **−$8.05 (−23%)** on this window. The
+orchestrator stays on DeepSeek deliberately ($3.31 if moved): it is the lane
+that plans, delegates, and verifies every turn, and it is the only remaining
+non-Z.ai family, so a Z.ai regression degrades specialists rather than the
+control loop. Designer was already on `GLM-5.3-Flash`.
+
+Caveats:
+
+- The oracle figure is the largest single saving but is flattered by Kimi-K3-era
+  cache tokens in that lane's history. On post-switch oracle volume alone the
+  saving is far smaller; treat it as upside.
+- The real exposure is concentration: four lanes now share one model. The
+  targeted revert is the oracle lane back to `GLM-5.3 @ high` (~+$4.80 on this
+  window); a broader revert is `explorer` → `DeepSeek-V4.1-Flash @ low`
+  (~+$1.35).
+- Everything above is still list-price metering, not plan cash (see §6).
+
+## 9. Other levers, in order of effect
 
 1. **Context re-reads.** 62% of spend is cache read. Fewer, larger turns;
    `/compact` before long sessions; keep the MCP/tool surface small. Helps on
    every provider, but 10× more on synthetic.
-2. **Designer lane** — done above.
-3. **Oracle lane** — revisit only if it stops being 1.5% of spend.
-4. **Orchestrator variant** — done above, small and possibly inert.
-5. **Cross-provider lanes** — if the single-provider rule is relaxed, point
+2. **Designer lane** — done in the first pass.
+3. **Oracle / explorer / fixer lanes** — done in the second pass (§8).
+4. **Orchestrator variant** — aligned to `high`; small and possibly inert.
+5. **Orchestrator model** — the last significant lever. Moving it to
+   `GLM-5.3-Flash @ high` saves ~$3.31 on the measured window but leaves the
+   preset single-family and puts Flash-tier judgment on the planning loop.
+6. **Cross-provider lanes** — if the single-provider rule is relaxed, point
    designer at `opencode-go/claude-haiku-5-5 @ medium` and oracle at
    `opencode-go/qwen3.8-flash @ xhigh` for another ~2.8× on top of the
    `GLM-5.3-Flash` designer pick.
 
-## 9. Reproducing
+## 10. Reproducing
 
 ```sh
 # recorded cost per synthetic message vs current models.dev rates
