@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
-  "preset": "openrouter-no-floor",
+  "preset": "synthetic",
   "presets": {
     "opencode-go": {
       "orchestrator": {
@@ -57,7 +57,7 @@
         ]
       },
       "oracle": {
-        "model": "synthetic/hf:zai-org/GLM-5.3-Flash",
+        "model": "synthetic/hf:zai-org/GLM-5.3",
         "variant": "high",
         "skills": [
           "simplify"
@@ -75,13 +75,13 @@
       },
       "designer": {
         "model": "synthetic/hf:zai-org/GLM-5.3-Flash",
-        "variant": "high",
+        "variant": "max",
         "skills": [],
         "mcps": []
       },
       "fixer": {
         "model": "synthetic/hf:zai-org/GLM-5.3-Flash",
-        "variant": "high",
+        "variant": "max",
         "skills": [],
         "mcps": []
       }

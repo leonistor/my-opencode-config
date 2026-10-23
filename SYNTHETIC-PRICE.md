@@ -205,23 +205,67 @@ Caveats:
   (~+$1.35).
 - Everything above is still list-price metering, not plan cash (see §6).
 
-## 9. Other levers, in order of effect
+## 9. What changed in the third pass (2026-10-23)
+
+The preset was already at the cost floor after the second pass, so this pass
+spends a little to fix the two structural weak spots: one specialist family
+across four lanes, and Flash-tier reasoning on the lane designated for hard
+reasoning.
+
+`oh-my-opencode-slim.json`, `synthetic` preset:
+
+| agent | before | after | why |
+| --- | --- | --- | --- |
+| oracle | `hf:zai-org/GLM-5.3-Flash` @ `high` | `hf:zai-org/GLM-5.3` @ `high` | The architecture/debug judge was the weakest link. +$4.81 on the recorded oracle mix, but the lane is low-volume (169 msgs lifetime) so it is the cheapest quality upgrade available. Also breaks the four-lane Flash concentration. |
+| designer | `GLM-5.3-Flash` @ `high` | `GLM-5.3-Flash` @ `max` | The lane emits only 0.11M output, so a full effort step is ~$0.03 on the recorded mix. |
+| fixer | `GLM-5.3-Flash` @ `high` | `GLM-5.3-Flash` @ `max` | Largest lane and the coding lane; reasoning bills at GLM's $0.50/M output rate, so the step is ~$0.5 on the recorded mix. |
+| orchestrator | `DeepSeek-V4.1-Flash` @ `high` | **unchanged** | Still the diversity anchor, vision-capable, cheapest cache read on the provider. `xhigh`/`max` remain the lever if judgment suffers. |
+| explorer | `GLM-5.3-Flash` @ `low` | **unchanged** | Cheapest vision + 524k lane. |
+
+Lane costs on the recorded five-lane token mixes (list prices, same method as
+§8):
+
+| lane | before | after | delta |
+| --- | --- | --- | --- |
+| orchestrator | $19.62 | $19.62 | — |
+| oracle | $0.76 | $5.57 | **+$4.81** |
+| explorer | $1.34 | $1.34 | — |
+| designer | $0.96 | $0.99 | +$0.03 |
+| fixer | $6.15 | $6.65 | +$0.50 |
+| **total** | **$28.83** | **$34.17** | **+$5.34 (+19%)** |
+
+Caveats:
+
+- The oracle figure is the largest single increase and is inflated by Kimi-K3-era
+  cache tokens in that lane's history (§8); on steady-state oracle volume the
+  delta is smaller. The targeted revert is `GLM-5.3-Flash @ high` (−$4.81) or
+  `DeepSeek-V4.1-Flash @ max` (+$0.44 on the recorded mix, for family diversity
+  instead of Z.ai quality).
+- The `max` effort steps are estimated, not measured: synthetic reports zero
+  reasoning tokens for the Z.ai models, so the delta is modelled from GLM's
+  output rate rather than read from the token ledger.
+- Everything above is still list-price metering, not plan cash (see §6).
+
+## 10. Other levers, in order of effect
 
 1. **Context re-reads.** 62% of spend is cache read. Fewer, larger turns;
    `/compact` before long sessions; keep the MCP/tool surface small. Helps on
    every provider, but 10× more on synthetic.
 2. **Designer lane** — done in the first pass.
 3. **Oracle / explorer / fixer lanes** — done in the second pass (§8).
-4. **Orchestrator variant** — aligned to `high`; small and possibly inert.
-5. **Orchestrator model** — the last significant lever. Moving it to
+4. **Oracle quality** — done in the third pass (§9).
+5. **Orchestrator variant** — aligned to `high`; `xhigh`/`max` is the next
+   quality lever (~+$1 on the measured mix) and the cheapest place to spend
+   output tokens on this provider.
+6. **Orchestrator model** — the last significant cost lever. Moving it to
    `GLM-5.3-Flash @ high` saves ~$3.31 on the measured window but leaves the
    preset single-family and puts Flash-tier judgment on the planning loop.
-6. **Cross-provider lanes** — if the single-provider rule is relaxed, point
+7. **Cross-provider lanes** — if the single-provider rule is relaxed, point
    designer at `opencode-go/claude-haiku-5-5 @ medium` and oracle at
    `opencode-go/qwen3.8-flash @ xhigh` for another ~2.8× on top of the
    `GLM-5.3-Flash` designer pick.
 
-## 10. Reproducing
+## 11. Reproducing
 
 ```sh
 # recorded cost per synthetic message vs current models.dev rates
