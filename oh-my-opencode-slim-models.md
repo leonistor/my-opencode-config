@@ -119,24 +119,23 @@ Measured cost behaviour, and the reasoning behind the current picks, are in
 | --- | --- | --- | --- | --- |
 | orchestrator | `synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash` | `high` | 0.60 / 1.20 (cache 0.03) | Highest-token lane and the only one the quality brief defends paying up for. 524k ctx, vision-capable (so no Observer lane needed), cheapest cache read on the provider ($0.03/M), and a second model family if Z.ai regresses. `high` matches the `opencode-go` orchestrator; `xhigh`/`max` are available if judgment suffers. |
 | oracle | `synthetic/hf:zai-org/GLM-5.3` | `high` | 1.40 / 4.40 (cache 0.26) | Read-only hard reasoning, and the third pass pays for it: the lane is the preset's designated architecture/debug judge, and Flash-tier reasoning was the weakest link. `GLM-5.3` bills $5.57 on the recorded mix versus $0.76 on `GLM-5.3-Flash` (+$4.81), but the lane is low-volume (169 msgs lifetime), so it is the cheapest quality upgrade available. 524k ctx, `low|high|max`. Revert to `GLM-5.3-Flash` if the review quality does not justify it; `Kimi-K3` is the most capable option at ~15x. |
-| explorer | `synthetic/hf:zai-org/GLM-5.3-Flash` | `low` | 0.15 / 0.50 (cache 0.04) | High-volume scouting and external docs research; 524k ctx + vision; carries context7 + gh_grep MCPs. Cheapest model on the lane's recorded mix ($1.34 versus $2.69 on DeepSeek): 4x cheaper input and 2.4x cheaper output outweigh DeepSeek's 25% cache-read edge. The lane least exposed to Flash-tier quality risk. |
-| designer | `synthetic/hf:zai-org/GLM-5.3-Flash` | `max` | 0.15 / 0.50 (cache 0.04) | Vision-capable UI/UX work. Replaces `Kimi-K3` (3.00 / 15.00 / cache 0.45), which was **34% of all synthetic spend from 5% of the messages**; the same recorded token volume costs $2.53 here instead of $34.35 (13.6x). Still 524k ctx, vision, `low|high|max` effort. Raised to `max` in the third pass: the lane emits only 0.11M output, so the effort step is ~$0.03 on the recorded mix. |
-| fixer | `synthetic/hf:zai-org/GLM-5.3-Flash` | `max` | 0.15 / 0.50 (cache 0.04) | Scoped implementation from a concrete plan. $6.15 versus $8.05 on the lane's recorded DeepSeek mix (−24%). Raised to `max` in the third pass — the largest lane and the coding lane, and reasoning bills at GLM's cheap $0.50/M output rate, so the step is ~$0.5 on the recorded mix. `low` is the trim if output spend ever matters. |
+| explorer | `synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash` | `low` | 0.60 / 1.20 (cache 0.03) | High-volume scouting and external docs research; 524k ctx + vision; carries context7 + gh_grep MCPs. Reverted from `GLM-5.3-Flash @ low` in the fourth pass — **that combination is broken**: it either degenerates into an unbounded `— (stop) — end. — final.` reasoning loop until the provider aborts, or finishes with zero text. Cost +$1.35 on the lane's recorded mix ($2.69 versus $1.34). Restores a second model family: the preset is now 2 DeepSeek / 3 Z.ai lanes. See `SYNTHETIC-PRICE.md` §10. |
+| designer | `synthetic/hf:zai-org/GLM-5.3-Flash` | `high` | 0.15 / 0.50 (cache 0.04) | Vision-capable UI/UX work. Replaces `Kimi-K3` (3.00 / 15.00 / cache 0.45), which was **34% of all synthetic spend from 5% of the messages**; the same recorded token volume costs $2.53 here instead of $34.35 (13.6x). Still 524k ctx, vision. Backed off `max` → `high` in the fifth pass for cost: the `max` step is estimated, not measured, and this lane emits only ~0.11M output. `low` is **not** usable — see the broken-pairing gotcha below. |
+| fixer | `synthetic/hf:zai-org/GLM-5.3-Flash` | `high` | 0.15 / 0.50 (cache 0.04) | Scoped implementation from a concrete plan. $6.15 versus $8.05 on the lane's recorded DeepSeek mix (−24%). Backed off `max` → `high` in the fifth pass; `max` was the third pass's estimate (~$0.5 on the recorded mix) rather than a measurement. `low` is **not** usable — see the broken-pairing gotcha below. |
 
 Observer is **left at its default (disabled)** and is configured in no preset:
 the DeepSeek orchestrator is vision-capable, so images ride inline and a
 separate reader would be wasted spend.
 
-**Diversity note:** three lanes (`explorer`, `designer`, `fixer`) run Z.ai
-`GLM-5.3-Flash`, the oracle runs Z.ai `GLM-5.3`, and the orchestrator runs
-DeepSeek. The preset is still effectively one specialist family, but the third
-pass traded some of the pass-2 concentration back for quality: the oracle no
-longer shares the Flash model with the three volume lanes, and the orchestrator
-(the lane that plans, delegates, and verifies) stays on DeepSeek, so a Z.ai
-regression degrades specialist output rather than the control loop. If the
-remaining concentration proves too thin, the cheapest way to restore a second
-family is `explorer` → `DeepSeek-V4.1-Flash` (cost +$1.35 on the recorded mix)
-or a `Kimi`/`MiniMax` fixer.
+**Diversity note:** three lanes (`designer`, `fixer`, and the Z.ai oracle)
+run Z.ai models and two (`orchestrator`, `explorer`) run DeepSeek — the
+fourth pass moved `explorer` back to DeepSeek both to fix a broken
+model/variant pairing and to restore a second family. The oracle no longer
+shares the Flash model with the volume lanes, and the orchestrator (the lane
+that plans, delegates, and verifies) stays on DeepSeek, so a Z.ai regression
+degrades specialist output rather than the control loop. The concentration is
+now on the *volume* lanes; if it proves too thin again, the cheapest next move
+is a `Kimi`/`MiniMax` fixer.
 
 ### Why the oracle moved (and what it costs)
 
@@ -164,15 +163,21 @@ puts both the control loop and the hard-reasoning lane on DeepSeek).
 
 ### Alternates, if the balance needs re-tuning
 
-- Restore a non-Z.ai voice cheaply: `explorer` → `DeepSeek-V4.1-Flash @ low`
-  (+$1.35 on the recorded mix) or `fixer` → `Kimi-K2.7-Code @ high` (code
-  specialist; 262k ctx, no cache discount at $0.95/M).
+- Restore a non-Z.ai voice cheaply: `fixer` → `Kimi-K2.7-Code @ high` (code
+  specialist; 262k ctx, no cache discount at $0.95/M). `explorer` already runs
+  DeepSeek since the fourth pass.
+- **Avoid `GLM-5.3-Flash @ low` entirely** (and check any other cheap variant
+  pairing before trusting it): it fails on both this lane and `librarian`, and
+  it is a property of the model/variant pair, not of the agent. `high` on the
+  same model is fine if Z.ai is wanted here.
 - Trim oracle cost: `GLM-5.3-Flash @ high` (0.15 / 0.50, cache 0.04) — −$4.81 on
   the recorded mix, back to Flash-tier reasoning; or `DeepSeek-V4.1-Flash @ max`
   (+$0.44) to buy a second family instead of Z.ai quality. `Kimi-K3 @ high`
   remains the most capable option at ~15x the cost.
-- Trim volume-lane effort: `designer`/`fixer` back to `high` (from `max`) recovers
-  ~$0.5 on the recorded mix; `explorer` is already at `low`.
+- Volume-lane effort: `designer`/`fixer` are at `high` since the fifth pass,
+  recovering the third pass's estimated `max` step (~$0.5 on the recorded mix).
+  `high` is the floor here — `low` is a broken pairing, not a cheaper option.
+  `explorer` is at `low`, which works on DeepSeek.
 - More performant orchestrator effort: `DeepSeek-V4.1-Flash @ xhigh` or `max`
   (0.60 / 1.20, cache 0.03) — the control-loop judgment lane, and the cheapest
   place to spend output tokens on this provider; ~+$1 on the recorded mix.
@@ -309,6 +314,16 @@ per lane if you want cross-family failover.
   - GLM-5.3 / GLM-5.3-Flash / Kimi-K3: `low|high|max`
   - MiniMax-M3 / Nemotron-3-Super / gpt-oss-120b: `low|medium|high`
   - Qwen3.6-27B: `none|low|medium|high`; GLM-4.7-Flash: none listed
+- **A valid `variant` is not a working `variant`.** `GLM-5.3-Flash @ low`
+  satisfies the schema but produces no content — it degenerates into an
+  unbounded `— (stop) — end. — final.` reasoning loop (aborted by the provider
+  after burning the full 65,536 output cap) or finishes empty. Verified on
+  **three distinct agents** (`explorer`, `designer`, `fixer`), so this is a
+  property of the model/variant pair, not of any agent: the same model at `high`
+  is fine, and `DeepSeek-V4.1-Flash @ low` is fine. It is invisible in cost
+  reports because synthetic returns zero reasoning tokens for Z.ai models — the
+  loop shows up as `tokens_output`. Canary a cheap Z.ai variant before trusting
+  a lane to it.
 
 ## Tooling
 

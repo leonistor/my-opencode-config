@@ -246,7 +246,124 @@ Caveats:
   output rate rather than read from the token ledger.
 - Everything above is still list-price metering, not plan cash (see §6).
 
-## 10. Other levers, in order of effect
+## 10. What changed in the fourth pass (2026-10-23)
+
+A correctness fix, not a cost one. The synthetic `explorer` lane was failing
+outright, which is why it appeared to ignore pings: it returned no content at
+all rather than a wrong answer.
+
+**Root cause:** `synthetic/hf:zai-org/GLM-5.3-Flash` at variant **`low`** is
+broken. Two failure modes, same pairing:
+
+- **Degenerate reasoning loop** — the model emits thousands of tokens of
+  `— (stop) — end. — final. — emit. — done.` until the provider aborts
+  (`finish: error`, `error.type: aborted`, "Step interrupted"). Worst observed:
+  196,608 output tokens, 0 text, 7,239s.
+- **Empty completion** — `finish: stop` after burning reasoning, with zero text.
+
+**It is the variant, not the agent or the model.** Controlled probes, same
+agent and prompt, differing only in model/variant:
+
+| model @ variant | result |
+| --- | --- |
+| `GLM-5.3-Flash @ high` | replies |
+| `GLM-5.3-Flash @ low` | **no response, empty text** |
+| `DeepSeek-V4.1-Flash @ low` | replies |
+| `GLM-4.7-Flash @ low` | replies |
+
+Ledger corroboration — every synthetic subagent session on the exact pairing:
+
+| model @ variant | sessions | failed/interrupted | empty output |
+| --- | --- | --- | --- |
+| `GLM-5.3-Flash @ low` | 8 | 6 | 4 |
+| `GLM-5.3-Flash @ high/default/max/medium` | 25 | 0 | 0 |
+| all other synthetic model/variant pairs | 100+ | 0 | 0 |
+
+`librarian` (now an alias for `explorer`, so *not* independent evidence) failed
+on the same pairing too. Agent-independence was established separately in the
+fifth pass by probing `designer` and `fixer` on it. Failures begin at commit
+`6e88a4a` (second pass), which moved `explorer` onto this model.
+
+`oh-my-opencode-slim.json`, `synthetic` preset:
+
+| lane | before | after |
+| --- | --- | --- |
+| explorer | `hf:zai-org/GLM-5.3-Flash` @ `low` | `hf:deepseek-ai/DeepSeek-V4.1-Flash` @ `low` |
+
+Cost on the lane's recorded mix (fresh in 2.81M, out 0.38M, cache 18.33M,
+list prices):
+
+| lane | before | after | delta |
+| --- | --- | --- | --- |
+| explorer | $1.34 | $2.69 | **+$1.35** |
+
+Notes:
+
+- The $1.34 "before" figure was never actually earned — those tokens were the
+  lane's DeepSeek-era history, re-priced onto GLM. The real before-state was
+  near-zero useful output.
+- DeepSeek's cache read is the provider's cheapest ($0.03/M versus GLM's
+  $0.04/M), which is the rate that governs recon, so the gap narrows as
+  sessions lengthen.
+- Family split moves from 1 DeepSeek / 4 Z.ai to 2 / 3.
+- `high` on the same Z.ai model would also work (~$1.34-class) if the diversity
+  argument is outvoted; it is verified by probe but has no real-work history on
+  this lane.
+
+## 11. What changed in the fifth pass (2026-10-23)
+
+A cost trim on the two Z.ai volume lanes, requested directly: take `designer`
+and `fixer` down to a cheaper variant.
+
+**`low` is not available at any price.** The only step below `max` on
+`GLM-5.3-Flash` that works is `high`. The variant ladder is `low|high|max`, and
+`low` is the broken pairing recorded in §10 — this pass verified that on the
+two target agents specifically, since `librarian` is only an alias of `explorer`
+and so was not independent evidence:
+
+| probe (`GLM-5.3-Flash @ low`) | agent | result |
+| --- | --- | --- |
+| #1 | `designer` | degenerated into the reasoning loop, hit the 65,536 output cap, interrupted |
+| #2 | `fixer` | completed with no response, empty text |
+
+Both agents reply normally at `high`. Three distinct agents (`explorer`,
+`designer`, `fixer`) now fail on `GLM-5.3-Flash @ low`, which confirms a
+model/variant defect rather than anything agent-specific.
+
+`oh-my-opencode-slim.json`, `synthetic` preset:
+
+| lane | before | after |
+| --- | --- | --- |
+| designer | `GLM-5.3-Flash` @ `max` | `GLM-5.3-Flash` @ `high` |
+| fixer | `GLM-5.3-Flash` @ `max` | `GLM-5.3-Flash` @ `high` |
+
+Cost on the recorded five-lane mixes (list prices, same method as §8/§9):
+
+| lane | before (`max`) | after (`high`) | delta |
+| --- | --- | --- | --- |
+| designer | $0.99 | $0.96 | −$0.03 |
+| fixer | $6.65 | $6.15 | −$0.50 |
+| **total** | **$7.64** | **$7.11** | **−$0.53** |
+
+Notes:
+
+- The saving is small because it reverses the *third* pass, which had raised
+  these lanes from `high` to `max`. That raise was always an estimate: synthetic
+  reports zero reasoning tokens for Z.ai models, so the `max` step was modelled
+  from GLM's output rate, never measured (§9). This pass removes an unmeasured
+  increase rather than exploiting a new one.
+- The real reason to stop at `high` is that `low` is broken, not that `high` is
+  a sweet spot. If GLM-5.3-Flash ever ships a working `low`, re-test it — that
+  is the genuine trim.
+- `fixer` is the larger of the two lanes (1.08M out on the recorded mix versus
+  designer's 0.11M), so it carries nearly all of the delta.
+
+**Generalisable lesson:** synthetic reports zero reasoning tokens for the Z.ai
+models, so a degenerate reasoning loop is invisible in the cost ledger — it
+surfaces as `tokens_output` only. Any lane on a cheap Z.ai variant is worth one
+canary probe before trusting it.
+
+## 12. Other levers, in order of effect
 
 1. **Context re-reads.** 62% of spend is cache read. Fewer, larger turns;
    `/compact` before long sessions; keep the MCP/tool surface small. Helps on
@@ -254,18 +371,23 @@ Caveats:
 2. **Designer lane** — done in the first pass.
 3. **Oracle / explorer / fixer lanes** — done in the second pass (§8).
 4. **Oracle quality** — done in the third pass (§9).
-5. **Orchestrator variant** — aligned to `high`; `xhigh`/`max` is the next
+5. **Explorer correctness** — done in the fourth pass (§10); broken pairing,
+   not a cost decision.
+6. **Designer / fixer effort** — trimmed `max` → `high` in the fifth pass (§11);
+   the `low` step below it is a broken pairing, so `high` is the floor on
+   `GLM-5.3-Flash`.
+7. **Orchestrator variant** — aligned to `high`; `xhigh`/`max` is the next
    quality lever (~+$1 on the measured mix) and the cheapest place to spend
    output tokens on this provider.
-6. **Orchestrator model** — the last significant cost lever. Moving it to
+8. **Orchestrator model** — the last significant cost lever. Moving it to
    `GLM-5.3-Flash @ high` saves ~$3.31 on the measured window but leaves the
    preset single-family and puts Flash-tier judgment on the planning loop.
-7. **Cross-provider lanes** — if the single-provider rule is relaxed, point
+9. **Cross-provider lanes** — if the single-provider rule is relaxed, point
    designer at `opencode-go/claude-haiku-5-5 @ medium` and oracle at
    `opencode-go/qwen3.8-flash @ xhigh` for another ~2.8× on top of the
    `GLM-5.3-Flash` designer pick.
 
-## 11. Reproducing
+## 13. Reproducing
 
 ```sh
 # recorded cost per synthetic message vs current models.dev rates
