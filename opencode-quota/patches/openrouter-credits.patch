@@ -1,0 +1,81 @@
+--- a/dist/lib/openrouter.js
++++ b/dist/lib/openrouter.js
+@@ -15,6 +15,56 @@
+     apiKeyEnv: "OPENROUTER_API_KEY",
+     format: "openrouter-key-v1",
+ };
++
++// --- openrouter-credits.mjs patch: account remaining credit ---
++const OPENROUTER_CREDITS_SOURCE = {
++    id: "openrouter",
++    providerId: "openrouter",
++    label: "OpenRouter",
++    mode: "remote-api",
++    url: "https://openrouter.ai/api/v1/credits",
++    apiKeyEnv: "OPENROUTER_API_KEY",
++    format: "json-v1",
++    adapter: {
++        mappings: [
++            {
++                resultType: "budget",
++                name: "Credits",
++                label: "Credits:",
++                unit: "$",
++                unitPosition: "prefix",
++                metric: {
++                    type: "spend-budget",
++                    spend: { path: ["data", "total_usage"] },
++                    budget: { path: ["data", "total_credits"] },
++                },
++            },
++        ],
++    },
++};
++// json-v1 cannot subtract two paths, so do the arithmetic here and emit a plain
++// value row. The single-window projection keeps one row per provider, and a
++// percent row would add a bar we do not want, so this is a value entry.
++const openRouterUsd = (value) => "$" + value.toFixed(2);
++function openRouterCreditEntries(entry) {
++    const [rawSpend, rawBudget] = String(entry.right ?? "").split("/");
++    const spend = Number(String(rawSpend ?? "").replace(/[^0-9.-]/g, ""));
++    const budget = Number(String(rawBudget ?? "").replace(/[^0-9.-]/g, ""));
++    if (!Number.isFinite(spend) || !Number.isFinite(budget) || budget <= 0)
++        return [entry];
++    const remaining = budget - spend;
++    const { percentRemaining, right, ...base } = entry;
++    return [
++        {
++            ...base,
++            kind: "value",
++            label: "Credits left:",
++            value: openRouterUsd(remaining),
++            accounting: { ...entry.accounting, resultType: "balance" },
++        },
++    ];
++}
++// --- end openrouter-credits.mjs patch ---
+ export async function resolveOpenRouterApiKey() {
+     return await resolveQuotaProviderApiKey(OPENROUTER_KEY_SOURCE);
+ }
+@@ -36,9 +86,20 @@
+     const result = await fetchRemoteQuotaProvider(OPENROUTER_KEY_SOURCE, options.resolved.key, options.requestTimeoutMs);
+     if (!result.success)
+         return result;
++    let entries = result.entries;
++    // When the key has its own limit the plugin already reports a correct budget
++    // percent, so leave it alone. Otherwise replace the all-time spend row with
++    // the account's remaining credit.
++    const keyHasLimit = entries.some((entry) => entry.kind !== "value");
++    if (!keyHasLimit) {
++        const credits = await fetchRemoteQuotaProvider(OPENROUTER_CREDITS_SOURCE, options.resolved.key, options.requestTimeoutMs);
++        if (credits.success && credits.entries.length > 0) {
++            entries = credits.entries.flatMap(openRouterCreditEntries);
++        }
++    }
+     return {
+         ...result,
+-        entries: result.entries.map((entry) => ({
++        entries: entries.map((entry) => ({
+             ...entry,
+             accounting: {
+                 ...entry.accounting,
