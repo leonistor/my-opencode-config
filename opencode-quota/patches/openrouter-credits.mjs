@@ -302,7 +302,7 @@ async function main() {
 
   const removed = await clearCachedRows();
   if (removed > 0) console.log(`Cleared ${removed} cached OpenRouter row(s).`);
-  console.log("\nRestart the OpenCode service (opencode serve --service) and the TUI(s) to load the patch.");
+  console.log("\nRestart OpenCode to load the patch: `opencode service restart`, then reopen the TUI(s).");
 }
 
 await main();

@@ -37,8 +37,9 @@ upstream file does not match the expected layout, keeps a `openrouter.js.orig`
 backup next to the patched file, runs `node --check`, and clears the cached
 OpenRouter row so the old value is not reused.
 
-**Restart OpenCode afterwards** — the plugin loads at process start, so
-`opencode serve --service` and every TUI must be restarted to pick the patch up.
+**Restart OpenCode afterwards** — the plugin loads at process start, so run
+`opencode service restart` and reopen the TUI(s) to pick the patch up. Agents
+are told about this directory in the global `AGENTS.md`.
 
 Not needed on plugin v6+? Check first: v6 changes the OpenRouter row to this
 month's spend (`usage_monthly`) but still does not read `/api/v1/credits`, so

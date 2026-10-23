@@ -73,6 +73,12 @@ Use pty_spawn for any task that needs to run in the background, is long-running,
 | `pty_list`  | List all PTY sessions with status, PID, line count                                          |
 | `pty_kill`  | Terminate a PTY session, optionally cleanup the buffer                                      |
 
+## Local patches
+
+- Patches to installed plugins live in `~/.config/opencode/opencode-quota/patches/`, each with a `README.md`. They edit plugin code inside the npm cache, which OpenCode replaces on every plugin update.
+- After `opencode plugin update` (or any plugin version change), re-run every patch script in that directory, e.g. `node ~/.config/opencode/opencode-quota/patches/openrouter-credits.mjs`. They are idempotent and report what they changed.
+- Restart the service afterwards (`opencode service restart`): plugins load at process start, so the TUI(s) do not see the change until then.
+
 ## Skills - Knowledge Injection
 
 Skills are reusable knowledge packages. Load them on-demand for specialized tasks.
