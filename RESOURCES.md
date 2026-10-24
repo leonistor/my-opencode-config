@@ -48,7 +48,7 @@ live with the error in the sidebar and use CodexBar when Synthetic numbers are a
 - **`@npv12/opencode-quota`** — fork of `@slkiser/opencode-quota`; same Synthetic parser lineage, no gain.
 - **`opencode-quotas-extended`** — extra providers, but still aggregates Go the same way.
 
-## External tools (from README)
+## External tools
 
 - https://basemind.ai/start/installation/ — if basemind is a no-go:
   - https://github.com/ZaxbyHub/opencode-swarm
@@ -59,6 +59,11 @@ live with the error in the sidebar and use CodexBar when Synthetic numbers are a
 - Convex skills: https://github.com/waynesutton/convexskills
 - Bug scanner (installed, not configured for OpenCode):
   https://github.com/Dicklesworthstone/ultimate_bug_scanner
+
+## MCP
+
+- Inspect a server locally: `npx @modelcontextprotocol/inspector uvx --with "mcp<2" mcp-server-fetch`
+  — from https://github.com/modelcontextprotocol/servers/issues/4560
 
 ## Tutorials
 

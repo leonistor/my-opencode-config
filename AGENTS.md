@@ -76,8 +76,26 @@ Use pty_spawn for any task that needs to run in the background, is long-running,
 ## Local patches
 
 - Patches to installed plugins live in `~/.config/opencode/opencode-quota/patches/`, each with a `README.md`. They edit plugin code inside the npm cache, which OpenCode replaces on every plugin update.
+- The npm cache path carries a per-install id segment: `~/.cache/opencode/npm/<pkg>@<version>/<id>/...`, not the old `~/.cache/opencode/packages/...`.
 - After `opencode plugin update` (or any plugin version change), re-run every patch script in that directory, e.g. `node ~/.config/opencode/opencode-quota/patches/openrouter-credits.mjs`. They are idempotent and report what they changed.
 - Restart the service afterwards (`opencode service restart`): plugins load at process start, so the TUI(s) do not see the change until then.
+
+## Workarounds
+
+Three things in this config exist only to work around upstream bugs. Each has a clear removal trigger.
+
+### opencode-pty — the local wrapper registers the tools
+
+`plugins/opencode-pty/` is a local plugin *package*, not a plain re-export. Two upstream bugs force it:
+
+- The `opencode-pty/v2` subpath spec cannot be installed from `opencode.jsonc` (npm reads it as the git shorthand `github:opencode-pty/v2`) — opencode-pty issue #85.
+- `opencode-pty@0.4.0`'s V2 setup registers its commands but not its tools, so `pty_spawn`/`pty_write`/`pty_read`/`pty_list`/`pty_kill` are silently missing — issue #86; the fix, PR #61, is on `main` only.
+
+`index.ts` keeps the package's `setup` and adds `ctx.tool.transform(...)` for the five tools, mirroring upstream `registerV2Tools`. When a release ships the fix (0.4.1+ with PR #84's dual-mode default export): delete the tool-registration block, and keep the wrapper until the subpath spec installs too.
+
+### cmux — deny policies
+
+`cmux hooks setup` regenerates `plugins/cmux-feed.js` and `plugins/cmux-session.js`, whose default export reuses `id: "cmux.server"` — the same id as the real V2 package at `plugins/cmux/`. Three entries sharing one id makes the TUI report `2 plugins failed: cmux.server, cmux.server`. The `integration.use` deny policies in `opencode.jsonc` keep only the V2 package. Upstream fixed the ids in cmux PR #20819 (merged 2026-10-15), but no tagged release contains it yet (installed app 0.65.2). When a release ships it: re-run `cmux hooks setup`, then delete the two deny entries.
 
 ## Skills - Knowledge Injection
 
@@ -124,5 +142,13 @@ up and testing it for a brainstorm session; they apply whatever host you are on.
   reports `annotated`, which proves nothing about dismissal.
 - **A record in a scratch file is not a record.** Decisions that matter go into `openspec/` (or the
   project's own plan), in the same session that produced them; the Inbox thread scrolls away.
-- The setup recipe — global plugin plus `~/.plannotator/config.json` — is in `README.md` §plannotator.
+- **Ask one question per real need.** The Inbox thread keeps its own history, so a decision can be read
+  back later instead of being reconstructed from a chat scroll.
+- **Only one plan-review plugin.** open-plan-annotator was removed on 2026-10-24: it and
+  `@plannotator/opencode` both register a plan tool (`annotate_plan` vs `submit_plan`) and both inject a
+  system prompt on the `plan` agent, giving the model contradictory instructions. `submit_plan` won — do
+  not re-enable `open-plan-annotator@latest`.
+- **The plugin injects its own Inbox line per session** (`inboxReminder`, on by default), so the managed
+  block above is partly redundant; `inboxReminder: false` turns the injected line off.
+- The setup recipe — global plugin plus `~/.plannotator/config.json` — is in `README.md` §Plannotator.
   If `plannotator_inbox` is not in your tool list, this host is not wired for it.
