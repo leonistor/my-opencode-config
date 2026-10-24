@@ -5,10 +5,12 @@
  *
  * Usage:
  *   bun ~/.config/opencode/model-table.ts                  # active preset
+ *   bun ~/.config/opencode/model-table.ts synthetic        # leading positional = preset
  *   bun ~/.config/opencode/model-table.ts --preset synthetic
  *   bun ~/.config/opencode/model-table.ts --all            # every preset
  *   bun ~/.config/opencode/model-table.ts --refresh        # bypass the cache
  *   bun ~/.config/opencode/model-table.ts --json           # machine output
+ *   bun ~/.config/opencode/model-table.ts --validate       # + availability/single-provider check
  *   bun ~/.config/opencode/model-table.ts oracle fixer     # filter agents
  */
 
@@ -37,9 +39,10 @@ const presetFlag = (() => {
 const showAll = flags.has("--all");
 const asJson = flags.has("--json");
 const refresh = flags.has("--refresh");
+const validate = flags.has("--validate");
 
-const agentFilter = positional.filter((a) => a !== presetFlag);
-const filterSet = agentFilter.length ? new Set(agentFilter) : undefined;
+// Positionals are either the preset (leading, when it names one) or agent filters.
+const positionalAgents = positional.filter((a) => a !== presetFlag);
 
 // ------------------------------------------------------------- config input
 
@@ -197,9 +200,19 @@ const rawConfig = await Bun.file(CONFIG).text();
 const config = parseLoose(rawConfig) as { preset?: string; presets?: Record<string, PresetShape> };
 const presets = config.presets ?? {};
 
+// `--preset X` wins; otherwise a leading positional that names a preset is the
+// preset (so `/suggest-models synthetic` works); else the active preset.
+const positionalPreset =
+  !presetFlag && !showAll && positionalAgents[0] && presets[positionalAgents[0]]
+    ? positionalAgents[0]
+    : undefined;
+
+const agentFilter = positionalAgents.filter((a) => a !== positionalPreset);
+const filterSet = agentFilter.length ? new Set(agentFilter) : undefined;
+
 const presetNames = showAll
   ? Object.keys(presets)
-  : [presetFlag ?? config.preset ?? Object.keys(presets)[0]].filter(Boolean);
+  : [presetFlag ?? positionalPreset ?? config.preset ?? Object.keys(presets)[0]].filter(Boolean);
 
 if (!presetNames.length) {
   process.stderr.write("No presets found in " + CONFIG + "\n");
@@ -277,4 +290,59 @@ for (const presetName of [...new Set(rows.map((r) => r.preset))]) {
     console.log(line([row.agent, row.model, row.variant, row.context, row.input, row.output, row.cacheRead]));
   }
 }
+
+const shownPresets = [...new Set(rows.map((r) => r.preset))];
+
+// `--validate` is the advisory half of /suggest-models: it checks that every
+// recommended model is actually offered by the host, and that a preset does not
+// mix providers (all agents in a session should bill one provider's quota).
+if (validate) {
+  const warnings: string[] = [];
+
+  let available: Set<string> | undefined;
+  try {
+    const proc = Bun.spawnSync(["opencode", "models"], { stdout: "pipe", stderr: "ignore" });
+    const list = new TextDecoder().decode(proc.stdout);
+    available = new Set(list.split("\n").map((l) => l.trim()).filter(Boolean));
+  } catch {
+    available = undefined;
+  }
+
+  const providersByPreset = new Map<string, Set<string>>();
+  for (const row of rows) {
+    const provider = row.model.includes("/") ? row.model.slice(0, row.model.indexOf("/")) : "(none)";
+    if (!providersByPreset.has(row.preset)) providersByPreset.set(row.preset, new Set());
+    providersByPreset.get(row.preset)!.add(provider);
+  }
+
+  for (const presetName of shownPresets) {
+    const providers = [...(providersByPreset.get(presetName) ?? [])];
+    if (providers.length > 1) {
+      warnings.push(`${presetName}: mixes providers (${providers.join(", ")}) — keep a session on one provider`);
+    }
+  }
+
+  if (!available) {
+    warnings.push("could not read `opencode models` — availability check skipped");
+  } else {
+    for (const row of rows) {
+      if (!available.has(row.model)) {
+        warnings.push(`${row.preset}/${row.agent}: ${row.model} not offered by \`opencode models\` (unavailable or not authenticated)`);
+      }
+    }
+  }
+
+  console.log();
+  if (warnings.length) {
+    console.log("Warnings:");
+    for (const warning of warnings) console.log(`  ⚠ ${warning}`);
+  } else {
+    console.log("OK: every model is available and each preset stays on one provider.");
+  }
+}
+
+if (!showAll && shownPresets.length === 1) {
+  console.log(`\nApply: /preset ${shownPresets[0]}  — switches all agents in this session to the preset`);
+}
+
 console.log();
