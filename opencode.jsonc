@@ -4,7 +4,6 @@
   "plugins": [
     // Not V2-ready yet (no upstream V2 variant):
     // "opencode-history-search",
-    // "open-plan-annotator@latest",
     // opencode-pty: cannot load as a package spec on V2 (its V2 build is a
     // subpath export, `opencode-pty/v2`, which OpenCode parses as a git spec).
     // Loaded via a local plugin package instead: plugins/opencode-pty/
@@ -12,9 +11,11 @@
     "@slkiser/opencode-quota@5", // v5 = OpenCode 2 (v4 = OpenCode 1)
     "./plugins/cmux",
     "oh-my-opencode-slim",
-    "open-plan-annotator@latest",
-    // Plannotator's own plugin, for the Inbox: threads, questions, and
-    // attachments annotated in place, instead of only the plan gate above.
+    // Plannotator's own plugin: the Inbox (threads, questions, attachments
+    // annotated in place) plus plan review via `submit_plan`, which replaced
+    // open-plan-annotator's `annotate_plan`. Two plugins that both register a
+    // plan tool inject contradictory system prompts on the `plan` agent, so
+    // only one may be loaded — this one. Removed 2026-10-24.
     // The `plannotator_inbox` tool is off by default for OpenCode; the file
     // ~/.plannotator/config.json turns it on via `inboxTool.opencode`. Plugins
     // load at process start, so this applies to a new session, not this one.

@@ -115,7 +115,9 @@ up and testing it for a brainstorm session; they apply whatever host you are on.
 - **An empty session is never approval.** Closing a Plannotator session, or submitting one with
   nothing in it, is not a decision. The three files in `commands/plannotator-*.md` name every empty
   outcome — empty output, `{"decision":"dismissed"}`, and `"nothingToSend": true` — and end with
-  "acknowledge it in one sentence and stop". Honour that: no work follows a blank session.
+  "acknowledge it in one sentence and stop". Honour that: no work follows a blank session. Those
+  stubs only run where the plugin cannot register its native commands; upstream now suppresses the
+  same outcomes itself, so the rule holds either way.
 - **`plannotator review` reports differently.** Its JSON is `{decision, message}` — there is no
   `annotationCount`, so do not look for one there.
 - **To test the dismissal path, close the session.** Pressing Submit sends an empty document and

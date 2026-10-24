@@ -2,7 +2,13 @@
 
 ## fixes
 
-run `node ~/.cache/opencode/packages/open-plan-annotator@latest/node_modules/open-plan-annotator/scripts/install-runtime.mjs` to fix open-plan-annotator
+open-plan-annotator is no longer loaded (removed 2026-10-24, see `plannotator` below). If it is ever
+reinstated, its runtime repair script now lives at:
+
+`node "$(echo ~/.cache/opencode/npm/open-plan-annotator@latest/*/node_modules/open-plan-annotator/scripts/install-runtime.mjs)"`
+
+The cache path carries a per-install id segment after `@latest/`, so it is
+`~/.cache/opencode/npm/...`, not the old `~/.cache/opencode/packages/...`.
 
 ## plugins
 
@@ -67,6 +73,19 @@ effect in the *next* session. It ships with every request: ~8 KB, roughly 2,300 
   `annotated`; only Close reports `dismissed`.
 - **One question per real need.** The Inbox thread keeps its own history, so a decision can be read
   back later instead of being reconstructed from a chat scroll.
+- **Only one plan-review plugin.** On 2026-10-24 open-plan-annotator was removed: it and
+  `@plannotator/opencode` both register a plan tool (`annotate_plan` vs `submit_plan`) and both
+  inject a system prompt on the `plan` agent telling it to use theirs, so the model got contradictory
+  instructions. `submit_plan` won. Keep it that way — do not re-enable `open-plan-annotator@latest`.
+- **The `commands/plannotator-*.md` stubs are shadowed.** Since 0.28.x the plugin registers
+  `/plannotator-review|annotate|last` natively (`ctx.command.transform`; it re-registers when the
+  stub's description differs, which ours do). The stubs only run on a host without native command
+  execution. Our hardening is therefore belt-and-braces: upstream suppresses empty and dismissed
+  outcomes itself (`buildReviewPromptFromBridgeOutcome` returns no message for `dismissed`; annotate
+  returns early on empty feedback). Keep them for the fallback path, but they are not what runs here.
+- **The plugin injects its own Inbox line per session** (`inboxReminder`, on by default, one line
+  telling the agent when to use the Inbox), so the managed AGENTS.md block is partly redundant.
+  `inboxReminder: false` turns the injected line off.
 
 ## to investigate
 
