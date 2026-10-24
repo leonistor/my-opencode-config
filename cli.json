@@ -7,7 +7,7 @@
   "attention": {
     "notifications": true,
     "sound": true,
-    "volume": 1,
+    "volume": 0.4,
     "sound_pack": "opencode.default"
   },
   "plugins": ["oh-my-opencode-slim", "@slkiser/opencode-quota@5"],

@@ -10,24 +10,59 @@ reinstated, its runtime repair script now lives at:
 The cache path carries a per-install id segment after `@latest/`, so it is
 `~/.cache/opencode/npm/...`, not the old `~/.cache/opencode/packages/...`.
 
-## plugins
+### opencode-pty — local wrapper registers the tools
 
-- https://basemind.ai/start/installation/
+`plugins/opencode-pty/index.ts` is a local plugin package, not a plain re-export. Two upstream bugs
+force it (both tracked, neither fixed in a release):
 
-in case basemind no go:
+- The `opencode-pty/v2` subpath spec cannot be installed from `opencode.jsonc` (npm reads it as the
+  git shorthand `github:opencode-pty/v2`) — upstream issue #85.
+- `opencode-pty@0.4.0`'s V2 setup registers its **commands but not its tools**, so every `pty_*` tool
+  was silently missing from 2026-10-14 until this wrapper registered them (upstream issue #86; the
+  fix, PR #61, is on `main` only).
 
-- https://github.com/ZaxbyHub/opencode-swarm
-- https://github.com/darrenhinde/OpenAgentsControl
+The wrapper keeps the package's `setup` and adds `ctx.tool.transform(...)` for the five tools,
+mirroring upstream `registerV2Tools`. **When a release ships the fix** (0.4.1+ with PR #84's
+dual-mode default export), delete the tool-registration block and keep the wrapper until the subpath
+spec is also installable.
 
-# in a repo
+### cmux — deny policies still required
 
-- basemind scan
-- DESIGN.md tools https://oh-my-design.kr/docs/en
-- https://github.com/Goldziher/ai-rulez
+`cmux hooks setup` regenerates two loose plugin files (`cmux-feed.js`, `cmux-session.js`) whose
+default export reuses `id: "cmux.server"` — the same id as the real V2 package at `plugins/cmux/`.
+Three entries sharing one id makes the TUI report `2 plugins failed: cmux.server, cmux.server`. The
+`integration.use` deny policies in `opencode.jsonc` keep only the V2 package. Upstream fixed the ids
+in PR #20819 (merged 2026-10-15) but **no tagged cmux release contains it** (installed app 0.65.2).
+When a release ships it: re-run `cmux hooks setup`, then delete the two deny entries.
 
-## skills
+## notifications
 
-- good src: https://github.com/TerminalSkills/skills
+OpenCode v2's desktop notifications live in `cli.json` under `attention`
+(`notifications`, `sound`, `volume`, `sound_pack`, `sounds`). There is no per-directory CLI config and
+no `attention.enabled`. The built-in notifier fires on `session.execution.*` and `permission.asked`
+with **title = the session title and a fixed body ("Session done")**, delivered as OSC 99 (kitty) /
+OSC 777 (cmux). The routing is per-tty-correct, but the payload is identical, so with two concurrent
+sessions macOS Notification Center groups them and you cannot tell which window fired.
+
+To disambiguate two live sessions (e.g. cmux + kitty), give each launch its own `attention` block —
+the inline JSON merges over `cli.json`:
+
+```sh
+# cmux window — desktop banners, no sound
+OPENCODE_CLI_CONFIG_CONTENT='{"attention":{"notifications":true,"sound":false}}' opencode
+
+# kitty window — sound only, no banner
+OPENCODE_CLI_CONFIG_CONTENT='{"attention":{"notifications":false,"sound":true}}' opencode
+```
+
+Better (self-identifying banners) would be a small TUI plugin that calls `attention.notify` with a
+`[kitty|cmux] <dir> · <session title>` title; not written yet. Also useful: macOS System Settings →
+Notifications, styled per app (kitty vs cmux), and `attention.sounds` per-event overrides.
+
+## external tools
+
+Candidates, comparisons, and links live in `RESOURCES.md` (including the CodexBar
+quota-tool recommendation).
 
 ## MCPs
 
@@ -89,13 +124,7 @@ effect in the *next* session. It ships with every request: ~8 KB, roughly 2,300 
 
 ## to investigate
 
-- bug scanner: https://github.com/Dicklesworthstone/ultimate_bug_scanner installed but not configured for opencode
-
----
-
-## convex
-
-https://github.com/waynesutton/convexskills
+- bug scanner (installed, not configured for opencode): see `RESOURCES.md`
 
 ---
 
@@ -115,5 +144,4 @@ from https://github.com/modelcontextprotocol/servers/issues/4560
 
 ### tuts
 
-- https://opencode.school/
-- https://freedium-mirror.cfd/https://ai.sulat.com/the-definitive-guide-to-opencode-from-first-install-to-production-workflows-aae1e95855fb#skills-reusable-knowledge
+See `RESOURCES.md`.

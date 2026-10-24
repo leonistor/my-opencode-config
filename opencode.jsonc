@@ -227,8 +227,12 @@
       },
     },
   },
+  // `provider` (singular) is deprecated in the V2 schema, but
+  // @slkiser/opencode-quota still WRITES this declaration here — its `init` and
+  // `provider add` commands target `["provider", providerId]`. Do not move it to
+  // `providers`: the plugin rewrites it. Harmless, since V2 still accepts
+  // deprecated keys, and the provider is also discoverable from auth.json.
   "provider": {
-    // Detected opencode authentication; opencode-quota added this global provider declaration.
     "opencode": {}
   },
 }
