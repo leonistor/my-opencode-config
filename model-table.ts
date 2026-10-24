@@ -91,7 +91,10 @@ function resolvePreset(
     const preset = presets[current];
     if (!preset) throw new Error(`preset not found: ${current}`);
     chain.push(current);
-    merged = { ...merged, ...agentsOf(preset) };
+    // Walk outward from the named preset, so an already-collected entry is the
+    // more derived one and must win: the plugin resolves `extends` the same way
+    // (parent agents first, then the child's overrides — mergeAgentOverrides).
+    merged = { ...agentsOf(preset), ...merged };
     current = typeof preset.extends === "string" ? preset.extends : undefined;
   }
   return { agents: merged, chain };
@@ -283,7 +286,7 @@ const widths = Object.fromEntries(columns.map(({ key, header }) => [key, width(k
 const line = (cells: string[]) => cells.map((cell, i) => pad(cell, widths[columns[i].key])).join("  ");
 
 for (const presetName of [...new Set(rows.map((r) => r.preset))]) {
-  console.log(`\n${presetName}${presetFlag || showAll || presetNames.length > 1 ? "" : " (active)"}`);
+  console.log(`\n${presetName}${presetFlag || positionalPreset || showAll || presetNames.length > 1 ? "" : " (active)"}`);
   console.log(line(columns.map((c) => c.header)));
   console.log(columns.map((c) => "─".repeat(widths[c.key])).join("  "));
   for (const row of rows.filter((r) => r.preset === presetName)) {
