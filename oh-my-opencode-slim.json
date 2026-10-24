@@ -44,6 +44,21 @@
         "mcps": []
       }
     },
+    "opencode-perform": {
+      "extends": "opencode-go",
+      "agents": {
+        "orchestrator": {
+          "model": "opencode-go/mimo-v2.6-pro"
+        },
+        "oracle": {
+          "model": "opencode-go/deepseek-v4-pro",
+          "variant": "max"
+        },
+        "fixer": {
+          "model": "opencode-go/mimo-v2.6-pro"
+        }
+      }
+    },
     "synthetic": {
       "orchestrator": {
         "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
