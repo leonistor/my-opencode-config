@@ -13,6 +13,12 @@
     "./plugins/cmux",
     "oh-my-opencode-slim",
     "open-plan-annotator@latest",
+    // Plannotator's own plugin, for the Inbox: threads, questions, and
+    // attachments annotated in place, instead of only the plan gate above.
+    // The `plannotator_inbox` tool is off by default for OpenCode; the file
+    // ~/.plannotator/config.json turns it on via `inboxTool.opencode`. Plugins
+    // load at process start, so this applies to a new session, not this one.
+    "@plannotator/opencode",
   ],
   "agents": {
     // oh-my-opencode-slim provides its own `explorer` subagent and the

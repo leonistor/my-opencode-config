@@ -95,3 +95,32 @@ Load a skill with the built-in `skill` tool before starting matching work:
 
 - `skill(name="jevgrep")` — plain load
 - `skill(name="shadcn")` — with optional `context` describing the task
+
+<!-- plannotator-inbox:start v1 · added by Plannotator. Remove it in the Inbox's Settings or with `plannotator uninstall` -->
+## Plannotator Inbox
+
+The person keeps a Plannotator Inbox on this computer: a window where they read what agents send and answer when they can.
+If you have a `plannotator_inbox` tool or a `plannotator-inbox` MCP server, use its `send_message` when the person isn't here to answer in this chat: to ask a decision only they can make (as a `:::question` block), or to hand over finished long work (put the files to read in `attachments`). Then keep working.
+Their reply comes back to this session by itself where your agent supports that; otherwise call `wait_for_reply`. When they are here, ask in this chat instead.
+<!-- plannotator-inbox:end -->
+
+## Plannotator: what we learned (2026-10)
+
+The managed block above says when to reach for the Inbox. These are our own findings from wiring it
+up and testing it for a brainstorm session; they apply whatever host you are on.
+
+- **Ask with cards, not documents.** A `:::question` block is answered; a document attached for
+  inline annotation was not annotated once in three attempts, even when the ask was explicit. Attach
+  a file when reading it is genuinely useful — never as the surface that carries the feedback.
+- **An empty session is never approval.** Closing a Plannotator session, or submitting one with
+  nothing in it, is not a decision. The three files in `commands/plannotator-*.md` name every empty
+  outcome — empty output, `{"decision":"dismissed"}`, and `"nothingToSend": true` — and end with
+  "acknowledge it in one sentence and stop". Honour that: no work follows a blank session.
+- **`plannotator review` reports differently.** Its JSON is `{decision, message}` — there is no
+  `annotationCount`, so do not look for one there.
+- **To test the dismissal path, close the session.** Pressing Submit sends an empty document and
+  reports `annotated`, which proves nothing about dismissal.
+- **A record in a scratch file is not a record.** Decisions that matter go into `openspec/` (or the
+  project's own plan), in the same session that produced them; the Inbox thread scrolls away.
+- The setup recipe — global plugin plus `~/.plannotator/config.json` — is in `README.md` §plannotator.
+  If `plannotator_inbox` is not in your tool list, this host is not wired for it.
