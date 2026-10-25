@@ -5,8 +5,8 @@
  *
  * Usage:
  *   bun ~/.config/opencode/model-table.ts                  # active preset
- *   bun ~/.config/opencode/model-table.ts synthetic        # leading positional = preset
- *   bun ~/.config/opencode/model-table.ts --preset synthetic
+ *   bun ~/.config/opencode/model-table.ts opencode-go     # leading positional = preset
+ *   bun ~/.config/opencode/model-table.ts --preset opencode-go
  *   bun ~/.config/opencode/model-table.ts --all            # every preset
  *   bun ~/.config/opencode/model-table.ts --refresh        # bypass the cache
  *   bun ~/.config/opencode/model-table.ts --json           # machine output
@@ -204,7 +204,7 @@ const config = parseLoose(rawConfig) as { preset?: string; presets?: Record<stri
 const presets = config.presets ?? {};
 
 // `--preset X` wins; otherwise a leading positional that names a preset is the
-// preset (so `/suggest-models synthetic` works); else the active preset.
+// preset (so `/suggest-models opencode-go` works); else the active preset.
 const positionalPreset =
   !presetFlag && !showAll && positionalAgents[0] && presets[positionalAgents[0]]
     ? positionalAgents[0]

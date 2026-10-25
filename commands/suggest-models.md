@@ -10,7 +10,7 @@ provider, so every agent in a session bills that provider's quota.
 Print the command output exactly as shown, inside a single fenced code block. Keep any warnings and
 the "Apply:" line. Add no columns, no "why" or commentary, and do not reformat the numbers.
 
-- Argument is a preset name: `synthetic`, `opencode-go`, `opencode-perform`, `openrouter`, `openrouter-no-floor`
+- Argument is a preset name: `opencode-go`, `opencode-perform`, `openrouter`, `openrouter-no-floor`
   (`--all` for all of them; no argument = the active preset).
 - To switch the session to a preset, use the built-in `/preset <name>`.
 - Rationale and per-agent trade-offs live at `~/.config/opencode/oh-my-opencode-slim-models.md`

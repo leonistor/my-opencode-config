@@ -219,7 +219,6 @@
       },
     },
     "opencode-go": {},
-    "synthetic": {},
     // V2 discovers pulled Ollama models automatically.
     "ollama": {
       "settings": {
