@@ -8,7 +8,6 @@
     // subpath export, `opencode-pty/v2`, which OpenCode parses as a git spec).
     // Loaded via a local plugin package instead: plugins/opencode-pty/
     "@upstash/context7-opencode",
-    "@slkiser/opencode-quota@5", // v5 = OpenCode 2 (v4 = OpenCode 1)
     "./plugins/cmux",
     "oh-my-opencode-slim",
     // Plannotator's own plugin: the Inbox (threads, questions, attachments
@@ -225,13 +224,5 @@
         "baseURL": "http://localhost:11434/v1",
       },
     },
-  },
-  // `provider` (singular) is deprecated in the V2 schema, but
-  // @slkiser/opencode-quota still WRITES this declaration here — its `init` and
-  // `provider add` commands target `["provider", providerId]`. Do not move it to
-  // `providers`: the plugin rewrites it. Harmless, since V2 still accepts
-  // deprecated keys, and the provider is also discoverable from auth.json.
-  "provider": {
-    "opencode": {}
   },
 }

@@ -43,7 +43,7 @@ The models.dev rates in the table are **reference only** — they are what these
 models cost elsewhere, and they are exactly what the quota weighting uses, so
 they are a faithful proxy for relative burn.
 
-Quota windows, as reported by the Console usage API via `/quota_status`:
+Quota windows, as reported by the Console usage API:
 
 | Window | Reset | Notes |
 | --- | --- | --- |

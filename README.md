@@ -10,7 +10,6 @@ Global OpenCode v2 config for this machine.
 | `model-table.ts` | Backs `/suggest-models <preset>` |
 | `commands/` | Custom slash commands |
 | `plugins/` | Local plugin workarounds (cmux, opencode-pty) |
-| `opencode-quota/patches/` | Patches re-applied after plugin updates |
 
 Agent instructions: `AGENTS.md`. External tools and links: `RESOURCES.md`.
 

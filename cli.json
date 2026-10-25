@@ -10,7 +10,7 @@
     "volume": 0.4,
     "sound_pack": "opencode.default"
   },
-  "plugins": ["oh-my-opencode-slim", "@slkiser/opencode-quota@5"],
+  "plugins": ["oh-my-opencode-slim"],
   "diffs": {
     "wrap": "word"
   },

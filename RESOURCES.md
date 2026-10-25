@@ -8,8 +8,7 @@ config live in `README.md`; this file is for candidates, comparisons, and links.
 ### Recommended: CodexBar (cross-provider view + standalone CLI)
 
 A macOS menu-bar app **with a standalone CLI** (`codexbar`). It covers every
-provider this setup uses and normalises each provider's quota shape, which
-`@slkiser/opencode-quota` does not.
+provider this setup uses and normalises each provider's quota shape.
 
 - Repo: https://github.com/steipete/CodexBar — MIT, ~22.7k★, actively released (v0.81.0, 2026-10-24).
 - Providers include: **OpenCode Go, OpenRouter, OpenCode Zen, DeepSeek, z.ai/GLM** (+100 more).
@@ -25,9 +24,9 @@ provider this setup uses and normalises each provider's quota shape, which
 - Caveats: macOS-first (Linux CLI builds exist). No tool reports opencode-go **per-model monthly
   dollars** — every implementation collapses Go to aggregate 5h/weekly/monthly from the same API.
 
-**Why it is here and not wired in:** `@slkiser/opencode-quota` is kept (its Go/Zen/OpenRouter numbers
-are correct, and its TUI sidebar is useful). CodexBar adds what the plugin does not: a standalone
-CLI, a `guard` exit code for scripts, and an HTTP endpoint for a statusline.
+**Why it is here and not wired in:** nothing quota-related is wired into OpenCode. CodexBar is used
+directly — the menu bar for at-a-glance windows, plus a standalone CLI, a `guard` exit code for
+scripts, and an HTTP endpoint for a statusline.
 
 ### Evaluated and rejected
 
@@ -35,8 +34,6 @@ CLI, a `guard` exit code for scripts, and an HTTP endpoint for a statusline.
   Providers: OpenAI, Zhipu AI, Z.ai, GitHub Copilot, Google Antigravity only — **no
   opencode-go, no OpenRouter**. Plugin-only (`/mystatus`), no standalone CLI, stale (last push
   2026-01-20). Not a fit.
-- **`@npv12/opencode-quota`** — fork of `@slkiser/opencode-quota`; same parser lineage, no gain.
-- **`opencode-quotas-extended`** — extra providers, but still aggregates Go the same way.
 
 ## External tools
 
