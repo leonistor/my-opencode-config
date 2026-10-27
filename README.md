@@ -32,8 +32,11 @@ OPENCODE_CLI_CONFIG_CONTENT='{"attention":{"notifications":false,"sound":true}}'
 
 Plan review plus a machine-local Inbox for agent questions. Wire it with the plugin in
 `opencode.jsonc` and `{"inboxTool":{"opencode":true}}` in `~/.plannotator/config.json`, then
-`opencode service restart` (plugins load at process start). Usage notes and findings: `AGENTS.md`
-§Plannotator.
+`opencode service restart`: plugins load at process start in the long-lived service host, so a host
+older than the last wiring change serves new projects without the tools. After any wiring change,
+open a fresh session and confirm `plannotator_inbox` + `submit_plan` before calling it done.
+Usage rules (one-line pointer after every Inbox send; wiring self-check) and findings:
+`AGENTS.md` § Plannotator.
 
 ## Tips
 

@@ -143,5 +143,43 @@ up and testing it for a brainstorm session; they apply whatever host you are on.
   not re-enable `open-plan-annotator@latest`.
 - **The plugin injects its own Inbox line per session** (`inboxReminder`, on by default), so the managed
   block above is partly redundant; `inboxReminder: false` turns the injected line off.
+- **Silent Inbox sends (fixed 2026-10-27):** agents ended turns after `send_message` with nothing in
+  the chat; the thread `url` sits in every send result. The send protocol now requires a one-line
+  pointer.
+- **"Not configured" in new projects:** sessions attach to the long-lived `opencode serve --service`
+  host, which loads plugins at process start — a host older than the last wiring change serves new
+  projects without `plannotator_inbox`/`submit_plan`, and agents skipped both silently. Hence the
+  self-check; `opencode service restart` is part of any wiring change.
 - The setup recipe — global plugin plus `~/.plannotator/config.json` — is in `README.md` §Plannotator.
-  If `plannotator_inbox` is not in your tool list, this host is not wired for it.
+  If `plannotator_inbox` is not in your tool list, this host is not wired for it — report it and run
+  the recipe under "send protocol + wiring self-check" below; never go without silently.
+
+## Plannotator: send protocol + wiring self-check (2026-10-27)
+
+How every session on this machine uses the Inbox. The plugin's injected line says when; this says how.
+
+- **Never send silently.** After every `plannotator_inbox` send (`send_message`, `submit_guide`), put
+  exactly one line in the chat before the turn ends:
+
+  `Inbox: <subject> — <url> — <what was asked or handed over>; <blocked: … | going on with …>`
+
+  The URL is the `url` field of the send result (for a later reference in the same thread without a
+  new send, `read_thread` returns it). Link it as-is; never invent one, never drop it, no other
+  commentary. This closes the loop: the chat always shows where the question lives.
+- **Check the wiring, never go without.** Before the first Inbox send or a plan review in a session,
+  confirm `plannotator_inbox` (and, when a plan is about to end, `submit_plan`) is in your tool list.
+  If it is missing, that is a fault to report in the chat — with the recipe, never a silent skip:
+  1. `plannotator inbox --background` — starts the Inbox; the tool registers in the *next* session.
+  2. `~/.plannotator/config.json` keeps `{"inboxTool":{"opencode":true}}`.
+  3. `@plannotator/opencode` stays in `opencode.jsonc` `plugins`.
+  4. All three good but the tool still missing → the `opencode serve --service` host predates the
+     wiring (plugins load at process start). Ask the person to run `opencode service restart` — a
+     restart drops live sessions, so never bounce the host yourself.
+  Until the wiring works, fall back to asking in the chat. The Inbox's silence is never the
+  person's answer.
+- **A plan without review is not approved.** Ending plan mode must go through `submit_plan` when
+  the tool exists; `commands/plannotator-*.md` are the CLI fallbacks. If neither could run, say so
+  in one sentence and stop — never present a plan as reviewed.
+- **In this config repo:** a change to `plugins` in `opencode.jsonc` or to `inboxTool` is incomplete
+  until, after `opencode service restart`, a fresh session shows `plannotator_inbox` + `submit_plan`.
+  Say so in the same change's summary.
