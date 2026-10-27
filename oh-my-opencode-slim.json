@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
-  "preset": "openrouter",
+  "preset": "synthetic",
   "presets": {
     "opencode-go": {
       "orchestrator": {
@@ -57,6 +57,48 @@
         "fixer": {
           "model": "opencode-go/mimo-v2.6-pro"
         }
+      }
+    },
+    "synthetic": {
+      "orchestrator": {
+        "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
+        "variant": "high",
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*",
+          "!context7"
+        ]
+      },
+      "oracle": {
+        "model": "synthetic/hf:zai-org/GLM-5.3",
+        "variant": "high",
+        "skills": [
+          "simplify"
+        ],
+        "mcps": []
+      },
+      "explorer": {
+        "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
+        "variant": "low",
+        "skills": [],
+        "mcps": [
+          "context7",
+          "gh_grep"
+        ]
+      },
+      "designer": {
+        "model": "synthetic/hf:zai-org/GLM-5.3-Flash",
+        "variant": "high",
+        "skills": [],
+        "mcps": []
+      },
+      "fixer": {
+        "model": "synthetic/hf:zai-org/GLM-5.3-Flash",
+        "variant": "high",
+        "skills": [],
+        "mcps": []
       }
     },
     "openrouter": {
