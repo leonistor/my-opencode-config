@@ -23,6 +23,22 @@
 - Use deep-dive sub-agents to assist with research.
 - Use deep-dive sub-agents to review the different aspects of your plan before presenting to the user.
 
+## Project conventions
+
+Standing preferences for projects I own.
+
+- **Build bottom-up.** Start from the concrete case — real entities, real callers, small composable
+  pieces — and grow outward. Extract a layer or abstraction only when a second real use exists, and
+  prefer one thin end-to-end slice through the real problem over building horizontal layers first.
+- **OpenSpec for green-field projects.** When we create a project from scratch, `openspec init` is
+  part of the scaffolding unless I opt that project out. Existing repos keep what they have — add
+  OpenSpec to one only when I ask. Where `openspec/` exists, use it for change proposals
+  (`openspec change`) and decisions that matter — never a scratch file.
+- **I pick; you bring the options.** Any research-and-evaluation whose result is choosing a package,
+  library, tool, or service ends with the candidates compared — trade-offs, maintenance status,
+  cost, ecosystem fit — plus your recommendation, and the choice is mine. Nothing gets adopted or
+  integrated before I confirm the pick.
+
 ## Reuse before implementation
 
 - Do not implement substantial infrastructure from scratch when an established package, library, framework feature, or existing project pattern can reasonably provide it.
@@ -33,7 +49,7 @@
 - Do not add a dependency merely to avoid a few lines of straightforward application code.
 - When an existing package could solve the problem, present it as an option and explain the trade-offs before implementing a custom solution. If no suitable package exists, or one introduces disproportionate complexity, explain why a custom implementation is preferable.
 - When evaluating a new dependency, consider its maintenance status, activity, license, documentation, API quality, TypeScript support, ecosystem fit, bundle/runtime cost, and compatibility with the project.
-- Do not introduce a dependency without asking the user; when proposing one, explain briefly why it is preferable to the relevant alternatives.
+- Every new dependency goes through "Project conventions — I pick; you bring the options": never introduce one without my confirmed pick.
 
 ## Change / edit mode
 
@@ -150,6 +166,10 @@ up and testing it for a brainstorm session; they apply whatever host you are on.
   host, which loads plugins at process start — a host older than the last wiring change serves new
   projects without `plannotator_inbox`/`submit_plan`, and agents skipped both silently. Hence the
   self-check; `opencode service restart` is part of any wiring change.
+- **Plannotator asks upstream — drafted 2026-10-27, not filed.** No `gh` on this machine, my choice;
+  the paste-ready draft is in `README.md` § Plannotator. Until upstream ships them, the thread-URL
+  pointer lives in the send protocol above, and the injected reminder text stays hardcoded — no
+  config key exists for it, don't look for one.
 - The setup recipe — global plugin plus `~/.plannotator/config.json` — is in `README.md` §Plannotator.
   If `plannotator_inbox` is not in your tool list, this host is not wired for it — report it and run
   the recipe under "send protocol + wiring self-check" below; never go without silently.

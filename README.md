@@ -13,6 +13,17 @@ Global OpenCode v2 config for this machine.
 
 Agent instructions: `AGENTS.md`. External tools and links: `RESOURCES.md`.
 
+## How I work with agents
+
+Conventions every agent session follows in my projects — the rules themselves live in `AGENTS.md`:
+
+- **Bottom-up** — thin end-to-end slices first; abstractions only when a second real use appears.
+- **OpenSpec for green-field projects** — fresh projects are scaffolded with `openspec init`;
+  existing repos are left alone unless asked. Spec changes and decisions live in `openspec/`,
+  not in chat or scratch files.
+- **Options reviewed before adoption** — package/tool research ends with candidates, trade-offs
+  and a recommendation; the pick is mine, and precedes integration.
+
 ## Notifications
 
 Notifications are set in `cli.json` → `attention` (`notifications`, `sound`, `volume`, `sound_pack`,
@@ -37,6 +48,17 @@ older than the last wiring change serves new projects without the tools. After a
 open a fresh session and confirm `plannotator_inbox` + `submit_plan` before calling it done.
 Usage rules (one-line pointer after every Inbox send; wiring self-check) and findings:
 `AGENTS.md` § Plannotator.
+
+### Proposed upstream (draft — not filed; no `gh` on this machine)
+
+Paste-ready for the GitHub web UI (backnotprop/plannotator):
+
+1. **Configurable reminder line.** The per-session injected line ("Plannotator Inbox is on: …") is
+   hardcoded in the OpenCode plugin. A `~/.plannotator/config.json` key to append/override it would
+   let house rules ride with the tool instead of per-host instruction files.
+2. **Pointer-by-default in send results.** `send_message` results already carry the thread `url`,
+   but agents silently drop it; an instruction line in the result text ("end your turn with
+   `Inbox: <subject> — <url>`") would make the pointer default on every host.
 
 ## Tips
 
