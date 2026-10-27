@@ -19,6 +19,7 @@
     // ~/.plannotator/config.json turns it on via `inboxTool.opencode`. Plugins
     // load at process start, so this applies to a new session, not this one.
     "@plannotator/opencode",
+    "opencode-mem@latest",
   ],
   "agents": {
     // oh-my-opencode-slim provides its own `explorer` subagent and the
