@@ -9,10 +9,11 @@
 
 ## Working with Git
 
+- Default mode is solo: commit on the current branch and push when I ask, without re-confirming each push.
+- A repo is collaborative only when I say so for that repo or session. Then branch instead of committing on main, keep each commit reviewable, and open a PR instead of pushing to main.
 - Always use semantic commit prefixes (feat:, fix:, docs:, etc.).
-- Never push without explicit user approval, every time. Never force-push or amend commits that were already pushed.
-- Only open a PR when asked.
-- If the user asks to hold off, leave work uncommitted.
+- Never force-push or amend a commit that was already pushed.
+- If I ask to hold off, leave work uncommitted.
 
 ## Planning mode
 
@@ -38,6 +39,9 @@ Standing preferences for projects I own.
   library, tool, or service ends with the candidates compared — trade-offs, maintenance status,
   cost, ecosystem fit — plus your recommendation, and the choice is mine. Nothing gets adopted or
   integrated before I confirm the pick.
+- **Grilling is opt-in.** `grill-me` and `grill-with-change` are separate skills (`/grill`,
+  `/grill-change`), run only when I ask. Never require them before submitting a plan, and never
+  inject a grilling round into an OpenSpec change on your own.
 
 ## Reuse before implementation
 
@@ -140,11 +144,13 @@ up and testing it for a brainstorm session; they apply whatever host you are on.
   inline annotation was not annotated once in three attempts, even when the ask was explicit. Attach
   a file when reading it is genuinely useful — never as the surface that carries the feedback.
 - **An empty session is never approval.** Closing a Plannotator session, or submitting one with
-  nothing in it, is not a decision. The three files in `commands/plannotator-*.md` name every empty
-  outcome — empty output, `{"decision":"dismissed"}`, and `"nothingToSend": true` — and end with
-  "acknowledge it in one sentence and stop". Honour that: no work follows a blank session. Those
-  stubs only run where the plugin cannot register its native commands; upstream now suppresses the
-  same outcomes itself, so the rule holds either way.
+  nothing in it, is not a decision. A blank outcome is `"decision":"dismissed"` or empty output;
+  since 0.28.30 upstream also collapses `"nothingToSend": true` / `annotationCount: 0` into that
+  dismissal, so no work follows any of them — acknowledge it in one sentence and stop.
+- **Never hand-edit `commands/plannotator-*.md`.** The plugin's postinstall rewrites them from its
+  own package on every install, and on this host (OpenCode V2) the plugin registers the three
+  commands natively and re-registers them to shadow the markdown stubs. They are regenerated
+  fallbacks only; house rules belong in this file (and in the injected reminder below).
 - **`plannotator review` reports differently.** Its JSON is `{decision, message}` — there is no
   `annotationCount`, so do not look for one there.
 - **To test the dismissal path, close the session.** Pressing Submit sends an empty document and
@@ -158,7 +164,8 @@ up and testing it for a brainstorm session; they apply whatever host you are on.
   system prompt on the `plan` agent, giving the model contradictory instructions. `submit_plan` won — do
   not re-enable `open-plan-annotator@latest`.
 - **The plugin injects its own Inbox line per session** (`inboxReminder`, on by default), so the managed
-  block above is partly redundant; `inboxReminder: false` turns the injected line off.
+  block above is partly redundant; `inboxReminder: false` turns it off. Since 0.28.30 the text is
+  configurable — see "the injected reminder is ours" below.
 - **Silent Inbox sends (fixed 2026-10-27):** agents ended turns after `send_message` with nothing in
   the chat; the thread `url` sits in every send result. The send protocol now requires a one-line
   pointer.
@@ -166,10 +173,11 @@ up and testing it for a brainstorm session; they apply whatever host you are on.
   host, which loads plugins at process start — a host older than the last wiring change serves new
   projects without `plannotator_inbox`/`submit_plan`, and agents skipped both silently. Hence the
   self-check; `opencode service restart` is part of any wiring change.
-- **Plannotator asks upstream — drafted 2026-10-27, not filed.** No `gh` on this machine, my choice;
-  the paste-ready draft is in `README.md` § Plannotator. Until upstream ships them, the thread-URL
-  pointer lives in the send protocol above, and the injected reminder text stays hardcoded — no
-  config key exists for it, don't look for one.
+- **The injected reminder is ours (0.28.36).** `~/.plannotator/config.json` →
+  `prompts.inbox.reminder` (or `prompts.inbox.runtimes.opencode.reminder`) replaces the hardcoded
+  per-session line. Ours is a short pointer to the send protocol below, not a second copy of it:
+  edit the config when the protocol's location changes, not the rules themselves. This was upstream
+  item #1; item #2 (pointer-by-default in send results) is still open in `README.md`.
 - The setup recipe — global plugin plus `~/.plannotator/config.json` — is in `README.md` §Plannotator.
   If `plannotator_inbox` is not in your tool list, this host is not wired for it — report it and run
   the recipe under "send protocol + wiring self-check" below; never go without silently.

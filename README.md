@@ -49,16 +49,23 @@ open a fresh session and confirm `plannotator_inbox` + `submit_plan` before call
 Usage rules (one-line pointer after every Inbox send; wiring self-check) and findings:
 `AGENTS.md` § Plannotator.
 
-### Proposed upstream (draft — not filed; no `gh` on this machine)
+### Upstream status (draft — not filed; no `gh` on this machine)
 
-Paste-ready for the GitHub web UI (backnotprop/plannotator):
+For the GitHub web UI (backnotprop/plannotator):
 
-1. **Configurable reminder line.** The per-session injected line ("Plannotator Inbox is on: …") is
-   hardcoded in the OpenCode plugin. A `~/.plannotator/config.json` key to append/override it would
-   let house rules ride with the tool instead of per-host instruction files.
+1. ~~**Configurable reminder line.**~~ **Shipped in 0.28.30.** `~/.plannotator/config.json` now takes
+   `prompts.inbox.reminder` (string) or `prompts.inbox.runtimes.<host>.reminder`, and
+   `inboxReminder` turns the injected line off. Ours is set to a pointer at `AGENTS.md` § Plannotator:
+   send protocol + wiring self-check.
 2. **Pointer-by-default in send results.** `send_message` results already carry the thread `url`,
    but agents silently drop it; an instruction line in the result text ("end your turn with
    `Inbox: <subject> — <url>`") would make the pointer default on every host.
+
+### Command stubs are plugin-owned
+
+`commands/plannotator-*.md` are copied from `@plannotator/opencode` by its postinstall on every
+install, and on OpenCode V2 the plugin registers the three commands natively and reclaims the names
+from the stubs. Do not customise them: they get overwritten, and they are shadowed anyway.
 
 ## Tips
 
