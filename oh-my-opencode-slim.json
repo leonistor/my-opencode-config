@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
-  "preset": "synthetic",
+  "preset": "opencode-go",
   "presets": {
     "opencode-go": {
       "orchestrator": {
@@ -15,8 +15,8 @@
         ]
       },
       "oracle": {
-        "model": "opencode-go/qwen3.8-flash",
-        "variant": "xhigh",
+        "model": "opencode-go/deepseek-v4-pro",
+        "variant": "max",
         "skills": [
           "simplify"
         ],
@@ -48,13 +48,6 @@
       "extends": "opencode-go",
       "agents": {
         "orchestrator": {
-          "model": "opencode-go/mimo-v2.6-pro"
-        },
-        "oracle": {
-          "model": "opencode-go/deepseek-v4-pro",
-          "variant": "max"
-        },
-        "fixer": {
           "model": "opencode-go/mimo-v2.6-pro"
         }
       }

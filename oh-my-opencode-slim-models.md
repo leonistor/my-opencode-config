@@ -1,8 +1,9 @@
 # oh-my-opencode-slim: model presets and rationale
 
 Preset rationale for `~/.config/opencode/oh-my-opencode-slim.json`. The active
-preset is `opencode-perform`, which extends the base `opencode-go` preset; the
-`openrouter` and `openrouter-no-floor` presets are documented below as alternates.
+preset is `opencode-go`; `opencode-perform` extends it by one tier on the
+orchestrator lane and is opt-in for demanding work. The `openrouter` and
+`openrouter-no-floor` presets are documented below as alternates.
 
 Run `/suggest-models <preset>` (or `bun ~/.config/opencode/model-table.ts --validate <preset>`) for
 the live table with current models.dev pricing, availability, and a single-provider check.
@@ -51,15 +52,30 @@ Quota windows, as reported by the Console usage API:
 | Weekly | Monday 00:00 UTC | 50% of each model's monthly limit |
 | Monthly | anchored to the subscription period | 100% of each model's monthly limit; not calendar-aligned |
 
-Limits are ~2x higher on Go Plus ($40/mo) than Go ($10/mo); the relative
-ordering below is identical on both.
+Limits are ~2x–4x higher on Go Plus ($40/mo) than Go ($10/mo); the relative
+ordering below is identical on both. **The account is on Go Plus since 2026-10-27.**
+
+### The live meter does not reconcile with dollars (read this before trusting a projection)
+
+On 2026-10-29, mid-plan (2 days after the upgrade, 3.5 days into the weekly window), the usage API
+reported **5h 57%, weekly 63%, monthly 31%** — while the same month's opencode-go token volume
+prices out at ~$32 (30-day actual) to ~$56 (last-7-day pace) at the reference rates below. Those
+percentages cannot be dollar-weighted against the per-model limits in this file: no lane comes close
+to 63% of its weekly allowance on any reading. Either the meter is token/credit-weighted, or the
+percentages carried over from the Go plan at the upgrade.
+
+Consequence: **treat the per-model dollar limits as a relative ordering, and the usage API as the
+authoritative constraint.** Before sizing a new preset, read the Console once for the model you
+intend to add — `mimo-v2.6-pro`'s allowance is still undocumented, and `opencode models` does not
+distinguish an enabled model from a catalogued one. The weekly window has been the binding one in
+practice.
 
 | Agent | Model | Variant | Reference rate (per M) | Monthly limit (Go / Plus) | Why |
 | --- | --- | --- | --- | --- | --- |
 | orchestrator | `opencode-go/deepseek-v4.1-flash` | `high` | 0.15 / 0.60 (cache 0.003) | $80 / $160 | Highest-token lane. Cache read $0.003/M — 20x cheaper than MiniMax-M3's $0.06 — so the repeated-context burn collapses; 1M ctx, vision, `low|high|max` effort. |
-| oracle | `opencode-go/qwen3.8-flash` | `xhigh` | 0.15 / 0.47 (cache 0.016) | $30 / $90 | Rare, read-only, hard reasoning. 13x cheaper in/out and 15x cheaper cache read than Qwen3.8-Max, with 2x the limit; keeps the `xhigh` effort scale. |
+| oracle | `opencode-go/deepseek-v4-pro` | `max` | 0.66 / 1.98 (cache 0.022) | $15 / $60 | Flagship reasoning on the cheapest lane. Measured oracle volume is ~2.8M fresh input and ~27.5M cache read a month, which prices at **~$1.7/mo — 3% of the Plus allowance**. It is the only lane that can afford this model: the same mix on the orchestrator is ~$146/mo, 2.4x the allowance. Replaced `qwen3.8-flash @ xhigh` (0.7/mo) for a strictly better reasoner at a trivial absolute cost. |
 | explorer | `opencode-go/muse-spark-1.3-contributor` | `low` | 0.10 / 0.20 (cache 0.002) | $80 / $160 | Volume lane — codebase recon plus external docs research. Cheapest model in the catalog on all three rates (2x cheaper input, 3x cheaper output, 1.5x cheaper cache read than DeepSeek-V4.1-Flash). Only cheap-tier model exposing `minimal`, so the effort trim has more room than `low`. Read-only recon is the lane least exposed to Contributor-tier quality risk. **Contributes training data.** |
-| designer | `opencode-go/claude-haiku-5-5` | `medium` | 0.10 / 0.50 (cache 0.01) | $60 / $180 | Multimodal UI/UX work. Replaces MiniMax-M3: 3x cheaper input, 2.4x cheaper output, **6x cheaper cache read** ($0.06 → $0.01) — the designer lane was previously the most expensive in the preset on the rate that actually governs burn. `medium` keeps effort above `low` for UI judgment; escalate to `high` if polish suffers. |
+| designer | `opencode-go/claude-haiku-5-5` | `medium` | 0.10 / 0.50 (cache 0.01) — **tier above 100k ctx: 0.50 / 2.50 (cache 0.05, write 0.625)** | $60 / $180 | Multimodal UI/UX work. Replaces MiniMax-M3: 3x cheaper input, 2.4x cheaper output. **The "6x cheaper cache read" claim only holds under 100k context**: designer sessions spend most of their life above it, where cache read is $0.05/M — the same as the MiniMax it replaced — and output is $2.50/M. OpenCode's recorded cost confirms the tier (implied ~0.045–0.05/M). Real cost is ~$6–11/mo, still affordable; keep it for UI judgment, not as a cost floor. `medium` keeps effort above `low`; escalate to `high` if polish suffers. |
 | fixer | `opencode-go/deepseek-v4.1-flash` | `high` | 0.15 / 0.60 (cache 0.003) | $80 / $160 | Scoped implementation from a concrete plan; same cheap volume profile as explorer. |
 
 Observer is **not configured**: `opencode-go/deepseek-v4.1-flash` declares image
@@ -115,64 +131,81 @@ proves stable and a measured need appears.
 
 ## The `opencode-perform` preset
 
-Same provider and plan as `opencode-go` (one session, one Go allowance), but the
-two lanes that decide results — **orchestrator** and **fixer** — move up a tier,
-and the oracle gets the flagship model that the volume lanes cannot afford on
-Go. The brief is **more performance, still inside the Go limits**: Go meters a
-separate monthly dollar allowance per model, so the governing number is not the
-preset's total but whether one model's allowance empties first.
+Same provider and plan as `opencode-go`, but **only the orchestrator moves up a
+tier** — the lane that writes the plans and decides what runs. The fixer stays on
+the Flash lane: it is scoped implementation from a concrete plan, the tier step
+buys the least there, and putting it on `mimo-v2.6-pro` too would double the
+exposure to that model's undocumented allowance (the previous revision did
+exactly that, ~$93/mo combined).
 
-| Agent | Model | Variant | In/Out (per M) | Go limit | Projected $/mo | Why |
+| Agent | Model | Variant | In/Out (per M) | Plus limit | Projected $/mo | Why |
 | --- | --- | --- | --- | --- | --- | --- |
-| orchestrator | `opencode-go/mimo-v2.6-pro` | — (no ladder) | 0.435 / 0.87 (cache 0.003625) | n/a — verify | ~$35 | Pro tier, 1M ctx, vision (image/audio/video) — so images still ride inline. Its cache read ($0.003625) is **1.2× the Flash lane it replaces ($0.003)**, and cache read is ~97% of this lane's token volume, so the whole tier step costs about a third of what `deepseek-v4-pro` would. No effort ladder is declared, so no `variant`. |
-| oracle | `opencode-go/deepseek-v4-pro` | `max` | 0.66 / 1.98 (cache 0.022) | $15 | ~$0.9 | Flagship DeepSeek, and the *only* lane that can afford it: the oracle is rare (5 dispatches in the current window), so `max` effort costs ~$0.9/mo — 6% of the small $15 allowance. `high|max` are the only variants this model declares. |
-| explorer | `opencode-go/muse-spark-1.3-contributor` | `low` | 0.10 / 0.20 (cache 0.002) | $80 | ~$0.8 | Inherited from `opencode-go` unchanged — this lane is a cost floor, not a quality lane. |
-| designer | `opencode-go/claude-haiku-5-5` | `medium` | 0.10 / 0.50 (cache 0.01) | $60 | ~$3.7 | Inherited unchanged — 1M ctx, vision, and the cheapest cache rate of the vision-capable picks. |
-| fixer | `opencode-go/mimo-v2.6-pro` | — (no ladder) | 0.435 / 0.87 (cache 0.003625) | n/a — verify | ~$7.3 | The same tier step as the orchestrator; the lane is scoped implementation from a concrete plan, so it wants the same reliability at the same cheap cache read. Text-only would be fine here, but there is no cheaper Pro-tier option. |
+| orchestrator | `opencode-go/mimo-v2.6-pro` | — (no ladder) | 0.435 / 0.87 (cache 0.003625) | **unknown — verify** | ~$58 | Pro tier, 1M ctx, vision, `minimal|low|medium|high|xhigh` on the *spark* sibling but **no ladder here**, so no `variant`. Its cache read is 1.2× the Flash lane's, and cache read is ~97% of this lane's token volume — the whole tier step costs about a third of what `deepseek-v4-pro` would ($146/mo, 2.4× its allowance). |
+| oracle | `opencode-go/deepseek-v4-pro` | `max` | 0.66 / 1.98 (cache 0.022) | $60 | ~$1.7 | Inherited from `opencode-go`; no override needed. Rare, read-only reasoning — 3% of its allowance even at `max`. |
+| explorer | `opencode-go/muse-spark-1.3-contributor` | `low` | 0.10 / 0.20 (cache 0.002) | $160 | ~$1.3 | Inherited — a cost floor, not a quality lane. |
+| designer | `opencode-go/claude-haiku-5-5` | `medium` | tier >100k ctx: 0.50 / 2.50 (cache 0.05) | $180 | ~$6–11 | Inherited; see the tier warning in the `opencode-go` table. |
+| fixer | `opencode-go/deepseek-v4.1-flash` | `high` | 0.15 / 0.60 (cache 0.003) | $160 | ~$15.6 | Inherited. The cheap volume lane is the right place for scoped implementation. |
+
+Roster total at the measured pace: **~$51/mo** on the last 30 days' volume,
+**~$88/mo** at the last week's pace — against **~$33 / ~$57** for `opencode-go`.
+The premium is ~$20–32/mo and essentially all of it is one model's allowance.
 
 `extends: "opencode-go"` in `oh-my-opencode-slim.json` — the plugin resolves it
 as parent-first with the child's overrides winning (`resolvePresetDefinition` →
 `mergeAgentOverrides`, a deep merge), so an entry that sets only `model` (or
 `model` + `variant`) keeps the parent's `skills` and `mcps`. `model-table.ts`
-resolves the same chain.
+resolves the same chain. With one override, the preset is one line; do not
+restate the inherited lanes.
+
+### Measured lanes, 2026-10-29
+
+From `~/.local/share/opencode/opencode.db`, `session_message` (the V2 table; the
+legacy `message` table stops on 2026-10-10), grouped by agent and priced at
+models.dev rates. Volumes per **month**, with the last 7 days ×4.33 in the last
+column to show the current burn rate:
+
+| Lane | fresh in | output | cache read | 7-day pace |
+| --- | --- | --- | --- | --- |
+| orchestrator | 55.8M | 4.0M | 1,648M | 94.7M / 6.1M / **3,226M** |
+| fixer | 27.8M | 2.3M | 585M | 60.2M / 4.2M / 1,328M |
+| designer | 7.1M | 1.5M | 374M (+4.3M write) | 6.5M / 3.6M / 673M |
+| explorer | 8.7M | 0.8M | 63M | 9.7M / 1.0M / 65M |
+| oracle | 2.8M | 0.4M | 27.5M | 1.3M / 0.2M / 17M |
+
+Two things follow. The lane is **accelerating**: the last week is ~1.5–1.7× the
+30-day average on the top three lanes, so projections from the week are the
+conservative reading. And **cache read is still the whole game** at a ~30:1
+cache-to-input ratio.
 
 ### Why the flagship did not go on the volume lanes
 
-The last-7-day recorded mixes (from `~/.local/share/opencode/opencode.db`,
-`session_v2`, grouped by agent) priced at models.dev rates. The orchestrator lane
-moved ~11.1M fresh input, 1.8M output and **493.7M cache read**; the fixer 2.5M /
-0.5M / 38.3M. Month = ×4.33.
+Orchestrator candidates on the 7-day pace (monthly):
 
-| Model | In/Out/cache-read | Orchestrator $/mo | Fixer $/mo | Oracle $/mo | Go limit |
-| --- | --- | --- | --- | --- | --- |
-| `deepseek-v4.1-flash` (today) | 0.15 / 0.60 / 0.003 | 18 | 4 | — | $80 |
-| **`mimo-v2.6-pro`** | 0.435 / 0.87 / 0.003625 | **35** | **7** | 0.3 | verify |
-| `mimo-v2.5-pro` | 0.435 / 0.87 / 0.003625 | 35 | 7 | 0.3 | verify (text-only) |
-| `gpt-6-luna` | 0.10 / 0.50 / 0.01 | 30 | 4 | 0.3 | verify |
-| `claude-haiku-5-5` | 0.10 / 0.50 / 0.01 | 30 | 4 | 0.3 | $60 |
-| `minimax-m3.1-flash` | 0.15 / 0.60 / 0.015 | 44 | 6 | 0.4 | verify |
-| `qwen3.8-flash` | 0.15 / 0.47 / 0.016 | 45 | 5 | 0.4 | **$30 — over** |
-| `glm-5.3-flash` | 0.15 / 0.50 / 0.03 | 75 | 8 | 0.5 | **$60 — over** |
-| `deepseek-v4-pro` | 0.66 / 1.98 / 0.022 | **94** | 15 | 0.9 | $15 — orchestrator 6× over |
+| Model | In/Out/cache-read | Orchestrator $/mo | Fixer $/mo | Plus limit |
+| --- | --- | --- | --- | --- |
+| `deepseek-v4.1-flash` | 0.15 / 0.60 / 0.003 | **27.5** | **15.6** | $160 |
+| **`mimo-v2.6-pro`** | 0.435 / 0.87 / 0.003625 | **58.2** | 34.7 | verify |
+| `claude-haiku-5-5` (>100k) | 0.50 / 2.50 / 0.05 | 224 | 107 | $180 — orchestrator over |
+| `gpt-6-luna` | 0.10 / 0.50 / 0.01 | 44.8 | 21.7 | verify (tiers at 272k) |
+| `minimax-m3.1-flash` | 0.15 / 0.60 / 0.015 | 66 | 33 | verify |
+| `qwen3.8-flash` | 0.15 / 0.47 / 0.016 | 68.7 | 32.7 | $90 — 76% |
+| `glm-5.3-flash` | 0.15 / 0.50 / 0.03 | 114 | 51 | $180 — 63% |
+| `deepseek-v4-pro` | 0.66 / 1.98 / 0.022 | **145.6** | 62 | $60 — 2.4× over |
 
-Read the cache-read column, not the headline price: at a 45:1 cache-to-input
-ratio the flagship's $0.022/M cache read is what actually empties an allowance.
-`deepseek-v4-pro` on the orchestrator projects ~$94/mo against a $15 Go
-allowance; `qwen3.8-flash` and `glm-5.3-flash` also exceed theirs, which is why
-the oracle is the only lane the flagship visits. On **Go Plus** ($40/mo, ~2x the
-limits) the same table puts `deepseek-v4-pro @ high` on the orchestrator and
-`fixer` at ~$94 and ~$15 against $60 allowances — that is the documented upgrade
-path if the plan ever moves up: orchestrator and fixer → `deepseek-v4-pro @ high`,
-which is exactly the flagship preset this one is the affordable version of.
+Read the cache-read column, not the headline price. `claude-haiku-5-5` is the
+trap: below 100k context it *is* the cheapest vision model, but every long agent
+lane pays the 5× tier, which makes it the **most** expensive non-flagship option
+on the orchestrator and worse than the Flash lane on the fixer. It stays on the
+designer only because that lane's volume is small.
 
 **Rejected for the orchestrator lane, on the same mix, monthly:** `glm-5.3`
 (text-only, ~$658), `qwen3.8-max` (~$677), `kimi-k3.1-pro` (~$602), `kimi-k3`
 (~$903), `grok-4.7` (~$1,212, 500k ctx), `step-5-preview` (~$283), `minimax-m3`
 (no variant ladder, ~$152), `hy4-preview` (text-only, ~$149), `qwen3.7-plus`
-(no variant ladder, ~$117), `deepseek-v4-pro` (text-only *and* ~$94 against a $15
-allowance). Everything above `mimo-v2.6-pro`'s $35 costs 2–35× more for the same
-lane, and only `longcat-2.0` (~$37) lands in the same bracket — at the cost of
-vision, an effort ladder and a second model family.
+(~$117), `space-bunny` (~$115), `deepseek-v4-pro` (text-only *and* 2.4× its
+allowance). Everything above `mimo-v2.6-pro` costs 2–20× more for the same lane,
+and only `longcat-2.0` (~$55) lands in the same bracket — text-only, with no
+effort ladder.
 
 ### The limit check this preset is gated on
 
@@ -181,26 +214,24 @@ the per-model limits in the tables above come from the Console, and the usage AP
 (`GET https://opencode.ai/zen/go/v1/usage`) reports only the aggregate 5h /
 weekly / monthly percentages. Before trusting the preset:
 
-1. Read `mimo-v2.6-pro`'s monthly allowance in the Console, and confirm both
-   picks are *enabled* there — the Go Console governs model enablement as well
-   as the allowance, and `opencode models` does not distinguish a model that is
-   enabled from one that is merely in the catalog. The orchestrator
-   lane projects ~$35/mo and the fixer ~$7/mo **on the same model, so they share
-   one allowance** (~$43/mo combined).
-2. If that allowance is under ~$45/mo, move `fixer` off it in the same edit —
-   `opencode-go/glm-5.3-flash @ high` (known $60 allowance, ~$8/mo, vision, and
-   the model the `openrouter-no-floor` preset already runs on its fixer lane)
-   leaves the orchestrator alone on ~$35/mo.
+1. Read `mimo-v2.6-pro`'s monthly allowance in the Console, and confirm the
+   model is *enabled* there. The orchestrator projects ~$58/mo at the current
+   pace (~$34/mo on the last month); it is now the **only** lane on that model,
+   so the allowance only has to cover that one number.
+2. If it is under ~$65/mo, drop the override and run the orchestrator on
+   `deepseek-v4.1-flash @ max` (known $160 allowance, ~$35/mo): `perform` then
+   means *more effort on a known allowance* rather than a tier step on an
+   unknown one.
 3. Canary the lane before trusting it. `mimo-v2.6-pro` declares no effort
    ladder, so a degenerate loop would show up as unexpected output tokens — the
-   `GLM-5.3-Flash @ low` failure mode, not a cost line item. One short dispatch
-   per changed lane; check for non-empty text.
+   `GLM-5.3-Flash @ low` failure mode, not a cost line item. One short dispatch;
+   check for non-empty text.
 
-Note the general caveat: recorded dollars are a *relative
-meter*, not plan cash — the current monthly window records $13.08 of opencode-go
-spend while the Console reports 42% of the allowance used. The preset is sized by
-the price vector (cache read 1.2× the lane it replaces) rather than by an exact
-dollar promise.
+Note the general caveat: recorded dollars are a *relative* meter, not plan cash,
+and on 2026-10-29 they did not reconcile with the meter at all (5h 57% / weekly
+63% / monthly 31% while the month's Go volume prices at ~$32–56). See "the live
+meter does not reconcile with dollars" above. Size presets by the price vector,
+then watch the usage API.
 
 ## The `openrouter` preset (all `:floor`)
 
@@ -318,6 +349,12 @@ per lane if you want cross-family failover.
 
 ## Gotchas (variants)
 
+- **Context tiers are a hidden 5× multiplier.** `claude-haiku-5-5` (100k),
+  `gpt-6-luna` / `gpt-5.6-luna` (272k), `qwen3.7-plus` (256k), `minimax-m3`
+  (512k) and `grok-4.7` (200k) reprice above a context threshold. An agent lane
+  passes 100k almost immediately, so the **tier** rate is the one to compare,
+  not the models.dev headline. Haiku's cache read goes 0.01 → 0.05 and its
+  output 0.50 → 2.50, which is why it is a designer-only pick here.
 - `variant` must exist for the model:
   - DeepSeek-V4.1-Flash: `none|low|high|xhigh|max`
   - GLM-5.3 / GLM-5.3-Flash / Kimi-K3: `low|high|max`
