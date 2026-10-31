@@ -11,7 +11,8 @@
         ],
         "mcps": [
           "*",
-          "!context7"
+          "!context7",
+          "!open-pencil"
         ]
       },
       "oracle": {
@@ -61,7 +62,8 @@
         ],
         "mcps": [
           "*",
-          "!context7"
+          "!context7",
+          "!open-pencil"
         ]
       },
       "oracle": {
@@ -115,7 +117,8 @@
         ],
         "mcps": [
           "*",
-          "!context7"
+          "!context7",
+          "!open-pencil"
         ]
       },
       "oracle": {
@@ -205,7 +208,8 @@
         ],
         "mcps": [
           "*",
-          "!context7"
+          "!context7",
+          "!open-pencil"
         ]
       },
       "oracle": {
@@ -237,6 +241,22 @@
         "skills": [],
         "mcps": []
       }
+    }
+  },
+  "agents": {
+    "pencil": {
+      "displayName": "Pencil",
+      "description": "Builds OpenPencil wireframes and component skeletons, filled with text from project data",
+      "inheritModelFrom": "orchestrator",
+      "skills": [],
+      "mcps": ["open-pencil"],
+      "permission": {
+        "edit": {
+          "*": "deny",
+          "docs/design/**": "allow"
+        }
+      },
+      "orchestratorPrompt": "@pencil — OpenPencil wireframes and component skeletons. Delegate: new screen or flow layouts, component anatomy and variants, populating frames with real text from project data (fixtures, types, specs). Don't: visual polish or finished prototypes (@designer), React implementation (@fixer), architecture (@oracle). Needs the OpenPencil desktop app open with a document."
     }
   }
 }

@@ -27,6 +27,44 @@
     "explore": { "disabled": true },
     "general": { "disabled": true },
   },
+  // OpenPencil design tooling, global so the `pencil` subagent
+  // (oh-my-opencode-slim.json → agents.pencil) works in every project, the way
+  // OpenSpec does. The stdio bridge discovers the running desktop app and
+  // scopes file operations to the workspace (OPENPENCIL_MCP_ROOT defaults to
+  // cwd), so a session edits the .fig inside its own project and nothing else.
+  //
+  // Context: omo-slim compiles each agent's `mcps` list into `open-pencil_*`
+  // permission rules, so the orchestrator and every omo-slim specialist deny the
+  // server outright. Host built-ins (`plan`, `build`) are not managed by omo-slim
+  // and see only the collapsed Code Mode catalog entry — a two-line
+  // "open-pencil (42 tools)" pointer, not the schemas. Inside `pencil` the
+  // 42-tool set is reachable through `execute` plus `search`. The app must be
+  // open with a document: without it, tool calls answer "start the app" (or time
+  // out on a wedged bridge) and the agent stops instead of retrying.
+  //
+  // Keep it cold without editing this file: `/mcps` → disconnect (per
+  // location). Disable it for every agent: add "open-pencil" to `disabled_mcps`
+  // in oh-my-opencode-slim.json.
+  "mcp": {
+    "open-pencil": {
+      "type": "local",
+      "command": ["openpencil-mcp"],
+      // Left on the host's default Code Mode on purpose. A per-server
+      // `"codemode": false` gives direct `open-pencil_<tool>` tools but the
+      // setting is server-wide, not per-agent: it would put all 42 schemas
+      // (~9.8k tokens) into every plan/build session too. In Code Mode the
+      // pencil subagent gets one catalog entry plus `search`, and a built-in
+      // session sees a two-line "open-pencil (42 tools)" pointer — measured in
+      // this host's own catalog after a config reload.
+      "environment": {
+        // The wireframe set: build, layout, components, text, verification. No
+        // variables/design-system plumbing, vectors, booleans, diff, icons,
+        // comments, settings or eval. `update_node` covers text, size and
+        // corner radius, so set_text/set_radius/node_move/node_resize stay off.
+        "OPENPENCIL_MCP_DISABLED_TOOLS": "get_selection,set_radius,set_text,node_resize,stock_photo,diff_create,diff_jsx,diff_visual,calc,viewport_zoom_to_fit,select_nodes,list_libraries,insert_library_component,page_bounds,get_comments,add_comment,reply_to_comment,resolve_comment,get_font_status,list_fonts,list_available_fonts,search_icons,insert_icon,fetch_icons,combine_as_variants,expose_instance_swap,create_slot,get_behaviour,set_behaviour,create_vector,create_slice,import_svg,set_effects,set_opacity,set_font,set_rotation,set_font_range,set_blend,set_locked,set_stroke_align,set_image_fill,node_move,flatten_nodes,node_bounds,node_ancestors,node_children,node_tree,node_bindings,node_replace_with,list_variables,list_collections,get_variable,find_variables,create_variable,set_variable,delete_variable,bind_variable,unbind_variable,get_collection,create_collection,delete_collection,boolean_union,boolean_subtract,boolean_intersect,boolean_exclude,path_get,path_set,path_scale,path_flip,path_move,viewport_get,viewport_set,export_svg,export_pdf,analyze_colors,analyze_typography,lint_fix,analyze_spacing,analyze_clusters,analyze_overlaps,diff_show,diff_apply,design_to_tokens,import_design_tokens,design_to_component_map,close_file,activate_document,get_settings,update_settings,get_codegen_prompt"
+      }
+    }
+  },
   "policies": [
     // `cmux hooks setup` unconditionally regenerates two loose V1-era plugin
     // files whose default export reuses the id of the real V2 package at

@@ -42,6 +42,11 @@ Standing preferences for projects I own.
 - **Grilling is opt-in.** `grill-me` and `grill-with-change` are separate skills (`/grill`,
   `/grill-change`), run only when I ask. Never require them before submitting a plan, and never
   inject a grilling round into an OpenSpec change on your own.
+- **Wireframes go through `@pencil`.** Screen and flow layouts, component skeletons and the text
+  that fills them are built in OpenPencil, in `docs/design/<slug>.fig`, before any `.tsx` is
+  written. `pencil` is a global subagent (every project, like OpenSpec) that returns a component
+  map; it needs the OpenPencil desktop app open with a document. Finished prototypes and visual
+  polish stay with `@designer`; React implementation with `@fixer`.
 
 ## Reuse before implementation
 

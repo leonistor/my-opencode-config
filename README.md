@@ -6,7 +6,8 @@ Global OpenCode v2 config for this machine.
 | --- | --- |
 | `opencode.jsonc` | The real config: providers, plugins, policies, permissions |
 | `cli.json` | TUI only: theme, keybinds, `attention` (notifications/sound) |
-| `oh-my-opencode-slim.json` | Model presets — each maps to one provider |
+| `oh-my-opencode-slim.json` | Model presets — each maps to one provider; top-level `agents` holds custom specialists |
+| `oh-my-opencode-slim/` | Agent prompt files (`pencil.md` is the OpenPencil wireframe agent) |
 | `model-table.ts` | Backs `/suggest-models <preset>` |
 | `commands/` | Custom slash commands |
 | `plugins/` | Local plugin workarounds (cmux, opencode-pty) |
@@ -23,6 +24,26 @@ Conventions every agent session follows in my projects — the rules themselves 
   not in chat or scratch files.
 - **Options reviewed before adoption** — package/tool research ends with candidates, trade-offs
   and a recommendation; the pick is mine, and precedes integration.
+
+### The `pencil` agent
+
+A global subagent that builds wireframes and component skeletons in OpenPencil — structure,
+hierarchy and real text from project data, not polish. It is declared in
+`oh-my-opencode-slim.json` (`agents.pencil`, model inherited from the orchestrator) with its
+prompt in `oh-my-opencode-slim/pencil.md`, and it is the only agent allowed to call the
+`open-pencil` MCP server in `opencode.jsonc`.
+
+- **Artifacts:** `docs/design/<slug>.fig` plus an exported `<slug>.png` for the visual check. The
+  component map (frame → React component → props → data source) comes back in its reply, or in
+  `docs/design/<slug>.md` when a brief asks for a persisted note.
+- **Boundaries:** `edit` is confined to `docs/design/**`. No `.tsx` output, no design-system tools,
+  no icon hunting; polish is `@designer`'s lane, implementation is `@fixer`'s.
+- **Needs** the OpenPencil desktop app open with a document. Without it the tools answer "start the
+  app" and the agent stops rather than retrying.
+- **Cost:** inside that subagent, one Code Mode catalog entry plus `search` (~2k tokens); in
+  `plan`/`build` sessions, a two-line "open-pencil (42 tools)" pointer. The orchestrator and the
+  omo-slim specialists carry nothing, because omo-slim compiles each agent's `mcps` list into
+  `open-pencil_*` denies. To keep it cold per project without editing config: `/mcps` → disconnect.
 
 ## Notifications
 

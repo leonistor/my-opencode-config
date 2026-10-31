@@ -28,7 +28,13 @@ codebase recon and external docs research are now a single lane.
 | explorer | Codebase reconnaissance plus external docs / GitHub research (read-only) | High — high volume | Fast, cheap, large context; context7 + gh_grep MCPs |
 | designer | UI/UX implementation and visual polish | Medium | UI judgment + frontend codegen; vision |
 | fixer | Scoped implementation from a concrete plan | High — high volume | Reliable coding, cheap |
+| pencil | Wireframes and component skeletons in OpenPencil, filled with real project text (custom agent, `agents.pencil`) | Medium — only while a UI is being shaped | Vision (it reads its own exported PNG) + the `open-pencil` MCP |
 | observer | Reads images/screenshots/PDFs for a non-vision orchestrator | n/a | Vision; disabled by default and configured in no preset |
+
+`pencil` names no model of its own: it sets `inheritModelFrom: "orchestrator"`, so it bills
+whatever the active preset puts on the orchestrator and `/suggest-models` shows the resolved
+model. That is deliberate — a per-preset pin would need four entries kept in sync, and the
+agent's cost sits in its OpenPencil tool surface, not in model choice.
 
 ## The `opencode-go` preset
 

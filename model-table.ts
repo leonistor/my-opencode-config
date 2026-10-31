@@ -59,7 +59,13 @@ function parseLoose(text: string): unknown {
   }
 }
 
-type AgentConfig = { model?: string | Array<string | { id: string; variant?: string }>; variant?: string };
+type AgentConfig = {
+  model?: string | Array<string | { id: string; variant?: string }>;
+  variant?: string;
+  /** Custom agents (top-level `agents`) may take their model from the preset's
+   *  orchestrator instead of naming one. */
+  inheritModelFrom?: string;
+};
 type PresetShape = { extends?: string; agents?: Record<string, AgentConfig> } & Record<string, unknown>;
 
 /** A preset is either `{ extends, agents: {...} }` or flat `{ agent: {...} }`. */
@@ -200,8 +206,16 @@ type Row = {
 // --------------------------------------------------------------------- main
 
 const rawConfig = await Bun.file(CONFIG).text();
-const config = parseLoose(rawConfig) as { preset?: string; presets?: Record<string, PresetShape> };
+const config = parseLoose(rawConfig) as {
+  preset?: string;
+  presets?: Record<string, PresetShape>;
+  agents?: Record<string, AgentConfig>;
+};
 const presets = config.presets ?? {};
+/** Top-level `agents` (custom specialists) override a preset's entries, the way
+ *  the plugin merges them. They are not part of any preset, so they are added
+ *  here rather than being invisible to the table. */
+const topAgents = config.agents ?? {};
 
 // `--preset X` wins; otherwise a leading positional that names a preset is the
 // preset (so `/suggest-models opencode-go` works); else the active preset.
@@ -235,7 +249,17 @@ for (const presetName of presetNames) {
     continue;
   }
 
-  for (const [agent, entry] of Object.entries(resolved.agents)) {
+  const agents: Record<string, AgentConfig> = { ...resolved.agents, ...topAgents };
+  // `inheritModelFrom: "orchestrator"` bills the preset's orchestrator model, so
+  // show that model rather than "(unset)".
+  const orchestrator = modelOf(agents.orchestrator ?? {});
+  for (const [name, entry] of Object.entries(agents)) {
+    if (entry.model !== undefined || entry.inheritModelFrom !== "orchestrator") continue;
+    if (orchestrator.id === "(unset)") continue;
+    agents[name] = { model: orchestrator.id, variant: orchestrator.variant };
+  }
+
+  for (const [agent, entry] of Object.entries(agents)) {
     if (filterSet && !filterSet.has(agent)) continue;
     const { id, variant } = modelOf(entry);
     const slash = id.indexOf("/");
