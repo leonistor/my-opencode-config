@@ -1,9 +1,10 @@
 # oh-my-opencode-slim: model presets and rationale
 
 Preset rationale for `~/.config/opencode/oh-my-opencode-slim.json`. The active
-preset is `opencode-go`; `opencode-perform` extends it by one tier on the
-orchestrator lane and is opt-in for demanding work. The `openrouter` and
-`openrouter-no-floor` presets are documented below as alternates.
+preset is `openrouter`: the same balance as `opencode-go` at OpenRouter floor
+prices. `opencode-go` and `opencode-perform` (one tier up on the orchestrator)
+stay documented as the subscription alternates, and `openrouter-no-floor` is the
+catalogue-priced variant of the active preset.
 
 Run `/suggest-models <preset>` (or `bun ~/.config/opencode/model-table.ts --validate <preset>`) for
 the live table with current models.dev pricing, availability, and a single-provider check.
@@ -115,9 +116,11 @@ proves stable and a measured need appears.
 
 ### Alternates, if the balance needs re-tuning
 
-- Family diversity (avoids three lanes on DeepSeek): orchestrator →
-  `glm-5.3-flash @ high` (0.15 / 0.50, cache 0.03; $60/$180). ~$5.4/week, still
-  well inside its limit.
+- Family diversity against the DeepSeek lanes: orchestrator →
+  `mimo-v2.6-pro` (0.435 / 0.87, cache 0.003625; allowance still undocumented)
+  or `minimax-m3.1-flash @ high` (0.15 / 0.60, cache 0.015; $unknown).
+  `glm-5.3-flash` was removed from this list on 2026-11-01 — see "Why
+  GLM-5.3-Flash was retired".
 - Protect oracle quality: `deepseek-v4-pro @ high` (0.66 / 1.98, cache 0.022;
   $15/$60) — 3x cheaper than Qwen3.8-Max and stronger than Qwen3.8-Flash, but
   keeps the small limit.
@@ -195,7 +198,7 @@ Orchestrator candidates on the 7-day pace (monthly):
 | `gpt-6-luna` | 0.10 / 0.50 / 0.01 | 44.8 | 21.7 | verify (tiers at 272k) |
 | `minimax-m3.1-flash` | 0.15 / 0.60 / 0.015 | 66 | 33 | verify |
 | `qwen3.8-flash` | 0.15 / 0.47 / 0.016 | 68.7 | 32.7 | $90 — 76% |
-| `glm-5.3-flash` | 0.15 / 0.50 / 0.03 | 114 | 51 | $180 — 63% |
+| `glm-5.3-flash` | 0.15 / 0.50 / 0.03 | 114 | 51 | $180 — 63% (retired for reliability, 2026-11-01) |
 | `deepseek-v4-pro` | 0.66 / 1.98 / 0.022 | **145.6** | 62 | $60 — 2.4× over |
 
 Read the cache-read column, not the headline price. `claude-haiku-5-5` is the
@@ -239,6 +242,37 @@ and on 2026-10-29 they did not reconcile with the meter at all (5h 57% / weekly
 meter does not reconcile with dollars" above. Size presets by the price vector,
 then watch the usage API.
 
+## Why GLM-5.3-Flash was retired (2026-11-01)
+
+`z-ai/glm-5.3-flash` carried `openrouter`'s explorer and fixer lanes and
+`openrouter-no-floor`'s orchestrator, designer and fixer. It was removed for
+reliability, not price:
+
+1. **The highest-volume lane was the documented broken pair.** `openrouter` →
+   explorer ran `glm-5.3-flash:floor @ low` — the exact combination recorded
+   under Gotchas: an unbounded `— (stop) — end. — final.` loop, or empty output.
+   Measured on `synthetic`, GLM-5.3-Flash `@low` shows 58% errored steps, 21%
+   `finish: length` and a 531s median per step. `@high` is healthy; `@low` is not.
+2. **`:floor` put it on the fp4 pool.** The model has 40 eligible endpoints and
+   the two cheapest (Relace, OpenInference, 0.0103–0.0108/M input) are fp4. The
+   fixer lane's recorded failures are that pool: `Upstream error from
+   OpenInference: HTTP 429` plus four `Upstream idle timeout exceeded` inside 40
+   minutes on 2026-10-25/26. Median step on the floor lane is **9.0s** versus
+   **3.6s** on the plain route.
+3. **Its price edge vanished.** The 2026-10-22 check recorded 0.0052 / 0.1985;
+   live OpenRouter now lists **0.0103 / 0.1702** (cache = input), models.dev
+   says 0.0163 / 0.1402 / 0.0163, and 30 days of recorded fixer spend implies
+   ~0.0155/M cache — roughly 1.5–3x DeepSeek's floor rate. The old "cheapest
+   1M-context model with vision" claim no longer holds.
+4. **The replacement is the best-evidenced model in this repo.**
+   `deepseek/deepseek-v4.1-flash` recorded **2 errored steps out of 4,968** on
+   Go (0.04%) and 0.8% on the OpenRouter floor lane, with 1M context, vision,
+   and a `none|low|high|max` ladder whose `@low` is explicitly known to work.
+
+The swap costs about **−$4/mo** in real billing on the active preset (~−$26/mo
+against the declared floor rates). Every lane involved is a $2–27/mo line, so
+reliability decided it, not the price vector.
+
 ## The `openrouter` preset (all `:floor`)
 
 Same balance as `opencode-go`, but every model uses OpenRouter's
@@ -252,12 +286,18 @@ in models.dev, so they are declared in `opencode.jsonc`; OpenCode cannot see a
 | --- | --- | --- | --- | --- |
 | orchestrator | `openrouter/deepseek/deepseek-v4.1-flash:floor` | `high` | 0.004 / 0.72 (cache 0.005) | Highest-token lane; 1M ctx, vision, ~1/37th the input cost of the `opencode-go` orchestrator at floor routing. |
 | oracle | `openrouter/z-ai/glm-5.3:floor` | `high` | 0.11 / 6.00 | Rare read-only reasoning lane; floor makes GLM-5.3's input cheap enough to afford. |
-| explorer | `openrouter/z-ai/glm-5.3-flash:floor` | `low` | 0.15 / 0.50 | High-volume scouting and external docs research; 1M ctx, vision; carries context7 + gh_grep MCPs. |
-| designer | `openrouter/minimax/minimax-m3:floor` | `medium` | 0.30 / 1.20 | Mid-cheap designer grade. |
-| fixer | `openrouter/z-ai/glm-5.3-flash:floor` | `high` | 0.15 / 0.50 | Scoped implementation; the lane where cheap is safest. |
+| explorer | `openrouter/deepseek/deepseek-v4.1-flash:floor` | `low` | 0.004 / 0.72 (cache 0.005) | High-volume scouting and external docs research; 1M ctx, vision, carries context7 + gh_grep MCPs, and its `@low` is a proven-safe effort trim (unlike GLM's). |
+| designer | `openrouter/minimax/minimax-m3.1-flash:floor` | `medium` | 0.05 / 0.20 (cache 0.005) | Mid-cheap designer grade. The M3.1 successor is cheaper than M3 on all three rates and carries a `low→max` ladder; floor lands on Tenstorrent (fp8, 1M ctx). |
+| fixer | `openrouter/deepseek/deepseek-v4.1-flash:floor` | `high` | 0.004 / 0.72 (cache 0.005) | Scoped implementation; same proven cheap volume profile as explorer, now on the lane where a broken step costs the most. |
 
 Observer stays disabled and unconfigured — the orchestrator model is
 vision-capable.
+
+Three lanes share DeepSeek V4.1 Flash. That concentration is deliberate: it is
+the only family with both a measured 0% error rate and a working effort ladder
+at this price, and every lane's chain ends on a cross-family model (see below).
+The oracle remains on Z.ai because GLM-5.3 `@high` is a reasoning model, not the
+Flash variant that failed.
 
 ### Failover chains
 
@@ -269,9 +309,9 @@ only `:floor` does:
 | --- | --- |
 | orchestrator | `deepseek-v4.1-flash:floor` `high` → `deepseek-v4.1-flash` `high` → `qwen3.8-flash` |
 | oracle | `glm-5.3:floor` `high` → `glm-5.3` `high` → `qwen3.8-flash` |
-| explorer | `glm-5.3-flash:floor` `low` → `glm-5.3-flash` `low` → `mimo-v2.6-flash` |
-| designer | `minimax-m3:floor` `medium` → `minimax-m3` → `qwen3.8-flash` |
-| fixer | `glm-5.3-flash:floor` `high` → `glm-5.3-flash` `high` → `deepseek-v4.1-flash` `high` |
+| explorer | `deepseek-v4.1-flash:floor` `low` → `deepseek-v4.1-flash` `low` → `mimo-v2.6-flash` |
+| designer | `minimax-m3.1-flash:floor` `medium` → `minimax-m3.1-flash` `medium` → `qwen3.8-flash` |
+| fixer | `deepseek-v4.1-flash:floor` `high` → `deepseek-v4.1-flash` `high` → `qwen3.8-flash` |
 
 The pattern is floor primary → same model plain (identical capability, real price
 known) → cheap cross-family model for a model-wide failure. Behaviour comes from
@@ -285,13 +325,18 @@ Caveats:
 - All entries share the `openrouter` provider ID, so a dead key or spent
   OpenRouter allowance skips the remaining entries. Only a cross-provider entry
   would cover that, and it would break the single-provider rule.
-- Set `variant` only where the model declares effort levels. `qwen3.8-flash`,
-  `mimo-v2.6-flash`, and `minimax-m3` expose toggle/budget reasoning, so their
-  chain entries carry no variant.
-- Plain fallback prices (live OpenRouter, per M): DeepSeek 0.30 / 1.20
-  (cache 0.006) · GLM-5.3-Flash 0.0052 / 0.1985 (cache 0.0052) · GLM-5.3 0.70 /
-  2.20 (cache 0.13) · Qwen3.8-Flash 0.15 / 0.47 (cache 0.016) · MiMo-V2.6-Flash
-  0.14 / 0.28 (cache 0.0028). They bill only when a fallback actually runs.
+- Set `variant` only where the model declares effort levels. `qwen3.8-flash` and
+  `mimo-v2.6-flash` expose toggle/budget reasoning, so their chain entries carry
+  no variant (`minimax-m3`, the previous designer pick, did the same);
+  `minimax-m3.1-flash` declares `low|medium|high|xhigh|max` and so does carry
+  `medium`.
+- Plain fallback prices (snapshot 2026-11-01, per M): DeepSeek V4.1 Flash 0.045
+  / 0.50 (cache 0.006) · GLM-5.3 0.0699 / 1.40 (cache 0.0689) ·
+  MiniMax-M3.1-Flash 0.15 / 0.60 (cache 0.015) · Qwen3.8-Flash 0.15 / 0.47
+  (cache 0.016) · MiMo-V2.6-Flash 0.14 / 0.28 (cache 0.0028). They bill only
+  when a fallback actually runs. These move — re-read models.dev before trusting
+  a comparison older than a few weeks; GLM-5.3-Flash went from 0.0052 / 0.1985
+  to 0.0103 / 0.1702 in six weeks.
 - `model-table.ts` prints the primary only; the chain lives in the JSON.
 
 ### OpenRouter gotchas
@@ -302,19 +347,29 @@ Caveats:
   one under `providers.openrouter.models` in `opencode.jsonc` with `modelID`,
   `name`, `capabilities`, `limit`, and `cost`. A floor model with no declaration
   is invisible to `/suggest-models`.
-- Declared models expose `low|medium|high` variants; reasoning `effort` is
-  accepted by the floor endpoints at every level.
+- Declared models expose the effort ladder of the model behind them; it is not
+  universal. `deepseek-v4.1-flash` goes `none|low|high|max`,
+  `minimax-m3.1-flash` `low|medium|high|xhigh|max`, `glm-5.3-flash`
+  `low|high|max`, `qwen3.8-flash` and `mimo-v2.6-flash` are toggle-only. The
+  host rejects a variant the model does not declare.
 - The declared `cost` values drive OpenCode's own cost accounting — keep them in
-  sync with the real floor price when it changes. A 2026-10-22 check of
-  `GET /api/v1/models/{id}/endpoints` found `z-ai/glm-5.3-flash` cheapest at
-  0.0052 / 0.1985 (cache 0.0052), far below the declared `:floor` rate, while
-  `deepseek/deepseek-v4.1-flash` input is declared below the cheapest standard
-  endpoint (0.07). Floor can undercut standard endpoints via its flex tier, but
-  a floor declaration *above* the cheapest eligible endpoint means local cost
-  accounting is overstating spend — re-check both before trusting preset cost
+  sync with the real floor price when it changes. A 2026-11-01 check of
+  `GET /api/v1/models/{id}/endpoints` found `minimax-m3.1-flash` cheapest at
+  0.05 / 0.20 (cache 0.005) on Tenstorrent (fp8, 1M ctx) — where it is declared —
+  while `deepseek/deepseek-v4.1-flash` is declared at 0.004 / 0.72 against a
+  cheapest standard endpoint of 0.0085 / 0.5451 (cache 0.006): floor can
+  undercut standard endpoints via its flex tier, so a declaration slightly below
+  them is expected. `glm-5.3-flash` is the opposite case — declared at
+  0.15 / 0.50 / 0.03 against a live 0.0103 / 0.1702, which overstated every
+  recorded GLM lane ~1.5x. Re-check both before trusting preset cost
   comparisons.
 - `:floor` picks the cheapest *eligible* provider, so throughput/latency varies
-  by request; it is a cost lever, not a quality lever.
+  by request; it is a cost lever, not a quality lever, and "cheapest eligible"
+  often means the most aggressive quantization from the smallest provider. The
+  retired GLM-5.3-Flash lane is the proof: 40 endpoints, the two cheapest fp4,
+  and the only upstream failures on the whole preset — `HTTP 429` and four idle
+  timeouts in 40 minutes. A flaky floor lane is a routing problem first, a model
+  problem second: if a replacement still fails, drop that lane to its plain ID.
 
 ## The `openrouter-no-floor` preset
 
@@ -325,16 +380,17 @@ large context on the orchestrator and a vision-capable designer.
 
 | Agent | Model | Variant | In/Out (per M) | Why |
 | --- | --- | --- | --- | --- |
-| orchestrator | `openrouter/z-ai/glm-5.3-flash` | `high` | 0.0052 / 0.1985 (cache 0.0052) | Cheapest model in the catalogue with 1M context *and* vision, and it wins on every recorded lane mix: 29x cheaper input than DeepSeek V4.1 Flash. No context-tier pricing. |
-| oracle | `openrouter/deepseek/deepseek-v4-pro` | `high` | 0.4427 / 0.8853 (cache 0.0369) | Flagship MoE for the rare reasoning lane — cheaper than the old `GLM-5.3` pick (0.70 / 2.20 / cache 0.13) while staying a tier above Flash. 1M ctx. |
-| explorer | `openrouter/deepseek/deepseek-v4-flash-0731` | `low` | 0.0444 / 0.1333 (cache 0.0014) | Cheapest cache read of any 1M model ($0.0014/M) — the rate that governs recon. A coin flip with GLM-5.3-Flash on today's mix; wins as sessions lengthen. Text-only is fine, the orchestrator reads images. |
-| designer | `openrouter/z-ai/glm-5.3-flash` | `high` | 0.0052 / 0.1985 (cache 0.0052) | Vision + 1M ctx at the lowest rate in the catalogue. Image input is the hard requirement here. |
-| fixer | `openrouter/z-ai/glm-5.3-flash` | `high` | 0.0052 / 0.1985 (cache 0.0052) | At the 17:1 cache-to-input ratio these lanes run at, GLM is ~2.4x cheaper than `deepseek-v4.1-flash-1017`; DeepSeek only wins past ~590M cache tokens per 6M input. |
+| orchestrator | `openrouter/deepseek/deepseek-v4.1-flash` | `high` | 0.045 / 0.50 (cache 0.006) | Highest-token lane; 1M ctx, vision, `none|low|high|max`, and the family with the measured 0% error rate. Was `glm-5.3-flash` until 2026-11-01. |
+| oracle | `openrouter/deepseek/deepseek-v4-pro` | `high` | 1.60 / 3.20 (cache 0.135) | Flagship MoE for the rare reasoning lane — a tier above Flash while staying text-cheap on a lane that runs 27M cache tokens a month. 1M ctx. |
+| explorer | `openrouter/deepseek/deepseek-v4.1-flash` | `low` | 0.045 / 0.50 (cache 0.006) | Cheapest recon on the per-token mix ($1.17/mo against $2.73 for the previous `v4-flash-0731` pick) and it gains vision. Text-only was never a requirement — the orchestrator reads images. |
+| designer | `openrouter/xiaomi/mimo-v2.6-flash` | — (toggle-only) | 0.14 / 0.28 (cache 0.0028) | Vision + 1.05M ctx at the **lowest cache rate in the catalogue** ($0.0028/M), and the one cross-family lane left in the preset. No effort ladder, so no `variant` — that is also why it cannot degenerate the way GLM `@low` did. |
+| fixer | `openrouter/deepseek/deepseek-v4.1-flash` | `high` | 0.045 / 0.50 (cache 0.006) | Scoped implementation on the same proven profile as the orchestrator. At the ~25:1 cache-to-input ratio this lane runs at, cache rate decides the bill: 0.006 beats MiMo's output rate edge. |
 
-Projected on the recorded OpenRouter volumes: **$2.83** versus **$9.83** at the
-`openrouter` preset's declared floor rates, and **$4.11** at live
-cheapest-endpoint rates (≈31% below the real current cost). All five lanes get
-1,049k context; orchestrator, designer, and fixer are vision-capable.
+Projected on the 30-day lane mix used throughout this file: **~$33/mo**
+(orchestrator 14.40 · oracle 9.47 · explorer 1.17 · designer 2.46 · fixer 5.91).
+The previous revision's $2.83 figure is not comparable: it used a smaller
+recorded volume set and a GLM-5.3-Flash price that has since doubled. All five
+lanes get 1,049k+ context; orchestrator, designer, and fixer are vision-capable.
 
 **Excluded despite low headline prices:**
 
@@ -344,14 +400,17 @@ cheapest-endpoint rates (≈31% below the real current cost). All five lanes get
 - `openai/gpt-6-luna` tiers at 272k; `openrouter/free` is 200k ctx with an
   unvetted free router behind it.
 
-**Concentration:** three lanes share `GLM-5.3-Flash`, so a Z.ai regression hits
-most of the preset. Cheapest diversification: designer → `xiaomi/mimo-v2.6-flash`
-(1.05M, vision, 0.14 / 0.28 / cache 0.0028) or explorer → `z-ai/glm-5.3-flash`
-(removes the second family but is marginally cheaper today). If orchestration
-judgment suffers, orchestrator → `deepseek-v4.1-flash-1017` (+$0.89 on the
-recorded mix). If fixer quality suffers, `deepseek-v4.1-flash-1017 @ high`
-(+$1.06). No fallback chains are configured in this preset — add a second entry
-per lane if you want cross-family failover.
+**Concentration:** four of the five lanes are DeepSeek (`v4.1-flash` ×3,
+`v4-pro` ×1); only the designer runs a second family. That is the cost of the
+2026-11-01 retirement — the replacement for GLM is the model with the measured
+reliability record, not the most diverse one. The mitigation is that this preset
+carries **no fallback chains**, so add one per lane if you want cross-family
+failover; the documented pattern is floor → plain same model → cheap
+cross-family (the `openrouter` preset's chains are the template). If
+orchestration judgment suffers, orchestrator → `deepseek-v4.1-flash-1017`
+(pinned snapshot, +$1.3/mo on this mix). If fixer quality suffers, the same
+switch costs +$1.6/mo there. Designer has no DeepSeek fallback by design: vision
+is a hard requirement on that lane.
 
 ## Gotchas (variants)
 
@@ -362,10 +421,12 @@ per lane if you want cross-family failover.
   not the models.dev headline. Haiku's cache read goes 0.01 → 0.05 and its
   output 0.50 → 2.50, which is why it is a designer-only pick here.
 - `variant` must exist for the model:
-  - DeepSeek-V4.1-Flash: `none|low|high|xhigh|max`
+  - DeepSeek-V4.1-Flash: `none|low|high|max`
+  - MiniMax-M3.1-Flash: `low|medium|high|xhigh|max`;
+    MiniMax-M3 / Nemotron-3-Super / gpt-oss-120b: `low|medium|high`
   - GLM-5.3 / GLM-5.3-Flash / Kimi-K3: `low|high|max`
-  - MiniMax-M3 / Nemotron-3-Super / gpt-oss-120b: `low|medium|high`
   - Qwen3.6-27B: `none|low|medium|high`; GLM-4.7-Flash: none listed
+  - Qwen3.8-Flash and MiMo-V2.6-Flash are toggle-only — set no `variant`
 - **A valid `variant` is not a working `variant`.** `GLM-5.3-Flash @ low`
   satisfies the schema but produces no content — it degenerates into an
   unbounded `— (stop) — end. — final.` reasoning loop (aborted by the provider
@@ -374,7 +435,8 @@ per lane if you want cross-family failover.
   property of the model/variant pair, not of any agent: the same model at `high`
   is fine, and `DeepSeek-V4.1-Flash @ low` is fine. It is invisible in cost
   reports because these models report zero reasoning tokens — the loop shows up
-  as `tokens_output`. Canary a cheap Z.ai variant before trusting a lane to it.
+  as `tokens_output`. This is the failure that got GLM-5.3-Flash retired (see
+  above). Canary any new cheap variant before trusting a lane to it.
 
 ## Tooling
 

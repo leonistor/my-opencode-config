@@ -254,6 +254,26 @@
             "cache": { "read": 0.06 },
           },
         },
+        // Declared at the cheapest eligible endpoint (Tenstorrent, fp8, 1M
+        // context). The plain catalogue model is 0.15 / 0.60 / cache 0.015;
+        // floor routes below it, so a declaration at the plain rate would
+        // overstate this lane ~3x. Re-check against
+        // GET /api/v1/models/minimax/minimax-m3.1-flash/endpoints when it moves.
+        "minimax/minimax-m3.1-flash:floor": {
+          "modelID": "minimax/minimax-m3.1-flash:floor",
+          "name": "MiniMax-M3.1-Flash (:floor)",
+          "capabilities": {
+            "tools": true,
+            "input": ["text", "image", "video"],
+            "output": ["text"],
+          },
+          "limit": { "context": 1048576, "output": 524288 },
+          "cost": {
+            "input": 0.05,
+            "output": 0.2,
+            "cache": { "read": 0.005 },
+          },
+        },
       },
     },
     "opencode-go": {},

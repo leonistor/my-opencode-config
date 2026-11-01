@@ -114,11 +114,11 @@
       "explorer": {
         "model": [
           {
-            "id": "openrouter/z-ai/glm-5.3-flash:floor",
+            "id": "openrouter/deepseek/deepseek-v4.1-flash:floor",
             "variant": "low"
           },
           {
-            "id": "openrouter/z-ai/glm-5.3-flash",
+            "id": "openrouter/deepseek/deepseek-v4.1-flash",
             "variant": "low"
           },
           {
@@ -132,11 +132,12 @@
       "designer": {
         "model": [
           {
-            "id": "openrouter/minimax/minimax-m3:floor",
+            "id": "openrouter/minimax/minimax-m3.1-flash:floor",
             "variant": "medium"
           },
           {
-            "id": "openrouter/minimax/minimax-m3"
+            "id": "openrouter/minimax/minimax-m3.1-flash",
+            "variant": "medium"
           },
           {
             "id": "openrouter/qwen/qwen3.8-flash"
@@ -149,16 +150,15 @@
       "fixer": {
         "model": [
           {
-            "id": "openrouter/z-ai/glm-5.3-flash:floor",
-            "variant": "high"
-          },
-          {
-            "id": "openrouter/z-ai/glm-5.3-flash",
+            "id": "openrouter/deepseek/deepseek-v4.1-flash:floor",
             "variant": "high"
           },
           {
             "id": "openrouter/deepseek/deepseek-v4.1-flash",
             "variant": "high"
+          },
+          {
+            "id": "openrouter/qwen/qwen3.8-flash"
           }
         ],
         "variant": "high",
@@ -168,7 +168,7 @@
     },
     "openrouter-no-floor": {
       "orchestrator": {
-        "model": "openrouter/z-ai/glm-5.3-flash",
+        "model": "openrouter/deepseek/deepseek-v4.1-flash",
         "variant": "high",
         "skills": ["*"],
         "mcps": ["*", "!context7", "!open-pencil"]
@@ -180,19 +180,18 @@
         "mcps": []
       },
       "explorer": {
-        "model": "openrouter/deepseek/deepseek-v4-flash-0731",
+        "model": "openrouter/deepseek/deepseek-v4.1-flash",
         "variant": "low",
         "skills": [],
         "mcps": ["context7", "gh_grep"]
       },
       "designer": {
-        "model": "openrouter/z-ai/glm-5.3-flash",
-        "variant": "high",
+        "model": "openrouter/xiaomi/mimo-v2.6-flash",
         "skills": [],
         "mcps": []
       },
       "fixer": {
-        "model": "openrouter/z-ai/glm-5.3-flash",
+        "model": "openrouter/deepseek/deepseek-v4.1-flash",
         "variant": "high",
         "skills": [],
         "mcps": []
