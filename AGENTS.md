@@ -45,8 +45,10 @@ Standing preferences for projects I own.
 - **Wireframes go through `@pencil`.** Screen and flow layouts, component skeletons and the text
   that fills them are built in OpenPencil, in `docs/design/<slug>.fig`, before any `.tsx` is
   written. `pencil` is a global subagent (every project, like OpenSpec) that returns a component
-  map; it needs the OpenPencil desktop app open with a document. Finished prototypes and visual
-  polish stay with `@designer`; React implementation with `@fixer`.
+  map; it needs the OpenPencil desktop app open with a document. The `open-pencil` MCP ships
+  **disabled** — enable it for the session (`/mcps` → connect, or `"enabled": true` in the
+  project's config) before delegating, and leave it off afterwards. Finished prototypes and
+  visual polish stay with `@designer`; React implementation with `@fixer`.
 
 ## Reuse before implementation
 

@@ -27,11 +27,20 @@
     "explore": { "disabled": true },
     "general": { "disabled": true },
   },
-  // OpenPencil design tooling, global so the `pencil` subagent
-  // (oh-my-opencode-slim.json → agents.pencil) works in every project, the way
-  // OpenSpec does. The stdio bridge discovers the running desktop app and
-  // scopes file operations to the workspace (OPENPENCIL_MCP_ROOT defaults to
-  // cwd), so a session edits the .fig inside its own project and nothing else.
+  // OpenPencil design tooling for the `pencil` subagent
+  // (oh-my-opencode-slim.json → agents.pencil). The stdio bridge discovers the
+  // running desktop app and scopes file operations to the workspace
+  // (OPENPENCIL_MCP_ROOT defaults to cwd), so a session edits the .fig inside its
+  // own project and nothing else.
+  //
+  // Shipped OFF by default: design work is the exception, not the rule, and the
+  // entry otherwise spawns a bridge process in every session. Turn it on where
+  // it is actually needed, without editing this file:
+  //   - per session/location: `/mcps` → open-pencil → connect
+  //   - per project: add `"mcp": { "open-pencil": { "enabled": true } }` to that
+  //     project's opencode config (merged over this entry, so command/env stay).
+  // The permanent off-switch for every agent is "open-pencil" in `disabled_mcps`
+  // in oh-my-opencode-slim.json; that one is not meant to be toggled.
   //
   // Context: omo-slim compiles each agent's `mcps` list into `open-pencil_*`
   // permission rules, so the orchestrator and every omo-slim specialist deny the
@@ -41,13 +50,10 @@
   // 42-tool set is reachable through `execute` plus `search`. The app must be
   // open with a document: without it, tool calls answer "start the app" (or time
   // out on a wedged bridge) and the agent stops instead of retrying.
-  //
-  // Keep it cold without editing this file: `/mcps` → disconnect (per
-  // location). Disable it for every agent: add "open-pencil" to `disabled_mcps`
-  // in oh-my-opencode-slim.json.
   "mcp": {
     "open-pencil": {
       "type": "local",
+      "enabled": false,
       "command": ["openpencil-mcp"],
       // Left on the host's default Code Mode on purpose. A per-server
       // `"codemode": false` gives direct `open-pencil_<tool>` tools but the
