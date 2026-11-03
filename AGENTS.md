@@ -134,13 +134,38 @@ Load a skill with the built-in `skill` tool before starting matching work:
 - `skill(name="jevgrep")` — plain load
 - `skill(name="shadcn")` — with optional `context` describing the task
 
-<!-- plannotator-inbox:start v1 · added by Plannotator. Remove it in the Inbox's Settings or with `plannotator uninstall` -->
+<!-- plannotator-inbox:start v8 · added by Plannotator. Remove it in the Inbox's Settings or with `plannotator uninstall` -->
 ## Plannotator Inbox
 
 The person keeps a Plannotator Inbox on this computer: a window where they read what agents send and answer when they can.
-If you have a `plannotator_inbox` tool or a `plannotator-inbox` MCP server, use its `send_message` when the person isn't here to answer in this chat: to ask a decision only they can make (as a `:::question` block), or to hand over finished long work (put the files to read in `attachments`). Then keep working.
-Their reply comes back to this session by itself where your agent supports that; otherwise call `wait_for_reply`. When they are here, ask in this chat instead.
+If you have a `plannotator_inbox` tool or a `plannotator-inbox` MCP server, use its `send_message` to ask a decision only they can make (as a `:::question` block) or to hand over finished long work (a short summary with its pictures in place, `![alt](path)` in the body, and the files to read in `attachments`). Then keep working.
+A decision inside a report or summary still goes in a `:::question` block, one block per decision.
+Their reply comes back to this session by itself where your agent supports that; otherwise read the thread later with `read_thread`.
+Be proactive about Inbox updates and about replying to the person through the Inbox when you think they would want you to. Don't withhold important updates or decisions, and don't batch updates to send later: proactivity is better than procrastination.
+One thread per work stream, unless the person says otherwise.
+A decision you sent to the Inbox stays there. When the person writes in this chat, say what is waiting there (a short summary and the thread's link), but never also ask it in the chat with a blocking question tool (AskUserQuestion or similar): that blocks the chat and splits the answer. Ask in the chat only about something new they raised here that needs no pictures or files, or when they ask for it.
+Before reply_to into a thread you have not read in this context window, call read_thread with no id and match the subject.
+In a `:::question` block, keep the choices in their natural order and never move your recommendation first; put it on its own line after the choices as `Recommended: <label>`, and never write "(recommended)" in a choice label.
 <!-- plannotator-inbox:end -->
+
+## Plannotator: my intent (2026-11-03)
+
+The managed block above is upstream's and is rewritten as releases land (v1 → v8 in nine days).
+This section is mine and outlives it — where the two differ, this one wins.
+
+- **A decision is a choice between artefacts, paths, scopes, layouts, languages, dependencies,
+  orderings, or what "done" means.** It goes to the Inbox every time, whether I am in the chat or
+  not. Chat is for what I raise there, a one-line factual check, and status.
+- **An attachment is evidence, never the place the question lives.** Hand over finished work with
+  the ask as a `:::question` in the message body; pictures go inline where you write about them.
+- **At most four questions per message** (the tool allows about eight). More than that is two sends.
+- **A 👍 is "read it", never an instruction.** It never authorises a commit, push, delete, deploy or
+  publish; an action still pending gets one line, in the same thread, and waits for words.
+- **What only I can do outside this conversation is a `:::action` item**, with the command in a
+  fenced block: approve a deploy, sign in, touch a security key, merge a PR you cannot merge. A
+  choice is still a `:::question`; a status update is neither.
+- **Never infer a commit or a push.** Explicit words only — not a reaction, not a "looks good" on
+  adjacent work, not silence.
 
 ## Plannotator: what we learned (2026-10)
 
@@ -188,6 +213,13 @@ up and testing it for a brainstorm session; they apply whatever host you are on.
 - The setup recipe — global plugin plus `~/.plannotator/config.json` — is in `README.md` §Plannotator.
   If `plannotator_inbox` is not in your tool list, this host is not wired for it — report it and run
   the recipe under "send protocol + wiring self-check" below; never go without silently.
+- **The managed block is the CLI's, not the plugin's.** `plannotator` writes it at Inbox start and
+  brings an untouched earlier block up to the current version; the text went v1 → v8 in nine days.
+  A block edited by hand is pinned and never refreshed, so house rules go below the markers.
+- **`wait_for_reply` is gone (0.28.46+).** `plannotator_inbox` answers `action_removed`; a reply
+  arrives by itself once the session is idle, and a missed one is read back with `read_thread`.
+  `supersedes` withdraws questions that no longer apply; `resolve_message` archives a thread only
+  when nothing in it is left to read or answer.
 
 ## Plannotator: send protocol + wiring self-check (2026-10-27)
 
@@ -196,11 +228,13 @@ How every session on this machine uses the Inbox. The plugin's injected line say
 - **Never send silently.** After every `plannotator_inbox` send (`send_message`, `submit_guide`), put
   exactly one line in the chat before the turn ends:
 
-  `Inbox: <subject> — <url> — <what was asked or handed over>; <blocked: … | going on with …>`
+  `Inbox: <subject> — <url> — <what was asked or handed over>; <waiting on: … | going on with: …>`
 
-  The URL is the `url` field of the send result (for a later reference in the same thread without a
-  new send, `read_thread` returns it). Link it as-is; never invent one, never drop it, no other
-  commentary. This closes the loop: the chat always shows where the question lives.
+  Most sends are both: name what waits on the answer *and* what continues without it. "Nothing
+  continues" is a valid answer; omitting the waiting half is not. The URL is the `url` field of the
+  send result (for a later reference in the same thread without a new send, `read_thread` returns
+  it). Link it as-is; never invent one, never drop it, no other commentary. This closes the loop:
+  the chat always shows where the question lives.
 - **Check the wiring, never go without.** Before the first Inbox send or a plan review in a session,
   confirm `plannotator_inbox` (and, when a plan is about to end, `submit_plan`) is in your tool list.
   If it is missing, that is a fault to report in the chat — with the recipe, never a silent skip:

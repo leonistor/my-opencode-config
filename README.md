@@ -70,14 +70,36 @@ open a fresh session and confirm `plannotator_inbox` + `submit_plan` before call
 Usage rules (one-line pointer after every Inbox send; wiring self-check) and findings:
 `AGENTS.md` § Plannotator.
 
+### Two halves, upgraded together
+
+The CLI (`plannotator`, from the install script) serves the Inbox and writes the
+`plannotator-inbox` block in `AGENTS.md`; the OpenCode plugin (`@plannotator/opencode`) provides the
+`plannotator_inbox` tool and the plan-review hook, and is resolved from npm on its own schedule. A
+mismatch leaves a tool talking to a server of another version — e.g. 0.28.46 removed
+`wait_for_reply` from the tool while an older Inbox still documents it.
+
+```sh
+plannotator update                 # CLI + Inbox server
+plannotator inbox restart          # loads the new server; refreshes the AGENTS.md block
+plannotator inbox status           # URL, pid, version the Inbox actually runs
+opencode plugin update @plannotator/opencode  # tool schema + plan review
+opencode plugin check
+opencode service restart           # drops live sessions: run it when convenient
+```
+
+`inbox status` calls out a running Inbox whose version differs from `plannotator`. The managed
+block is refreshed only while it is byte-identical to an earlier version; a block edited by hand is
+pinned, so house rules belong below the markers. 0.28.48 adds an anonymous daily ping, on by
+default: set `NO_ANON_PING=1` in the environment that starts Plannotator to turn it off.
+
 ### Upstream status (draft — not filed; no `gh` on this machine)
 
 For the GitHub web UI (backnotprop/plannotator):
 
 1. ~~**Configurable reminder line.**~~ **Shipped in 0.28.30.** `~/.plannotator/config.json` now takes
    `prompts.inbox.reminder` (string) or `prompts.inbox.runtimes.<host>.reminder`, and
-   `inboxReminder` turns the injected line off. Ours is set to a pointer at `AGENTS.md` § Plannotator:
-   send protocol + wiring self-check.
+   `inboxReminder` turns the injected line off. Ours points at `AGENTS.md` § Plannotator: my intent,
+   then the send protocol + wiring self-check.
 2. **Pointer-by-default in send results.** `send_message` results already carry the thread `url`,
    but agents silently drop it; an instruction line in the result text ("end your turn with
    `Inbox: <subject> — <url>`") would make the pointer default on every host.
