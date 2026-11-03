@@ -1,25 +1,36 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
-  "preset": "openrouter",
+  "preset": "opencode-go",
   "presets": {
     "opencode-go": {
       "orchestrator": {
         "model": "opencode-go/deepseek-v4.1-flash",
         "variant": "high",
-        "skills": ["*"],
-        "mcps": ["*", "!context7", "!open-pencil"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*",
+          "!context7",
+          "!open-pencil"
+        ]
       },
       "oracle": {
         "model": "opencode-go/deepseek-v4-pro",
         "variant": "max",
-        "skills": ["simplify"],
+        "skills": [
+          "simplify"
+        ],
         "mcps": []
       },
       "explorer": {
         "model": "opencode-go/muse-spark-1.3-contributor",
         "variant": "low",
         "skills": [],
-        "mcps": ["context7", "gh_grep"]
+        "mcps": [
+          "context7",
+          "gh_grep"
+        ]
       },
       "designer": {
         "model": "opencode-go/claude-haiku-5-5",
@@ -46,20 +57,31 @@
       "orchestrator": {
         "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
         "variant": "high",
-        "skills": ["*"],
-        "mcps": ["*", "!context7", "!open-pencil"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*",
+          "!context7",
+          "!open-pencil"
+        ]
       },
       "oracle": {
         "model": "synthetic/hf:zai-org/GLM-5.3",
         "variant": "high",
-        "skills": ["simplify"],
+        "skills": [
+          "simplify"
+        ],
         "mcps": []
       },
       "explorer": {
         "model": "synthetic/hf:deepseek-ai/DeepSeek-V4.1-Flash",
         "variant": "low",
         "skills": [],
-        "mcps": ["context7", "gh_grep"]
+        "mcps": [
+          "context7",
+          "gh_grep"
+        ]
       },
       "designer": {
         "model": "synthetic/hf:zai-org/GLM-5.3-Flash",
@@ -90,8 +112,14 @@
           }
         ],
         "variant": "high",
-        "skills": ["*"],
-        "mcps": ["*", "!context7", "!open-pencil"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*",
+          "!context7",
+          "!open-pencil"
+        ]
       },
       "oracle": {
         "model": [
@@ -108,7 +136,9 @@
           }
         ],
         "variant": "high",
-        "skills": ["simplify"],
+        "skills": [
+          "simplify"
+        ],
         "mcps": []
       },
       "explorer": {
@@ -127,7 +157,10 @@
         ],
         "variant": "low",
         "skills": [],
-        "mcps": ["context7", "gh_grep"]
+        "mcps": [
+          "context7",
+          "gh_grep"
+        ]
       },
       "designer": {
         "model": [
@@ -170,20 +203,31 @@
       "orchestrator": {
         "model": "openrouter/deepseek/deepseek-v4.1-flash",
         "variant": "high",
-        "skills": ["*"],
-        "mcps": ["*", "!context7", "!open-pencil"]
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*",
+          "!context7",
+          "!open-pencil"
+        ]
       },
       "oracle": {
         "model": "openrouter/deepseek/deepseek-v4-pro",
         "variant": "high",
-        "skills": ["simplify"],
+        "skills": [
+          "simplify"
+        ],
         "mcps": []
       },
       "explorer": {
         "model": "openrouter/deepseek/deepseek-v4.1-flash",
         "variant": "low",
         "skills": [],
-        "mcps": ["context7", "gh_grep"]
+        "mcps": [
+          "context7",
+          "gh_grep"
+        ]
       },
       "designer": {
         "model": "openrouter/xiaomi/mimo-v2.6-flash",
@@ -200,11 +244,12 @@
   },
   "agents": {
     "pencil": {
-      "displayName": "pencil",
       "description": "Builds OpenPencil wireframes and component skeletons, filled with text from project data",
       "inheritModelFrom": "orchestrator",
       "skills": [],
-      "mcps": ["open-pencil"],
+      "mcps": [
+        "open-pencil"
+      ],
       "permission": {
         "edit": {
           "*": "deny",
