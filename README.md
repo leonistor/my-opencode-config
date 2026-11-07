@@ -6,7 +6,7 @@ Global OpenCode v2 config for this machine.
 | --- | --- |
 | `opencode.jsonc` | The real config: providers, plugins, policies, permissions |
 | `cli.json` | TUI only: theme, keybinds, `attention` (notifications/sound) |
-| `oh-my-opencode-slim.json` | Model presets — each maps to one provider; top-level `agents` holds custom specialists |
+| `oh-my-opencode-slim.json` | Model presets — each maps to one provider, except `nomoney` (opencode-go + OpenRouter `:floor` + Mistral by design); top-level `agents` holds custom specialists |
 | `oh-my-opencode-slim/` | Agent prompt files (`pencil.md` is the OpenPencil wireframe agent) |
 | `model-table.ts` | Backs `/suggest-models <preset>` |
 | `commands/` | Custom slash commands |

@@ -53,6 +53,72 @@
         }
       }
     },
+    "nomoney": {
+      "orchestrator": {
+        "model": "opencode-go/deepseek-v4.1-flash",
+        "variant": "high",
+        "skills": [
+          "*"
+        ],
+        "mcps": [
+          "*",
+          "!context7",
+          "!open-pencil"
+        ]
+      },
+      "oracle": {
+        "model": "opencode-go/deepseek-v4-pro",
+        "variant": "high",
+        "skills": [
+          "simplify"
+        ],
+        "mcps": []
+      },
+      "explorer": {
+        "model": [
+          {
+            "id": "openrouter/deepseek/deepseek-v4.1-flash:floor",
+            "variant": "low"
+          },
+          {
+            "id": "openrouter/deepseek/deepseek-v4.1-flash",
+            "variant": "low"
+          },
+          {
+            "id": "mistral/mistral-small-2603",
+            "variant": "none"
+          }
+        ],
+        "skills": [],
+        "mcps": [
+          "context7",
+          "gh_grep"
+        ]
+      },
+      "designer": {
+        "model": "opencode-go/mimo-v2.6-flash",
+        "skills": [],
+        "mcps": []
+      },
+      "fixer": {
+        "model": [
+          {
+            "id": "openrouter/deepseek/deepseek-v4.1-flash:floor",
+            "variant": "high"
+          },
+          {
+            "id": "openrouter/deepseek/deepseek-v4.1-flash",
+            "variant": "high"
+          },
+          {
+            "id": "mistral/mistral-small-2603",
+            "variant": "high"
+          }
+        ],
+        "skills": [],
+        "mcps": []
+      }
+    },
     "openrouter": {
       "orchestrator": {
         "model": [

@@ -178,6 +178,19 @@ function pad(text: string, width: number): string {
   return text + " ".repeat(Math.max(0, width - text.length));
 }
 
+/** Every model id an agent's config can use: the scalar, or all chain entries. */
+function modelIdsOf(agent: AgentConfig): string[] {
+  const raw = agent.model;
+  if (typeof raw === "string") return [raw];
+  if (Array.isArray(raw)) return raw.map((e) => (typeof e === "string" ? e : e.id));
+  return [];
+}
+
+/** Every provider an agent's model config can bill. */
+function providersOf(agent: AgentConfig): string[] {
+  return modelIdsOf(agent).map((id) => (id.includes("/") ? id.slice(0, id.indexOf("/")) : "(none)"));
+}
+
 /** First model id + variant from a preset entry (handles string or array forms). */
 function modelOf(agent: AgentConfig): { id: string; variant?: string } {
   const raw = agent.model;
@@ -240,6 +253,11 @@ const modelsDev = await loadModelsDev();
 const declared = await loadDeclaredModels();
 
 const rows: Row[] = [];
+/** preset → every provider its shown agents touch (whole chains, not just heads). */
+const providersByPreset = new Map<string, Set<string>>();
+/** Every model id shown, chain entries included, for the availability check. */
+const modelRefs: Array<{ preset: string; agent: string; id: string }> = [];
+const seenRefs = new Set<string>();
 for (const presetName of presetNames) {
   let resolved: { agents: Record<string, AgentConfig>; chain: string[] };
   try {
@@ -261,6 +279,15 @@ for (const presetName of presetNames) {
 
   for (const [agent, entry] of Object.entries(agents)) {
     if (filterSet && !filterSet.has(agent)) continue;
+    if (!providersByPreset.has(presetName)) providersByPreset.set(presetName, new Set());
+    const presetProviders = providersByPreset.get(presetName)!;
+    for (const provider of providersOf(entry)) presetProviders.add(provider);
+    for (const id of modelIdsOf(entry)) {
+      const key = `${presetName}\u0000${agent}\u0000${id}`;
+      if (seenRefs.has(key)) continue;
+      seenRefs.add(key);
+      modelRefs.push({ preset: presetName, agent, id });
+    }
     const { id, variant } = modelOf(entry);
     const slash = id.indexOf("/");
     const provider = slash === -1 ? "" : id.slice(0, slash);
@@ -322,7 +349,8 @@ const shownPresets = [...new Set(rows.map((r) => r.preset))];
 
 // `--validate` is the advisory half of /suggest-models: it checks that every
 // recommended model is actually offered by the host, and that a preset does not
-// mix providers (all agents in a session should bill one provider's quota).
+// mix providers (all agents in a session should bill one provider's quota —
+// `nomoney` is the one deliberate exception, so its warning is expected).
 if (validate) {
   const warnings: string[] = [];
 
@@ -335,13 +363,6 @@ if (validate) {
     available = undefined;
   }
 
-  const providersByPreset = new Map<string, Set<string>>();
-  for (const row of rows) {
-    const provider = row.model.includes("/") ? row.model.slice(0, row.model.indexOf("/")) : "(none)";
-    if (!providersByPreset.has(row.preset)) providersByPreset.set(row.preset, new Set());
-    providersByPreset.get(row.preset)!.add(provider);
-  }
-
   for (const presetName of shownPresets) {
     const providers = [...(providersByPreset.get(presetName) ?? [])];
     if (providers.length > 1) {
@@ -352,9 +373,9 @@ if (validate) {
   if (!available) {
     warnings.push("could not read `opencode models` — availability check skipped");
   } else {
-    for (const row of rows) {
-      if (!available.has(row.model)) {
-        warnings.push(`${row.preset}/${row.agent}: ${row.model} not offered by \`opencode models\` (unavailable or not authenticated)`);
+    for (const ref of modelRefs) {
+      if (!available.has(ref.id)) {
+        warnings.push(`${ref.preset}/${ref.agent}: ${ref.id} not offered by \`opencode models\` (unavailable or not authenticated)`);
       }
     }
   }
