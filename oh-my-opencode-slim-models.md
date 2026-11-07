@@ -1,13 +1,13 @@
 # oh-my-opencode-slim: model presets and rationale
 
 Preset rationale for `~/.config/opencode/oh-my-opencode-slim.json`. The active
-preset is `opencode-go` (the Go subscription) — the `preset` key in that file is
-authoritative. `openrouter` (all-`:floor`) is the token-priced alternate with the
+preset is whatever the `preset` key in that file names (currently `nomoney`) — that
+key is authoritative. `openrouter` (all-`:floor`) is the token-priced alternate with the
 same balance, `opencode-perform` lifts the orchestrator one tier,
 `openrouter-no-floor` is the catalogue-priced variant of the router preset, and
-`nomoney` is the cheap/mixed one — Go on the judgment lanes, OpenRouter `:floor`
-plus a Mistral tail on the two workhorse lanes (the only preset that deliberately
-mixes providers).
+`nomoney` is the cheap/mixed one — Go on the plan and designer lanes, OpenRouter
+cash on the oracle plus `:floor` and a Mistral tail on the two workhorse lanes
+(the only preset that deliberately mixes providers).
 
 Run `/suggest-models <preset>` (or `bun ~/.config/opencode/model-table.ts --validate <preset>`) for
 the live table with current models.dev pricing, availability, and a single-provider check.
@@ -292,14 +292,15 @@ reliability decided it, not the price vector.
 ## The `nomoney` preset
 
 The **cheap-over-performant** preset, and the only one that **deliberately mixes
-providers**: the judgment lanes ride the Go subscription on its cheapest credible
-models, and the two high-volume execution lanes move to OpenRouter `:floor`
-routing with a **Mistral** model as the cross-provider tail.
+providers**: the plan and designer lanes ride the Go subscription on its cheapest
+credible models, while the oracle and the two high-volume execution lanes run on
+OpenRouter cash — a cross-family reasoner on the oracle, `:floor` routing plus a
+**Mistral** tail on the workhorse lanes.
 
 | Agent | Model | Variant | In/Out/cache (per M) | Bills | Why |
 | --- | --- | --- | --- | --- | --- |
 | orchestrator | `opencode-go/deepseek-v4.1-flash` | `high` | 0.15 / 0.60 / 0.003 | Go ($200) | The plan lane: highest token volume, and cache read is ~97% of it. $0.003/M cache, 1M ctx, vision, proven ladder. `low` is the one-word lever if you want it cheaper still. |
-| oracle | `opencode-go/deepseek-v4-pro` | `high` | 0.66 / 1.98 / 0.022 | Go ($60) | Rare, read-only reasoning on a small allowance. `max` (the `opencode-go` value) only buys output tokens — a few dollars of $60 either way. |
+| oracle | `openrouter/z-ai/glm-5.3` | `high` | 0.0699 / 1.40 / 0.0689 | OpenRouter cash | Z.ai's flagship reasoner on the rare, read-only lane: 1M ctx, a `high` ladder already proven in the `openrouter` preset, and a *different family* from the DeepSeek orchestrator. On the measured oracle mix it costs ~$2.65/mo against $3.15–3.21 for either deepseek-v4-pro lane, and it frees the $60 V4 Pro Go allowance. Was `opencode-go/deepseek-v4-pro`. `high`, never `low` — GLM `@low` is the setting that degenerated on GLM-5.3-Flash. |
 | explorer | `openrouter/deepseek/deepseek-v4.1-flash:floor` → plain → `mistral/mistral-small-2603` | `low` / `low` / `none` | 0.004 / 0.72 / 0.005 · 0.051 / 0.567 / 0.018 · 0.15 / 0.60 / 0.015 | OpenRouter cash | High-volume recon moved off the subscription. Floor input is ~1/37th the Go rate; at the 25:1 cache-to-input ratio the $0.0054 cache rate still decides, and it is the cheapest lane that also carries a working `@low`. |
 | designer | `opencode-go/mimo-v2.6-flash` | — (no ladder) | 0.14 / 0.28 / **0.0028** | Go ($120) | Cheapest vision lane in the catalogue: 1.05M ctx, image/audio/video input, and the **lowest cache-read rate of any model here** (Claude Haiku's tiered 0.05 is 18× it). No effort ladder, so it cannot degenerate the way `GLM-5.3-Flash @ low` did. Measured designer burn is ~$2.5/mo — ~2% of its allowance. |
 | fixer | `openrouter/deepseek/deepseek-v4.1-flash:floor` → plain → `mistral/mistral-small-2603` | `high` / `high` / `high` | as explorer | OpenRouter cash | Scoped implementation on the same proven profile, at per-token cash instead of Go quota. |
@@ -318,6 +319,12 @@ different family.
 | explorer | `deepseek/deepseek-v4.1-flash:floor` `low` → `deepseek/deepseek-v4.1-flash` `low` → `mistral/mistral-small-2603` `none` |
 | fixer | `deepseek/deepseek-v4.1-flash:floor` `high` → `deepseek/deepseek-v4.1-flash` `high` → `mistral/mistral-small-2603` `high` |
 
+The oracle is a **single plain model** (`z-ai/glm-5.3`), not a chain: it is not
+`:floor`, so there is nothing to hand-declare, and a rare read-only lane does not
+justify the chain machinery the volume lanes need. Add
+`→ mistral/mistral-large-4-0` if a provider-level outage on the oracle is worth
+covering.
+
 The third entry is what the all-OpenRouter preset cannot do: it covers a spent
 OpenRouter allowance or a dead key, not just a transient upstream error. Mistral
 Small 4 is also a *different family*, so it survives a model-level regression —
@@ -331,24 +338,34 @@ At the recorded 30-day lane mix (7-day pace in parentheses), reference rates:
 | Lane | Go quota, $/mo | Cash (OpenRouter), $/mo |
 | --- | --- | --- |
 | orchestrator | $15.7 ($27.5) | — |
-| oracle | $3.2 ($1.6) | — |
+| oracle | — | $2.65 ($1.54) |
 | designer | $2.5 ($3.8) | — |
 | explorer | — | $0.95 ($1.1) |
 | fixer | — | $4.9 ($10.4) |
-| **total** | **~$21 ($33)**, spread over three models | **~$5.9 ($11.5)** |
+| **total** | **~$18 ($31)**, spread over two models | **~$8.5 ($13)** |
+
+The oracle's cash line is GLM-5.3 at the live catalogue rate (0.0699 / 1.40 /
+cache 0.0689) on the measured 2.8M in / 0.4M out / 27.5M cache mix — $2.65/mo,
+or $1.54 at the 7-day pace. GLM has **no real cache discount** (cache read ≈
+input rate), so the figure holds only while the oracle's cache-to-input ratio
+stays near 10:1; a much longer-session oracle would drift toward the input rate.
+That is the cost of the cross-family pick: `deepseek-v4-pro` prices at 0.535 /
+1.071 / cache 0.0446 now (≈$3.15/mo on the same mix), so GLM is ~17% cheaper and
+still a different family.
 
 The Go lanes' monthly limits (Go Plus column of the official table,
-`opencode.ai/docs/console/go`) are MiMo-V2.6-Flash **$120**, DeepSeek V4.1 Flash
-**$200**, DeepSeek V4 Pro **$60**. Note DeepSeek V4.1 Flash bills **2× during
+`opencode.ai/docs/console/go`) are MiMo-V2.6-Flash **$120** and DeepSeek V4.1
+Flash **$200**; DeepSeek V4 Pro's **$60** is no longer touched by this preset.
+Note DeepSeek V4.1 Flash bills **2× during
 peak windows** (Mon–Fri 01:00–04:00 and 06:00–10:00 UTC — 03:00–06:00 and
 08:00–13:00 in Romania), so the orchestrator's allowance burn roughly doubles for
 a European working morning; the limit itself is unchanged.
 
 **This is not cheaper in dollars than `opencode-go`.** The subscription is
 already paid, so a Go lane costs $0 at the margin while an OpenRouter lane bills
-real money. What `nomoney` buys is **~40% less Go quota burn** — ~$35/mo of
-allowance becomes ~$21/mo at the recorded 30-day mix (roughly $57 → $33 at the
-current pace), and the burn moves from four models onto three — for ~$6–11/mo of
+real money. What `nomoney` buys is **~half the Go quota burn** — ~$35/mo of
+allowance becomes ~$18/mo at the recorded 30-day mix (roughly $57 → $31 at the
+current pace), and the burn moves from four models onto two — for ~$8.5–13/mo of
 cash. That buys headroom on the weekly window and a workhorse lane that keeps
 running when the OpenRouter allowance runs out. If the Go weekly window never
 bothers you, `opencode-go` remains the cash-cheapest preset; `nomoney` is the one
@@ -373,6 +390,12 @@ Two mechanical reasons, both in the plugin's agent factory:
 ### Levers
 
 - **Cheaper orchestrator:** `deepseek-v4.1-flash @ low` — proven-safe trim.
+- **Oracle quality:** `qwen/qwen3.8-max-0902` (2.00 / 6.00 / cache 0.25, ~$14.9/mo
+  cash) if GLM-5.3 disappoints on architecture work; or the Go lane
+  `opencode-go/deepseek-v4-pro @ high` if you would rather spend $3.2 of the $60
+  allowance than $2.65 of cash. `minimax/minimax-m3.1-flash @ max` (~$0.54/mo) is
+  the budget extreme — it is the designer's flash tier, so expect a real reasoning
+  drop on the lane that exists for hard problems.
 - **Designer quality:** `qwen3.8-flash @ medium` (1M ctx, vision, $90 allowance on
   Plus) or `claude-haiku-5-5 @ medium` if UI judgment suffers. Both are Go lanes,
   so neither adds cash; both have *smaller* allowances than MiMo-V2.6-Flash's
@@ -503,13 +526,15 @@ large context on the orchestrator and a vision-capable designer.
 | Agent | Model | Variant | In/Out (per M) | Why |
 | --- | --- | --- | --- | --- |
 | orchestrator | `openrouter/deepseek/deepseek-v4.1-flash` | `high` | 0.045 / 0.50 (cache 0.006) | Highest-token lane; 1M ctx, vision, `none|low|high|max`, and the family with the measured 0% error rate. Was `glm-5.3-flash` until 2026-11-01. |
-| oracle | `openrouter/deepseek/deepseek-v4-pro` | `high` | 1.60 / 3.20 (cache 0.135) | Flagship MoE for the rare reasoning lane — a tier above Flash while staying text-cheap on a lane that runs 27M cache tokens a month. 1M ctx. |
+| oracle | `openrouter/deepseek/deepseek-v4-pro` | `high` | 0.535 / 1.071 (cache 0.0446) | Flagship MoE for the rare reasoning lane — a tier above Flash while staying text-cheap on a lane that runs 27M cache tokens a month. 1M ctx. Price corrected 2026-11-07 against `GET /api/v1/models`: the 1.60 / 3.20 / cache 0.135 this table carried was a stale snapshot, ~3x too high. |
 | explorer | `openrouter/deepseek/deepseek-v4.1-flash` | `low` | 0.045 / 0.50 (cache 0.006) | Cheapest recon on the per-token mix ($1.17/mo against $2.73 for the previous `v4-flash-0731` pick) and it gains vision. Text-only was never a requirement — the orchestrator reads images. |
 | designer | `openrouter/xiaomi/mimo-v2.6-flash` | — (toggle-only) | 0.14 / 0.28 (cache 0.0028) | Vision + 1.05M ctx at the **lowest cache rate in the catalogue** ($0.0028/M), and the one cross-family lane left in the preset. No effort ladder, so no `variant` — that is also why it cannot degenerate the way GLM `@low` did. |
 | fixer | `openrouter/deepseek/deepseek-v4.1-flash` | `high` | 0.045 / 0.50 (cache 0.006) | Scoped implementation on the same proven profile as the orchestrator. At the ~25:1 cache-to-input ratio this lane runs at, cache rate decides the bill: 0.006 beats MiMo's output rate edge. |
 
-Projected on the 30-day lane mix used throughout this file: **~$33/mo**
-(orchestrator 14.40 · oracle 9.47 · explorer 1.17 · designer 2.46 · fixer 5.91).
+Projected on the 30-day lane mix used throughout this file: **~$27/mo**
+(orchestrator 14.40 · oracle 3.15 · explorer 1.17 · designer 2.46 · fixer 5.91).
+The oracle line was $9.47 while this table carried the stale V4 Pro snapshot;
+the live rate brings the preset down ~$6/mo with no change to the roster.
 The previous revision's $2.83 figure is not comparable: it used a smaller
 recorded volume set and a GLM-5.3-Flash price that has since doubled. All five
 lanes get 1,049k+ context; orchestrator, designer, and fixer are vision-capable.

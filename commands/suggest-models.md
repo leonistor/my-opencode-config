@@ -4,8 +4,8 @@ description: Validate and show the recommended models for an oh-my-opencode-slim
 
 Model recommendation for an oh-my-opencode-slim preset. Each preset maps to one
 provider, so every agent in a session bills that provider's quota — except
-`nomoney`, which mixes opencode-go, OpenRouter `:floor` and Mistral on purpose
-(one warning is expected there).
+`nomoney`, which mixes opencode-go, OpenRouter (a plain catalogue oracle plus
+`:floor` execution lanes) and Mistral on purpose (one warning is expected there).
 
 !`bun ~/.config/opencode/model-table.ts --validate $ARGUMENTS`
 
