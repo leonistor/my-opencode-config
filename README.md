@@ -10,9 +10,23 @@ Global OpenCode v2 config for this machine.
 | `oh-my-opencode-slim/` | Agent prompt files (`pencil.md` is the OpenPencil wireframe agent) |
 | `model-table.ts` | Backs `/suggest-models <preset>` |
 | `commands/` | Custom slash commands |
-| `plugins/` | Local plugin workarounds (cmux, opencode-pty) |
+| `plugins/` | Local plugins: the opencode-pty wrapper and the cmux hook (`cmux-tui-journal.js`) |
 
 Agent instructions: `AGENTS.md`. External tools and links: `RESOURCES.md`.
+
+## Plugins
+
+Two local plugin artifacts live under `plugins/`:
+
+- `opencode-pty/` — a local package wrapping `opencode-pty/v2` (which OpenCode cannot
+  load as a package spec) and registering the five pty tools the 0.4.0 V2 entry forgets.
+  See `AGENTS.md` § Workarounds for the removal trigger.
+- `cmux-tui-journal.js` — the cmux-tui OpenCode hook, installed and updated by
+  `cmux agent hook install opencode`. It is auto-discovered (no `opencode.jsonc` `plugins`
+  entry) and is a no-op unless opencode is launched inside a cmux-tui terminal (which
+  inherits `CMUX_TUI_SOCKET` / `CMUX_TUI_TERMINAL_ID` / `CMUX_TUI_HOOK`). Re-run
+  `cmux agent hook install opencode` on a fresh clone or after a cmux upgrade. This
+  replaced the old `hooks`-generated `cmux/` + `cmux-feed.js` + `cmux-session.js` trio.
 
 ## How I work with agents
 

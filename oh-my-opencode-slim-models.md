@@ -1,10 +1,10 @@
 # oh-my-opencode-slim: model presets and rationale
 
 Preset rationale for `~/.config/opencode/oh-my-opencode-slim.json`. The active
-preset is `openrouter`: the same balance as `opencode-go` at OpenRouter floor
-prices. `opencode-go` and `opencode-perform` (one tier up on the orchestrator)
-stay documented as the subscription alternates, and `openrouter-no-floor` is the
-catalogue-priced variant of the active preset.
+preset is `opencode-go` (the Go subscription) — the `preset` key in that file is
+authoritative. `openrouter` (all-`:floor`) is the token-priced alternate with the
+same balance, `opencode-perform` lifts the orchestrator one tier, and
+`openrouter-no-floor` is the catalogue-priced variant of the router preset.
 
 Run `/suggest-models <preset>` (or `bun ~/.config/opencode/model-table.ts --validate <preset>`) for
 the live table with current models.dev pricing, availability, and a single-provider check.

@@ -8,7 +8,10 @@
     // subpath export, `opencode-pty/v2`, which OpenCode parses as a git spec).
     // Loaded via a local plugin package instead: plugins/opencode-pty/
     "@upstash/context7-opencode",
-    "./plugins/cmux",
+    // cmux: OpenCode integration is now a loose plugin installed by
+    // `cmux agent hook install opencode` → plugins/cmux-tui-journal.js
+    // (auto-discovered, no array entry and no id collision). The old
+    // ./plugins/cmux feed/session bridge was retired with the cmux-tui rewrite.
     "oh-my-opencode-slim",
     // Plannotator's own plugin: the Inbox (threads, questions, attachments
     // annotated in place) plus plan review via `submit_plan`, which replaced
@@ -72,21 +75,6 @@
     }
   },
   "policies": [
-    // `cmux hooks setup` unconditionally regenerates two loose V1-era plugin
-    // files whose default export reuses the id of the real V2 package at
-    // ./plugins/cmux. Three entries sharing one plugin id makes the TUI report
-    // "2 plugins failed: cmux.server, cmux.server". Denying the loose files
-    // keeps cmux's V2 integration (./plugins/cmux, loaded above) working.
-    {
-      "action": "integration.use",
-      "resource": "plugin:/Users/leo/.config/opencode/plugins/cmux-feed.js",
-      "effect": "deny",
-    },
-    {
-      "action": "integration.use",
-      "resource": "plugin:/Users/leo/.config/opencode/plugins/cmux-session.js",
-      "effect": "deny",
-    },
     {
       "action": "provider.use",
       "resource": "github-copilot",
@@ -283,7 +271,10 @@
       },
     },
     "opencode-go": {},
-    "synthetic": {},
+    // Mistral: API key lives in the environment (MISTRAL_API_KEY, set in
+    // ~/.bash_profile); models are auto-discovered from models.dev until a
+    // preset pins a selection here.
+    "mistral": {},
     // V2 discovers pulled Ollama models automatically.
     "ollama": {
       "settings": {

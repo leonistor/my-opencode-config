@@ -46,6 +46,12 @@ scripts, and an HTTP endpoint for a statusline.
 - Convex skills: https://github.com/waynesutton/convexskills
 - Bug scanner (installed, not configured for OpenCode):
   https://github.com/Dicklesworthstone/ultimate_bug_scanner
+- **Webcmd** (https://webcmd.dev/, `@agentrhq/webcmd`) — "browser infrastructure that
+  learns": compiles repeated browser-agent workflows into durable `webcmd <site> <command>`
+  CLI commands with structured output. Reviewed 2026-11-07: *not adopted* — it overlaps
+  `webfetch`/`websearch` plus the `playwriter` skill, and its ~90% token-reduction claim is
+  an illustrative placeholder, not a measured benchmark. Watch candidate if a repeated,
+  auth-gated web-UI workflow ever appears (its COOKIE/INTERCEPT/UI strategies).
 
 ## MCP
 

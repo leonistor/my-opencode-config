@@ -102,7 +102,7 @@ Use pty_spawn for any task that needs to run in the background, is long-running,
 
 ## Workarounds
 
-Two things in this config exist only to work around upstream bugs. Each has a clear removal trigger.
+One thing in this config exists only to work around an upstream bug, with a clear removal trigger.
 
 ### opencode-pty — the local wrapper registers the tools
 
@@ -113,9 +113,10 @@ Two things in this config exist only to work around upstream bugs. Each has a cl
 
 `index.ts` keeps the package's `setup` and adds `ctx.tool.transform(...)` for the five tools, mirroring upstream `registerV2Tools`. When a release ships the fix (0.4.1+ with PR #84's dual-mode default export): delete the tool-registration block, and keep the wrapper until the subpath spec installs too.
 
-### cmux — deny policies
-
-`cmux hooks setup` regenerates `plugins/cmux-feed.js` and `plugins/cmux-session.js`, whose default export reuses `id: "cmux.server"` — the same id as the real V2 package at `plugins/cmux/`. Three entries sharing one id makes the TUI report `2 plugins failed: cmux.server, cmux.server`. The `integration.use` deny policies in `opencode.jsonc` keep only the V2 package. Upstream fixed the ids in cmux PR #20819 (merged 2026-10-15), but no tagged release contains it yet (installed app 0.65.2). When a release ships it: re-run `cmux hooks setup`, then delete the two deny entries.
+cmux is no longer a workaround. The cmux-tui rewrite retired the old `hooks`-generated
+feed/session plugin (and its duplicate-`cmux.server` deny-policy workaround) in favour of one
+auto-discovered plugin, `plugins/cmux-tui-journal.js`, installed by `cmux agent hook install
+opencode`. See README § Plugins; no deny policies remain.
 
 ## Skills - Knowledge Injection
 
