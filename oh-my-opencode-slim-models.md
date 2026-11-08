@@ -4,10 +4,12 @@ Preset rationale for `~/.config/opencode/oh-my-opencode-slim.json`. The active
 preset is whatever the `preset` key in that file names (currently `nomoney`) — that
 key is authoritative. `openrouter` (all-`:floor`) is the token-priced alternate with the
 same balance, `opencode-perform` lifts the orchestrator one tier,
-`openrouter-no-floor` is the catalogue-priced variant of the router preset, and
+`openrouter-no-floor` is the catalogue-priced variant of the router preset,
 `nomoney` is the cheap/mixed one — Go on the plan and designer lanes, OpenRouter
-cash on the oracle plus `:floor` and a Mistral tail on the two workhorse lanes
-(the only preset that deliberately mixes providers).
+cash on the oracle plus `:floor` and a Mistral tail on the two workhorse lanes —
+and `lowmoney` is `nomoney` with the plan lane moved off DeepSeek, so that no lane
+bills a peak-doubled clock. `nomoney` and `lowmoney` are the only presets that
+deliberately mix providers.
 
 Run `/suggest-models <preset>` (or `bun ~/.config/opencode/model-table.ts --validate <preset>`) for
 the live table with current models.dev pricing, availability, and a single-provider check.
@@ -358,8 +360,9 @@ The Go lanes' monthly limits (Go Plus column of the official table,
 Flash **$200**; DeepSeek V4 Pro's **$60** is no longer touched by this preset.
 Note DeepSeek V4.1 Flash bills **2× during
 peak windows** (Mon–Fri 01:00–04:00 and 06:00–10:00 UTC — 03:00–06:00 and
-08:00–13:00 in Romania), so the orchestrator's allowance burn roughly doubles for
-a European working morning; the limit itself is unchanged.
+08:00–12:00 in Romania on EET; 04:00–07:00 and 09:00–13:00 on EEST), so the
+orchestrator's allowance burn roughly doubles for a European working morning; the
+limit itself is unchanged. This is what `lowmoney` exists to avoid.
 
 **This is not cheaper in dollars than `opencode-go`.** The subscription is
 already paid, so a Go lane costs $0 at the margin while an OpenRouter lane bills
@@ -417,6 +420,87 @@ reasoning ladder, too weak to be the fixer's last resort.
 **Side effect:** `nomoney` is the first preset with **no Contributor model** —
 explorer no longer runs `muse-spark-1.3-contributor`, so none of this preset's
 traffic is used for training.
+
+## The `lowmoney` preset
+
+`nomoney` with **the plan lane moved off DeepSeek**. Everything else is
+byte-identical: oracle `glm-5.3 @ high` on OpenRouter cash, the same `:floor` →
+plain → Mistral chains on explorer and fixer, the same `mimo-v2.6-flash` designer.
+The one change is that the orchestrator — and therefore `pencil`, which inherits
+it — runs `opencode-go/mimo-v2.6-flash`, a model with **no peak row** in the
+official Go table.
+
+| Agent | Model | Variant | In/Out/cache (per M) | Bills | Why |
+| --- | --- | --- | --- | --- | --- |
+| orchestrator | `opencode-go/mimo-v2.6-flash` | — (no ladder) | 0.14 / 0.28 / **0.0028** | Go ($120) | The same model already on the designer lane. Cache read is 7% **below** DeepSeek's off-peak rate and 53% below its peak rate, and there is no 2× window to plan around. 1.05M ctx, vision/audio/video. No effort ladder, so no `variant` — and no `@low`-style degeneration to route around. |
+| oracle | `openrouter/z-ai/glm-5.3` | `high` | 0.0699 / 1.40 / 0.0689 | OpenRouter cash | Inherited unchanged. |
+| explorer | `deepseek-v4.1-flash:floor` → plain → `mistral-small-2603` | `low` / `low` / `none` | as `nomoney` | OpenRouter cash | Inherited unchanged. |
+| designer | `opencode-go/mimo-v2.6-flash` | — | 0.14 / 0.28 / 0.0028 | Go ($120) | Inherited unchanged — and now the same model as the orchestrator. |
+| fixer | `deepseek-v4.1-flash:floor` → plain → `mistral-small-2603` | `high` / `high` / `high` | as `nomoney` | OpenRouter cash | Inherited unchanged. |
+
+### What peak actually costs, measured
+
+The claim that this preset is worth having rests on a number, so here it is. From
+`~/.local/share/opencode/opencode.db` (`session_message`, the V2 table), last 30
+days, agent `orchestrator` across all providers: **41.5M fresh input, 3.43M
+output, 1,679M cache read** — and **19.6% / 28.0% / 25.4%** of those three
+respectively fell inside the Mon–Fri 01:00–04:00 and 06:00–10:00 UTC windows.
+
+| Orchestrator model | $/mo at that mix | Note |
+| --- | --- | --- |
+| `deepseek-v4.1-flash`, off-peak rate | 13.33 | 6.23 in · 2.06 out · 5.04 cache |
+| `deepseek-v4.1-flash`, with the 2× peak share | **16.41** | 7.45 in · 2.64 out · 6.32 cache — the multiplier is **+$3.08/mo**, 23% of the lane and 1.5% of its $200 allowance |
+| `mimo-v2.6-flash` | **11.47** | 5.81 in · 0.96 out · 4.70 cache — −30% vs peak DeepSeek, −14% vs off-peak |
+
+Read that honestly: **the multiplier is small in dollars.** It matters because the
+5h window is 20% of a monthly limit and the burn doubles inside it during a
+European working morning — not because $3/mo is a budget problem. If the 5h window
+never bites, `nomoney` is already fine and this preset is optional.
+
+### Why it is flat, not `extends: "nomoney"`
+
+Mechanically impossible for this swap, for the reason documented under Gotchas: an
+agent-level `variant` survives a deep merge, and `nomoney` pins
+`orchestrator.variant: "high"`. `mimo-v2.6-flash` declares
+`reasoning_options: []`, so the inherited `high` would reach a model with no
+ladder and the host would reject it. `nomoney` is flat for the same class of
+reason (its designer). That is also why the escape hatch below is not a one-line
+override on `lowmoney` — it is a swap of the orchestrator entry plus a `variant`.
+
+### Headroom
+
+Orchestrator ($11.47) + designer (~$2.5) now share **one** $120 allowance —
+~12% of it at the recorded mix, so the concentration is comfortable and the 5h
+window (20% of $120) is far above a normal morning. The $200 DeepSeek allowance
+goes untouched, and the preset still carries **no Contributor model**.
+
+### Levers
+
+- **Escape hatch if planning quality suffers** (the one real risk — a flash model
+  with no effort knob on the lane that writes plans):
+  `openrouter/deepseek/deepseek-v4.1-flash-1017 @ high` — the same model, a pinned
+  snapshot, cash at DeepSeek's off-peak rates ($13.32/mo at the mix above) and **no
+  Go peak clock**. Cheapest same-model variant is
+  `openrouter/deepseek/deepseek-v4.1-flash:floor @ high` ($11.71/mo), at the cost
+  of the fp4 floor pool that retired GLM-5.3-Flash.
+- **Effort knob:** there is none on this lane. If `mimo-v2.6-flash` plans too
+  thinly, the answer is a different model (above), not a higher `variant`.
+- **Canary first.** No effort ladder means a degenerate loop shows up as empty
+  output or runaway reasoning tokens, not as a cost line — the GLM-5.3-Flash
+  `@low` failure shape. Run one short orchestrator dispatch after switching.
+- `pencil` inherits the orchestrator, so it bills MiMo with no separate entry and
+  keeps vision, which its wireframe work needs.
+
+**Rejected for this lane:** `muse-spark-1.3-contributor` ($8.19/mo — the cheapest
+by a margin, but it trains on traffic and Contributor tier is kept off the lanes
+that write plans); `particle-ai/particle-1` ($8.83/mo cash, 1M ctx, vision, full
+ladder — released 2026-10-28, closed weights, no reliability record, so it is a
+canary candidate rather than a pick); `mimo-v2.6-pro` ($27.12/mo — a 3× input rate
+on a $60 allowance, ~45% of it); `minimax-m3.1-flash` ($33.47/mo — 5× the cache
+rate on a lane that is 97% cache read); `longcat-2.0` ($26.64/mo and **text-only**,
+which would break inline images with no observer configured); `qwen3.8-flash`
+($34.70/mo); the free Go and `opencode/*-free` tiers (200k context or "limited
+time", too small for this lane's sessions).
 
 ## The `openrouter` preset (all `:floor`)
 
@@ -563,10 +647,13 @@ is a hard requirement on that lane.
 
 - **Go's peak windows are a second multiplier.** `deepseek-v4.1-flash` and
   `deepseek-v4-pro` bill **2× during peak windows** — Mon–Fri 01:00–04:00 and
-  06:00–10:00 UTC, i.e. 03:00–06:00 and 08:00–13:00 in Romania. The monthly limit
+  06:00–10:00 UTC, i.e. 03:00–06:00 and 08:00–12:00 in Romania on EET
+  (04:00–07:00 and 09:00–13:00 on EEST). The monthly limit
   does not change; the same tokens consume it twice as fast, so a European
   working morning is the expensive half of the day. Every dollar projection in
-  this file uses the off-peak (reference) rate, so treat them as a floor.
+  this file uses the off-peak (reference) rate, so treat them as a floor. These
+  two models are the **only** ones with a peak row in the official table —
+  everything else, MiMo included, is flat, which is the lever `lowmoney` pulls.
 - **Per-model limits are the authority; the usage API is an aggregate.** The
   official table (`opencode.ai/docs/console/go`) lists the monthly limit for each
   model on each plan; `GET https://opencode.ai/zen/go/v1/usage` returns only
