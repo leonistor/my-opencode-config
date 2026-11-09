@@ -6,7 +6,7 @@ Model recommendation for an oh-my-opencode-slim preset. Each preset maps to one
 provider, so every agent in a session bills that provider's quota — except
 `nomoney` and `lowmoney`, which mix opencode-go, OpenRouter (a plain catalogue
 oracle plus `:floor` execution lanes) and Mistral on purpose (one warning is
-expected there).
+expected there). `lowmoney` runs the plan lane on `opencode-go/gpt-6-luna @ medium`.
 
 !`bun ~/.config/opencode/model-table.ts --validate $ARGUMENTS`
 

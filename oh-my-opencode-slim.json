@@ -121,7 +121,8 @@
     },
     "lowmoney": {
       "orchestrator": {
-        "model": "opencode-go/mimo-v2.6-flash",
+        "model": "opencode-go/gpt-6-luna",
+        "variant": "medium",
         "skills": [
           "*"
         ],

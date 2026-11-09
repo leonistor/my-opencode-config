@@ -8,7 +8,8 @@ same balance, `opencode-perform` lifts the orchestrator one tier,
 `nomoney` is the cheap/mixed one — Go on the plan and designer lanes, OpenRouter
 cash on the oracle plus `:floor` and a Mistral tail on the two workhorse lanes —
 and `lowmoney` is `nomoney` with the plan lane moved off DeepSeek, so that no lane
-bills a peak-doubled clock. `nomoney` and `lowmoney` are the only presets that
+bills a peak-doubled clock — the plan lane runs `gpt-6-luna @ medium`, not MiMo.
+`nomoney` and `lowmoney` are the only presets that
 deliberately mix providers.
 
 Run `/suggest-models <preset>` (or `bun ~/.config/opencode/model-table.ts --validate <preset>`) for
@@ -212,7 +213,7 @@ Orchestrator candidates on the 7-day pace (monthly):
 | `deepseek-v4.1-flash` | 0.15 / 0.60 / 0.003 | **27.5** | **15.6** | $200 |
 | **`mimo-v2.6-pro`** | 0.435 / 0.87 / 0.003625 | **58.2** | 34.7 | $60 — 97% |
 | `claude-haiku-5-5` (>100k) | 0.50 / 2.50 / 0.05 | 224 | 107 | $60 — 3.7× over |
-| `gpt-6-luna` | 0.10 / 0.50 / 0.01 | 44.8 | 21.7 | $60 — 75% (tiers at 272k, same limit) |
+| `gpt-6-luna` | 0.10 / 0.50 / 0.01 | 44.8 | 21.7 | $60 — 75% (tiers at 272k, same limit); `lowmoney` runs it at `medium` on the 30-day mix, where it is ~$24 (40%) |
 | `minimax-m3.1-flash` | 0.15 / 0.60 / 0.015 | 66 | 33 | $80 — 83% |
 | `qwen3.8-flash` | 0.15 / 0.47 / 0.016 | 68.7 | 32.7 | $90 — 76% |
 | `glm-5.3-flash` | 0.15 / 0.50 / 0.03 | 114 | 51 | $180 — 63% (retired for reliability, 2026-11-01) |
@@ -427,15 +428,22 @@ traffic is used for training.
 byte-identical: oracle `glm-5.3 @ high` on OpenRouter cash, the same `:floor` →
 plain → Mistral chains on explorer and fixer, the same `mimo-v2.6-flash` designer.
 The one change is that the orchestrator — and therefore `pencil`, which inherits
-it — runs `opencode-go/mimo-v2.6-flash`, a model with **no peak row** in the
+it — runs `opencode-go/gpt-6-luna @ medium`, a model with **no peak row** in the
 official Go table.
+
+The trade is explicit: same Go subscription and no peak clock, a real effort
+ladder on the lane that writes plans, at roughly **2× the burn on a $60
+allowance** instead of MiMo's $120. MiMo-V2.6-Flash was the cheaper pick and was
+replaced anyway — it declares no effort ladder at all, so a plan lane that runs
+it has no quality knob. GPT 6 Luna at `medium` is the trim; `low` and `none` stay
+available beneath it.
 
 | Agent | Model | Variant | In/Out/cache (per M) | Bills | Why |
 | --- | --- | --- | --- | --- | --- |
-| orchestrator | `opencode-go/mimo-v2.6-flash` | — (no ladder) | 0.14 / 0.28 / **0.0028** | Go ($120) | The same model already on the designer lane. Cache read is 7% **below** DeepSeek's off-peak rate and 53% below its peak rate, and there is no 2× window to plan around. 1.05M ctx, vision/audio/video. No effort ladder, so no `variant` — and no `@low`-style degeneration to route around. |
+| orchestrator | `opencode-go/gpt-6-luna` | `medium` | 0.10 / 0.50 / 0.01 — **tier above 272k ctx: 0.20 / 0.75 / 0.02** | Go ($60) | The plan lane needs judgment and a knob. Full ladder `none\|low\|medium\|high\|xhigh\|max`, 1.05M ctx, vision + PDF, no 2× window. `medium` is set explicitly because a flat preset inherits nothing. The 272k tier is the live risk: this lane's sessions are long, and crossing it doubles every rate. |
 | oracle | `openrouter/z-ai/glm-5.3` | `high` | 0.0699 / 1.40 / 0.0689 | OpenRouter cash | Inherited unchanged. |
 | explorer | `deepseek-v4.1-flash:floor` → plain → `mistral-small-2603` | `low` / `low` / `none` | as `nomoney` | OpenRouter cash | Inherited unchanged. |
-| designer | `opencode-go/mimo-v2.6-flash` | — | 0.14 / 0.28 / 0.0028 | Go ($120) | Inherited unchanged — and now the same model as the orchestrator. |
+| designer | `opencode-go/mimo-v2.6-flash` | — | 0.14 / 0.28 / 0.0028 | Go ($120) | Inherited unchanged. Cheapest vision lane in the catalogue and the lowest cache-read rate of any model here; its measured burn is ~$2.5/mo, so the missing ladder costs nothing on a lane this small. |
 | fixer | `deepseek-v4.1-flash:floor` → plain → `mistral-small-2603` | `high` / `high` / `high` | as `nomoney` | OpenRouter cash | Inherited unchanged. |
 
 ### What peak actually costs, measured
@@ -450,57 +458,72 @@ respectively fell inside the Mon–Fri 01:00–04:00 and 06:00–10:00 UTC windo
 | --- | --- | --- |
 | `deepseek-v4.1-flash`, off-peak rate | 13.33 | 6.23 in · 2.06 out · 5.04 cache |
 | `deepseek-v4.1-flash`, with the 2× peak share | **16.41** | 7.45 in · 2.64 out · 6.32 cache — the multiplier is **+$3.08/mo**, 23% of the lane and 1.5% of its $200 allowance |
-| `mimo-v2.6-flash` | **11.47** | 5.81 in · 0.96 out · 4.70 cache — −30% vs peak DeepSeek, −14% vs off-peak |
+| `mimo-v2.6-flash` | **11.47** | 5.81 in · 0.96 out · 4.70 cache — −30% vs peak DeepSeek, −14% vs off-peak. No longer the pick: no effort ladder |
+| `gpt-6-luna`, flat rate | **23.95** | 4.15 in · 1.72 out · 16.79 cache + ~1.30 cache write — ~40% of its $60 allowance |
+| `gpt-6-luna`, if sessions sit above 272k ctx | **~47** | every rate doubles — ~78% of the $60 allowance, and the 5h window (20% = $12) starts to bite |
 
-Read that honestly: **the multiplier is small in dollars.** It matters because the
-5h window is 20% of a monthly limit and the burn doubles inside it during a
-European working morning — not because $3/mo is a budget problem. If the 5h window
-never bites, `nomoney` is already fine and this preset is optional.
+Read that honestly: **the peak multiplier is small in dollars.** It matters because
+the 5h window is 20% of a monthly limit and the burn doubles inside it during a
+European working morning — not because $3/mo is a budget problem. What `lowmoney`
+spends that money on instead is an effort ladder on the plan lane; the GPT 6 Luna
+line above is that purchase, and it is ~2× MiMo's burn at half the allowance.
 
 ### Why it is flat, not `extends: "nomoney"`
 
-Mechanically impossible for this swap, for the reason documented under Gotchas: an
-agent-level `variant` survives a deep merge, and `nomoney` pins
-`orchestrator.variant: "high"`. `mimo-v2.6-flash` declares
-`reasoning_options: []`, so the inherited `high` would reach a model with no
-ladder and the host would reject it. `nomoney` is flat for the same class of
-reason (its designer). That is also why the escape hatch below is not a one-line
-override on `lowmoney` — it is a swap of the orchestrator entry plus a `variant`.
+Two mechanical reasons, both the same class as `nomoney`'s own:
+
+1. **An agent-level `variant` survives a deep merge.** `nomoney` pins
+   `orchestrator.variant: "high"`, and `lowmoney` wants `medium` on a different
+   model — a deep merge cannot replace one with the other cleanly, and the
+   designer lane still runs `mimo-v2.6-flash`, which declares
+   `reasoning_options: []`, so any inherited variant there would be rejected by
+   the host.
+2. The mix *is* the content here. Five explicit lanes keep the provider, the
+   model and the variant visible per lane, exactly as `openrouter` is written.
 
 ### Headroom
 
-Orchestrator ($11.47) + designer (~$2.5) now share **one** $120 allowance —
-~12% of it at the recorded mix, so the concentration is comfortable and the 5h
-window (20% of $120) is far above a normal morning. The $200 DeepSeek allowance
-goes untouched, and the preset still carries **no Contributor model**.
+The orchestrator and the designer **no longer share an allowance**. Orchestrator
+~$23.95 is **~40% of its $60** at the recorded mix (~78% if sessions sit above
+272k ctx); designer ~$2.5 is ~2% of its $120. The 5h window on the orchestrator is
+20% of $60 = **$12 of burn**, which a heavy European morning can approach — that
+is the constraint to watch, not the monthly one. The $200 DeepSeek allowance goes
+untouched, and the preset still carries **no Contributor model**.
 
 ### Levers
 
-- **Escape hatch if planning quality suffers** (the one real risk — a flash model
-  with no effort knob on the lane that writes plans):
+- **Effort knob:** `medium` is the trim, not the floor. `@ low` trims the
+  reasoning spend on the same model and the same 272k tier boundary; `@ none` is
+  the floor. Reach for these before changing models — that is what the swap was
+  for.
+- **Escape hatch if the $60 allowance bites:**
   `openrouter/deepseek/deepseek-v4.1-flash-1017 @ high` — the same model, a pinned
   snapshot, cash at DeepSeek's off-peak rates ($13.32/mo at the mix above) and **no
   Go peak clock**. Cheapest same-model variant is
   `openrouter/deepseek/deepseek-v4.1-flash:floor @ high` ($11.71/mo), at the cost
   of the fp4 floor pool that retired GLM-5.3-Flash.
-- **Effort knob:** there is none on this lane. If `mimo-v2.6-flash` plans too
-  thinly, the answer is a different model (above), not a higher `variant`.
-- **Canary first.** No effort ladder means a degenerate loop shows up as empty
-  output or runaway reasoning tokens, not as a cost line — the GLM-5.3-Flash
-  `@low` failure shape. Run one short orchestrator dispatch after switching.
-- `pencil` inherits the orchestrator, so it bills MiMo with no separate entry and
-  keeps vision, which its wireframe work needs.
+- **Watch the context tier.** Crossing 272k doubles input, output and cache read
+  on this lane at once. If the canary shows long sessions routinely above it,
+  `@ low` keeps the model but lowers the output half of the bill; a model with a
+  flat rate is the other answer.
+- **Canary first.** A new model on the plan lane can fail as empty output or
+  runaway reasoning rather than as a cost line — the GLM-5.3-Flash `@low` failure
+  shape. Run one short orchestrator dispatch after switching.
+- `pencil` inherits the orchestrator, so it bills GPT 6 Luna with no separate
+  entry and keeps vision, which its wireframe work needs.
 
-**Rejected for this lane:** `muse-spark-1.3-contributor` ($8.19/mo — the cheapest
-by a margin, but it trains on traffic and Contributor tier is kept off the lanes
+**Rejected for this lane:** `mimo-v2.6-flash` ($11.47/mo — the cheapest by a
+margin and still on the designer, but it declares no effort ladder, so the plan
+lane has no quality knob); `muse-spark-1.3-contributor` ($8.19/mo — the cheapest
+overall, but it trains on traffic and Contributor tier is kept off the lanes
 that write plans); `particle-ai/particle-1` ($8.83/mo cash, 1M ctx, vision, full
 ladder — released 2026-10-28, closed weights, no reliability record, so it is a
 canary candidate rather than a pick); `mimo-v2.6-pro` ($27.12/mo — a 3× input rate
-on a $60 allowance, ~45% of it); `minimax-m3.1-flash` ($33.47/mo — 5× the cache
-rate on a lane that is 97% cache read); `longcat-2.0` ($26.64/mo and **text-only**,
-which would break inline images with no observer configured); `qwen3.8-flash`
-($34.70/mo); the free Go and `opencode/*-free` tiers (200k context or "limited
-time", too small for this lane's sessions).
+on a $60 allowance, ~45% of it, and still no ladder); `minimax-m3.1-flash`
+($33.47/mo — 5× the cache rate on a lane that is 97% cache read); `longcat-2.0`
+($26.64/mo and **text-only**, which would break inline images with no observer
+configured); `qwen3.8-flash` ($34.70/mo); the free Go and `opencode/*-free` tiers
+(200k context or "limited time", too small for this lane's sessions).
 
 ## The `openrouter` preset (all `:floor`)
 
@@ -668,12 +691,16 @@ is a hard requirement on that lane.
   (512k) and `grok-4.7` (200k) reprice above a context threshold. An agent lane
   passes 100k almost immediately, so the **tier** rate is the one to compare,
   not the models.dev headline. Haiku's cache read goes 0.01 → 0.05 and its
-  output 0.50 → 2.50, which is why it is a designer-only pick here.
+  output 0.50 → 2.50, which is why it is a designer-only pick here. `lowmoney`
+  is the first preset to carry a tiered model on a high-volume lane: GPT 6 Luna
+  doubles every rate above 272k ctx, so the tier — not the headline — is that
+  lane's live risk.
 - `variant` must exist for the model:
   - DeepSeek-V4.1-Flash: `none|low|high|max`
   - MiniMax-M3.1-Flash: `low|medium|high|xhigh|max`;
     MiniMax-M3 / Nemotron-3-Super / gpt-oss-120b: `low|medium|high`
   - GLM-5.3 / GLM-5.3-Flash / Kimi-K3: `low|high|max`
+  - GPT-6-Luna / GPT-5.6-Luna: `none|low|medium|high|xhigh|max`
   - Qwen3.6-27B: `none|low|medium|high`; GLM-4.7-Flash: none listed
   - Qwen3.8-Flash and MiMo-V2.6-Flash are toggle-only — set no `variant`
 - **A valid `variant` is not a working `variant`.** `GLM-5.3-Flash @ low`
