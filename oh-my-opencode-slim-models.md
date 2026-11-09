@@ -504,8 +504,10 @@ untouched, and the preset still carries **no Contributor model**.
   of the fp4 floor pool that retired GLM-5.3-Flash.
 - **Watch the context tier.** Crossing 272k doubles input, output and cache read
   on this lane at once. If the canary shows long sessions routinely above it,
-  `@ low` keeps the model but lowers the output half of the bill; a model with a
-  flat rate is the other answer.
+  the fallback is **back to `opencode-go/mimo-v2.6-flash`** (drop the `variant`,
+  flat $11.47/mo on a $120 allowance) — the lane then loses its effort knob, which
+  is the trade this preset made on purpose, so make it only on measured evidence.
+  `@ low` stays the cheaper experiment before that step.
 - **Canary first.** A new model on the plan lane can fail as empty output or
   runaway reasoning rather than as a cost line — the GLM-5.3-Flash `@low` failure
   shape. Run one short orchestrator dispatch after switching.
@@ -514,7 +516,8 @@ untouched, and the preset still carries **no Contributor model**.
 
 **Rejected for this lane:** `mimo-v2.6-flash` ($11.47/mo — the cheapest by a
 margin and still on the designer, but it declares no effort ladder, so the plan
-lane has no quality knob); `muse-spark-1.3-contributor` ($8.19/mo — the cheapest
+lane has no quality knob; it is the recorded fallback if the 272k tier proves to
+be the normal case); `muse-spark-1.3-contributor` ($8.19/mo — the cheapest
 overall, but it trains on traffic and Contributor tier is kept off the lanes
 that write plans); `particle-ai/particle-1` ($8.83/mo cash, 1M ctx, vision, full
 ladder — released 2026-10-28, closed weights, no reliability record, so it is a
