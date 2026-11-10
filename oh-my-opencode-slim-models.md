@@ -8,8 +8,9 @@ same balance, `opencode-perform` lifts the orchestrator one tier,
 `nomoney` is the cheap/mixed one — Go on the plan and designer lanes, OpenRouter
 cash on the oracle plus `:floor` and a Mistral tail on the two workhorse lanes —
 and `lowmoney` is `nomoney` with the plan lane moved off DeepSeek, so that no lane
-bills a peak-doubled clock — **deactivated 2026-11-10**, one day after GPT 6 Luna's
-per-endpoint token-rate throttle stalled the plan lane (see that section).
+bills a peak-doubled clock — its plan lane now runs `minimax-m3.1-flash @ high`
+(GPT 6 Luna was throttled off it on 2026-11-10; see that section) and the preset
+is **dormant**: `nomoney` is the active daily driver.
 `nomoney` and `lowmoney` are the only presets that
 deliberately mix providers.
 
@@ -439,29 +440,35 @@ traffic is used for training.
 > in 1.5 days, dominated by 83.2M cache read and 12.95M **cache write** at the
 > >272k tier rates — with the weekly window ($30) on pace to exhaust in ~10 days.
 > 29% of the lane's requests sat above the 272k tier (median context 213k, p90
-> 334k, max 348k on the day it throttled). Revive only when GPT 6 Luna gains a
-> saner per-endpoint token-rate limit or a non-tiered rate card; until then the
-> fallback is `nomoney`'s `deepseek-v4.1-flash @ high` plan lane, whose peak
-> multiplier was measured at **+$3/mo on a $200 allowance** — the cheap price of
-> the switch back.
+> 334k, max 348k on the day it throttled). GPT 6 Luna is retired from the lane
+> outright — the throttle is the endpoint's, not a tier problem to wait out —
+> and the plan lane now runs `minimax-m3.1-flash @ high` (table below). The
+> preset stays **dormant**: `nomoney` remains the active daily driver, whose
+> peak multiplier was measured at **+$3/mo on a $200 allowance**. Canary the
+> new lane before trusting it (see Levers).
 
 `nomoney` with **the plan lane moved off DeepSeek**. Everything else is
 byte-identical: oracle `glm-5.3 @ high` on OpenRouter cash, the same `:floor` →
 plain → Mistral chains on explorer and fixer, the same `mimo-v2.6-flash` designer.
 The one change is that the orchestrator — and therefore `pencil`, which inherits
-it — runs `opencode-go/gpt-6-luna @ medium`, a model with **no peak row** in the
-official Go table.
+it — runs `opencode-go/minimax-m3.1-flash @ high`, a model with **no peak row,
+no context tier and no cached-write billing** in the official Go table.
 
 The trade is explicit: same Go subscription and no peak clock, a real effort
-ladder on the lane that writes plans, at roughly **2× the burn on a $60
-allowance** instead of MiMo's $120. MiMo-V2.6-Flash was the cheaper pick and was
-replaced anyway — it declares no effort ladder at all, so a plan lane that runs
-it has no quality knob. GPT 6 Luna at `medium` is the trim; `low` and `none` stay
-available beneath it.
+ladder on the lane that writes plans, at roughly **2.9× the burn** of the MiMo
+pick ($33.47/mo against $11.47 at the recorded mix) on an **$80** allowance
+instead of MiMo's $120. MiMo-V2.6-Flash remains the cheaper pick and remains
+passed over — it declares no effort ladder, so a plan lane that runs it has no
+quality knob. With GPT 6 Luna throttled off its endpoint, MiniMax M3.1 Flash is
+the last candidate standing that meets this lane's constraints: ladder
+(`low|medium|high|xhigh|max`), vision for `pencil`, 1M context, flat rates, no
+context tier — and, unlike GPT 6 Luna, **no cached-write line at all**, which
+was the single largest cost line on the Luna lane. `high` is the lane default;
+`medium` trims beneath it.
 
 | Agent | Model | Variant | In/Out/cache (per M) | Bills | Why |
 | --- | --- | --- | --- | --- | --- |
-| orchestrator | `opencode-go/gpt-6-luna` | `medium` | 0.10 / 0.50 / 0.01, cache write 0.125 — **tier above 272k ctx: 0.20 / 0.75 / 0.02, cache write 0.25** | Go ($60) | The plan lane needs judgment and a knob. Full ladder `none\|low\|medium\|high\|xhigh\|max`, 1.05M ctx, vision + PDF, no 2× window. `medium` is set explicitly because a flat preset inherits nothing. The 272k tier is the live risk: this lane's sessions are long, and crossing it doubles every rate. **Measured 2026-11-10: 29% of the lane's requests sat above the tier, and the cache-write rate the earlier revision of this table omitted became the largest cost line.** |
+| orchestrator | `opencode-go/minimax-m3.1-flash` | `high` | 0.15 / 0.60 / 0.015 (no cache-write billing) | Go ($80) | The plan lane needs judgment and a knob. Full ladder `low\|medium\|high\|xhigh\|max`, 1M ctx, vision, **no peak row, no context tier, no cached-write rate** — every GPT 6 Luna live risk is structurally gone. `high` is the default for a judgment lane; `medium` trims. The cost is the cache rate — 5× DeepSeek's on a lane that is ~97% cache read — **$33.47/mo at the recorded 30-day mix, ~42% of the $80 allowance**, with the 5h window (20% = $16) the one to watch. **Canary before trusting** — proven on the designer lane (`openrouter` preset), new to a plan-writing lane. |
 | oracle | `openrouter/z-ai/glm-5.3` | `high` | 0.0699 / 1.40 / 0.0689 | OpenRouter cash | Inherited unchanged. |
 | explorer | `deepseek-v4.1-flash:floor` → plain → `mistral-small-2603` | `low` / `low` / `none` | as `nomoney` | OpenRouter cash | Inherited unchanged. |
 | designer | `opencode-go/mimo-v2.6-flash` | — | 0.14 / 0.28 / 0.0028 | Go ($120) | Inherited unchanged. Cheapest vision lane in the catalogue and the lowest cache-read rate of any model here; its measured burn is ~$2.5/mo, so the missing ladder costs nothing on a lane this small. |
@@ -482,12 +489,15 @@ respectively fell inside the Mon–Fri 01:00–04:00 and 06:00–10:00 UTC windo
 | `mimo-v2.6-flash` | **11.47** | 5.81 in · 0.96 out · 4.70 cache — −30% vs peak DeepSeek, −14% vs off-peak. No longer the pick: no effort ladder |
 | `gpt-6-luna`, flat rate | **23.95** | 4.15 in · 1.72 out · 16.79 cache + ~1.30 cache write — ~40% of its $60 allowance |
 | `gpt-6-luna`, if sessions sit above 272k ctx | **~47** | every rate doubles — ~78% of the $60 allowance, and the 5h window (20% = $12) starts to bite |
+| `minimax-m3.1-flash` | **33.47** | 6.23 in · 2.06 out · 25.19 cache — no peak row, no tier, no cache-write line; the current pick |
 
 Read that honestly: **the peak multiplier is small in dollars.** It matters because
 the 5h window is 20% of a monthly limit and the burn doubles inside it during a
 European working morning — not because $3/mo is a budget problem. What `lowmoney`
-spends that money on instead is an effort ladder on the plan lane; the GPT 6 Luna
-line above is that purchase, and it is ~2× MiMo's burn at half the allowance.
+spends that money on instead is an effort ladder on the plan lane; the MiniMax
+M3.1 Flash line is now that purchase — ~2.9× MiMo's burn on a smaller ($80)
+allowance, but with no peak clock, no context tier and no cached-write line. The
+GPT 6 Luna rows stay as the measured record of why it was retired.
 
 ### Why it is flat, not `extends: "nomoney"`
 
@@ -505,48 +515,51 @@ Two mechanical reasons, both the same class as `nomoney`'s own:
 ### Headroom
 
 The orchestrator and the designer **no longer share an allowance**. Orchestrator
-~$23.95 is **~40% of its $60** at the recorded mix (~78% if sessions sit above
-272k ctx); designer ~$2.5 is ~2% of its $120. The 5h window on the orchestrator is
-20% of $60 = **$12 of burn**, which a heavy European morning can approach — that
-is the constraint to watch, not the monthly one. The $200 DeepSeek allowance goes
-untouched, and the preset still carries **no Contributor model**.
+~$33.47 is **~42% of its $80** at the recorded mix — and there is no context tier
+to double it and no cache-write line to grow with long sessions, so that percentage
+moves only with volume; designer ~$2.5 is ~2% of its $120. The 5h window on the
+orchestrator is 20% of $80 = **$16 of burn**, which a heavy European morning can
+approach — that is the constraint to watch, not the monthly one. The $200 DeepSeek
+allowance goes untouched, and the preset still carries **no Contributor model**.
 
 ### Levers
 
-- **Effort knob:** `medium` is the trim, not the floor. `@ low` trims the
-  reasoning spend on the same model and the same 272k tier boundary; `@ none` is
-  the floor. Reach for these before changing models — that is what the swap was
-  for.
-- **Escape hatch if the $60 allowance bites:**
+- **Effort knob:** `high` is the lane default, not the ceiling — `xhigh` and `max`
+  sit above it. `@ medium` (the designer's known-good setting on this model) trims
+  the reasoning spend; `@ low` further. Reach for these before changing models —
+  that is what the swap was for.
+- **Escape hatch if the $80 allowance bites:**
   `openrouter/deepseek/deepseek-v4.1-flash-1017 @ high` — the same model, a pinned
   snapshot, cash at DeepSeek's off-peak rates ($13.32/mo at the mix above) and **no
   Go peak clock**. Cheapest same-model variant is
   `openrouter/deepseek/deepseek-v4.1-flash:floor @ high` ($11.71/mo), at the cost
   of the fp4 floor pool that retired GLM-5.3-Flash.
-- **Watch the context tier.** Crossing 272k doubles input, output and cache read
-  on this lane at once. If the canary shows long sessions routinely above it,
-  the fallback is **back to `opencode-go/mimo-v2.6-flash`** (drop the `variant`,
-  flat $11.47/mo on a $120 allowance) — the lane then loses its effort knob, which
-  is the trade this preset made on purpose, so make it only on measured evidence.
-  `@ low` stays the cheaper experiment before that step.
+- **No tier, no cache-write line.** MiniMax M3.1 Flash reprices at no context
+  threshold and bills no cached write — the two multipliers that made GPT 6
+  Luna's measured burn ~2× its flat-rate projection are structurally absent here.
 - **Canary first.** A new model on the plan lane can fail as empty output or
   runaway reasoning rather than as a cost line — the GLM-5.3-Flash `@low` failure
-  shape. Run one short orchestrator dispatch after switching.
-- `pencil` inherits the orchestrator, so it bills GPT 6 Luna with no separate
-  entry and keeps vision, which its wireframe work needs.
+  shape. Run one short orchestrator dispatch after switching. **Mandatory for
+  this pick**: it is proven on the designer lane, new to a plan-writing lane.
+- `pencil` inherits the orchestrator, so it bills MiniMax M3.1 Flash with no
+  separate entry and keeps vision, which its wireframe work needs.
 
-**Rejected for this lane:** `mimo-v2.6-flash` ($11.47/mo — the cheapest by a
-margin and still on the designer, but it declares no effort ladder, so the plan
-lane has no quality knob; it is the recorded fallback if the 272k tier proves to
-be the normal case); `muse-spark-1.3-contributor` ($8.19/mo — the cheapest
+**Rejected for this lane:** `gpt-6-luna` ($23.95/mo flat — **retired 2026-11-10**:
+30 × per-endpoint `429 Token rate limit` in one working morning with $1.40 of a
+$12 5h window burned, plus 29% of requests above the 272k tier where every rate
+doubles, and a $0.125/$0.25 per M cached-write line; see the banner and
+Gotchas); `mimo-v2.6-flash` ($11.47/mo — the cheapest by a margin and still on the
+designer, but it declares no effort ladder, so the plan lane has no quality
+knob); `muse-spark-1.3-contributor` ($8.19/mo — the cheapest
 overall, but it trains on traffic and Contributor tier is kept off the lanes
 that write plans); `particle-ai/particle-1` ($8.83/mo cash, 1M ctx, vision, full
 ladder — released 2026-10-28, closed weights, no reliability record, so it is a
 canary candidate rather than a pick); `mimo-v2.6-pro` ($27.12/mo — a 3× input rate
-on a $60 allowance, ~45% of it, and still no ladder); `minimax-m3.1-flash`
-($33.47/mo — 5× the cache rate on a lane that is 97% cache read); `longcat-2.0`
+on a $60 allowance, ~45% of it, and still no ladder); `glm-5.3-flash` (ladder-carrying,
+flat and vision-capable on paper, but retired 2026-11-01 for the `@low` degeneration —
+a model/variant property, not a routing one); `longcat-2.0`
 ($26.64/mo and **text-only**, which would break inline images with no observer
-configured); `qwen3.8-flash` ($34.70/mo); the free Go and `opencode/*-free` tiers
+configured); `qwen3.8-flash` ($34.70/mo, toggle-only); the free Go and `opencode/*-free` tiers
 (200k context or "limited time", too small for this lane's sessions).
 
 ## The `openrouter` preset (all `:floor`)
