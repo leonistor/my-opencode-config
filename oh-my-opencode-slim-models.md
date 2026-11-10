@@ -8,7 +8,8 @@ same balance, `opencode-perform` lifts the orchestrator one tier,
 `nomoney` is the cheap/mixed one — Go on the plan and designer lanes, OpenRouter
 cash on the oracle plus `:floor` and a Mistral tail on the two workhorse lanes —
 and `lowmoney` is `nomoney` with the plan lane moved off DeepSeek, so that no lane
-bills a peak-doubled clock — the plan lane runs `gpt-6-luna @ medium`, not MiMo.
+bills a peak-doubled clock — **deactivated 2026-11-10**, one day after GPT 6 Luna's
+per-endpoint token-rate throttle stalled the plan lane (see that section).
 `nomoney` and `lowmoney` are the only presets that
 deliberately mix providers.
 
@@ -424,6 +425,26 @@ traffic is used for training.
 
 ## The `lowmoney` preset
 
+> **Deactivated 2026-11-10** — the `preset` key names `nomoney` again. One day
+> after this preset went live (2026-11-09, `33643b3`), GPT 6 Luna's plan lane hit
+> Go's per-endpoint **token rate limit**: 30 × `429 "Token rate limit exceeded"`
+> between 06:48 and 08:10 UTC on 2026-11-10, each backed off 1.7–11.8 s by the
+> foreground-fallback retry hook, so every heavy turn stalled rather than failed
+> over (the lane is a single model, no chain). This is a short-window token
+> throttle, not a usage window: the lane had burned ≈ **$1.40 of its $12 5h
+> allowance** when the first 429 fired, and the bursts coincide with dense
+> minutes (peak 2.3M tokens in one minute; the big single session behind this
+> lane reached 587k context and re-sent it every turn). The measured burn also
+> put the model on a **~$75–80/mo pace against its $60 monthly limit** — ≈ $5.00
+> in 1.5 days, dominated by 83.2M cache read and 12.95M **cache write** at the
+> >272k tier rates — with the weekly window ($30) on pace to exhaust in ~10 days.
+> 29% of the lane's requests sat above the 272k tier (median context 213k, p90
+> 334k, max 348k on the day it throttled). Revive only when GPT 6 Luna gains a
+> saner per-endpoint token-rate limit or a non-tiered rate card; until then the
+> fallback is `nomoney`'s `deepseek-v4.1-flash @ high` plan lane, whose peak
+> multiplier was measured at **+$3/mo on a $200 allowance** — the cheap price of
+> the switch back.
+
 `nomoney` with **the plan lane moved off DeepSeek**. Everything else is
 byte-identical: oracle `glm-5.3 @ high` on OpenRouter cash, the same `:floor` →
 plain → Mistral chains on explorer and fixer, the same `mimo-v2.6-flash` designer.
@@ -440,7 +461,7 @@ available beneath it.
 
 | Agent | Model | Variant | In/Out/cache (per M) | Bills | Why |
 | --- | --- | --- | --- | --- | --- |
-| orchestrator | `opencode-go/gpt-6-luna` | `medium` | 0.10 / 0.50 / 0.01 — **tier above 272k ctx: 0.20 / 0.75 / 0.02** | Go ($60) | The plan lane needs judgment and a knob. Full ladder `none\|low\|medium\|high\|xhigh\|max`, 1.05M ctx, vision + PDF, no 2× window. `medium` is set explicitly because a flat preset inherits nothing. The 272k tier is the live risk: this lane's sessions are long, and crossing it doubles every rate. |
+| orchestrator | `opencode-go/gpt-6-luna` | `medium` | 0.10 / 0.50 / 0.01, cache write 0.125 — **tier above 272k ctx: 0.20 / 0.75 / 0.02, cache write 0.25** | Go ($60) | The plan lane needs judgment and a knob. Full ladder `none\|low\|medium\|high\|xhigh\|max`, 1.05M ctx, vision + PDF, no 2× window. `medium` is set explicitly because a flat preset inherits nothing. The 272k tier is the live risk: this lane's sessions are long, and crossing it doubles every rate. **Measured 2026-11-10: 29% of the lane's requests sat above the tier, and the cache-write rate the earlier revision of this table omitted became the largest cost line.** |
 | oracle | `openrouter/z-ai/glm-5.3` | `high` | 0.0699 / 1.40 / 0.0689 | OpenRouter cash | Inherited unchanged. |
 | explorer | `deepseek-v4.1-flash:floor` → plain → `mistral-small-2603` | `low` / `low` / `none` | as `nomoney` | OpenRouter cash | Inherited unchanged. |
 | designer | `opencode-go/mimo-v2.6-flash` | — | 0.14 / 0.28 / 0.0028 | Go ($120) | Inherited unchanged. Cheapest vision lane in the catalogue and the lowest cache-read rate of any model here; its measured burn is ~$2.5/mo, so the missing ladder costs nothing on a lane this small. |
@@ -680,6 +701,18 @@ is a hard requirement on that lane.
   this file uses the off-peak (reference) rate, so treat them as a floor. These
   two models are the **only** ones with a peak row in the official table —
   everything else, MiMo included, is flat, which is the lever `lowmoney` pulls.
+- **A per-endpoint token rate limit throttles before any usage window.** GPT 6
+  Luna's Go endpoint answers dense minutes with `429 "Token rate limit exceeded,
+  please try again later."` long before the 5h/weekly/monthly dollar windows are
+  anywhere near spent — the `lowmoney` plan lane drew 30 of them on 2026-11-10
+  with ≈ $1.40 of its $12 5h allowance burned. It surfaces as **stalled turns**
+  (the retry hook backs off 1.7–11.8 s and eventually succeeds), not as a cost
+  line, so the log is the place to look: `grep -c "Token rate limit"
+  ~/.local/share/opencode/log/oh-my-opencode-slim.*.log`. Big single sessions
+  amplify it — the lane's 587k-context session peaked at 2.3M tokens in one
+  minute. This throttle, not the tier prices, is what retired `gpt-6-luna` from
+  the plan lane; `gpt-5.6-luna` shares the endpoint family and the tier shape at
+  2× every rate, so it is not a substitute.
 - **Per-model limits are the authority; the usage API is an aggregate.** The
   official table (`opencode.ai/docs/console/go`) lists the monthly limit for each
   model on each plan; `GET https://opencode.ai/zen/go/v1/usage` returns only
