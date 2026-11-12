@@ -2,7 +2,18 @@
   "$schema": "https://opencode.ai/config.json",
   "default_agent": "plan",
   "plugins": [
-    // Not V2-ready yet (no upstream V2 variant):
+    // opencode-history-search: V1-only upstream (its V2 PRs sit unmerged). Superseded
+    // 2026-11-12 by ctx (ctx.rs): CLI + skill installed in ~/.agents/skills — ctx
+    // itself needs no plugin entry. But ctx 2.4.1 rejects this machine's opencode.db
+    // (BOTH schema generations populated by the V1→V2 in-place migration; upstream
+    // report pending), so the frozen V2 port below covers OpenCode-history search
+    // until ctx imports it. Drop it then — it reads session_v2 read-only, 1.0.0.
+    // Its data-dir resolution misses this machine (host DB at ~/.local/share/opencode,
+    // a V1-migration location the plugin does not mirror; it expects
+    // ~/Library/Application Support/opencode). Fixed by the symlink
+    // ~/Library/Application Support/opencode/opencode.db → the real DB. Remove the
+    // symlink together with the plugin entry when ctx takes over.
+    "opencode-history-search-v2@latest",
     // "opencode-history-search",
     // opencode-pty: cannot load as a package spec on V2 (its V2 build is a
     // subpath export, `opencode-pty/v2`, which OpenCode parses as a git spec).
