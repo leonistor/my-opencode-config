@@ -1,5 +1,6 @@
 ---
 name: servers
+version: 0.1.0
 description: Operate Leo's fleet from the servers repository — read the declared surface, observe a target, check drift, and plan a change. Use when asked what is deployed where, whether a server is healthy or drifted, or to plan a deploy to any of the four targets. Never execute on server.vitrina.promo without explicit approval.
 ---
 
