@@ -350,8 +350,7 @@ const shownPresets = [...new Set(rows.map((r) => r.preset))];
 // `--validate` is the advisory half of /suggest-models: it checks that every
 // recommended model is actually offered by the host, and that a preset does not
 // mix providers (all agents in a session should bill one provider's quota —
-// `nomoney` and `lowmoney` are the deliberate exceptions, so their warning is
-// expected).
+// `nomoney` is the deliberate exception, so its warning is expected).
 if (validate) {
   const warnings: string[] = [];
 

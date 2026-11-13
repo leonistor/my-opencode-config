@@ -6,7 +6,7 @@ Global OpenCode v2 config for this machine.
 | --- | --- |
 | `opencode.jsonc` | The real config: providers, plugins, policies, permissions |
 | `cli.json` | TUI only: theme, keybinds, `attention` (notifications/sound) |
-| `oh-my-opencode-slim.json` | Model presets — each maps to one provider, except `nomoney` and `lowmoney` (opencode-go + OpenRouter, plain oracle and `:floor` execution lanes, + Mistral tail by design; `lowmoney` is `nomoney` with the plan lane off DeepSeek's peak clock, on minimax-m3.1-flash @ high — GPT 6 Luna throttled off it 2026-11-10, preset inactive; active preset: `nomoney`); top-level `agents` holds custom specialists |
+| `oh-my-opencode-slim.json` | Model presets — three since the 2026-11-13 consolidation: `opencode-go` (active; all lanes on the Go subscription), `nomoney` (Go-quota relief; the only mixed-provider preset — Go plan/designer lanes, OpenRouter cash on the oracle and `:floor` execution lanes, Mistral failover tails), `openrouter` (all-cash; floor routing on the volume lanes); top-level `agents` holds custom specialists |
 | `oh-my-opencode-slim/` | Agent prompt files (`pencil.md` is the OpenPencil wireframe agent) |
 | `model-table.ts` | Backs `/suggest-models <preset>` |
 | `commands/` | Custom slash commands |
