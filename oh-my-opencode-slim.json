@@ -45,83 +45,9 @@
         "mcps": []
       }
     },
-    "opencode-perform": {
-      "extends": "opencode-go",
-      "agents": {
-        "orchestrator": {
-          "model": "opencode-go/mimo-v2.6-pro"
-        }
-      }
-    },
     "nomoney": {
       "orchestrator": {
         "model": "opencode-go/deepseek-v4.1-flash",
-        "variant": "high",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*",
-          "!context7",
-          "!open-pencil"
-        ]
-      },
-      "oracle": {
-        "model": "openrouter/z-ai/glm-5.3",
-        "variant": "high",
-        "skills": [
-          "simplify"
-        ],
-        "mcps": []
-      },
-      "explorer": {
-        "model": [
-          {
-            "id": "openrouter/deepseek/deepseek-v4.1-flash:floor",
-            "variant": "low"
-          },
-          {
-            "id": "openrouter/deepseek/deepseek-v4.1-flash",
-            "variant": "low"
-          },
-          {
-            "id": "mistral/mistral-small-2603",
-            "variant": "none"
-          }
-        ],
-        "skills": [],
-        "mcps": [
-          "context7",
-          "gh_grep"
-        ]
-      },
-      "designer": {
-        "model": "opencode-go/mimo-v2.6-flash",
-        "skills": [],
-        "mcps": []
-      },
-      "fixer": {
-        "model": [
-          {
-            "id": "openrouter/deepseek/deepseek-v4.1-flash:floor",
-            "variant": "high"
-          },
-          {
-            "id": "openrouter/deepseek/deepseek-v4.1-flash",
-            "variant": "high"
-          },
-          {
-            "id": "mistral/mistral-small-2603",
-            "variant": "high"
-          }
-        ],
-        "skills": [],
-        "mcps": []
-      }
-    },
-    "lowmoney": {
-      "orchestrator": {
-        "model": "opencode-go/minimax-m3.1-flash",
         "variant": "high",
         "skills": [
           "*"
@@ -213,10 +139,6 @@
       "oracle": {
         "model": [
           {
-            "id": "openrouter/z-ai/glm-5.3:floor",
-            "variant": "high"
-          },
-          {
             "id": "openrouter/z-ai/glm-5.3",
             "variant": "high"
           },
@@ -283,48 +205,6 @@
             "id": "openrouter/qwen/qwen3.8-flash"
           }
         ],
-        "variant": "high",
-        "skills": [],
-        "mcps": []
-      }
-    },
-    "openrouter-no-floor": {
-      "orchestrator": {
-        "model": "openrouter/deepseek/deepseek-v4.1-flash",
-        "variant": "high",
-        "skills": [
-          "*"
-        ],
-        "mcps": [
-          "*",
-          "!context7",
-          "!open-pencil"
-        ]
-      },
-      "oracle": {
-        "model": "openrouter/deepseek/deepseek-v4-pro",
-        "variant": "high",
-        "skills": [
-          "simplify"
-        ],
-        "mcps": []
-      },
-      "explorer": {
-        "model": "openrouter/deepseek/deepseek-v4.1-flash",
-        "variant": "low",
-        "skills": [],
-        "mcps": [
-          "context7",
-          "gh_grep"
-        ]
-      },
-      "designer": {
-        "model": "openrouter/xiaomi/mimo-v2.6-flash",
-        "skills": [],
-        "mcps": []
-      },
-      "fixer": {
-        "model": "openrouter/deepseek/deepseek-v4.1-flash",
         "variant": "high",
         "skills": [],
         "mcps": []

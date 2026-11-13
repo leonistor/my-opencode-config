@@ -132,88 +132,10 @@
   "providers": {
     "openrouter": {
       "models": {
-        "z-ai/glm-5.3-flash:floor": {
-          "modelID": "z-ai/glm-5.3-flash:floor",
-          "name": "GLM-5.3-Flash (:floor)",
-          "capabilities": {
-            "tools": true,
-            "input": ["text", "image", "video"],
-            "output": ["text"],
-          },
-          "limit": { "context": 1048576, "output": 943717 },
-          "cost": { "input": 0.15, "output": 0.5, "cache": { "read": 0.03 } },
-        },
-        "xiaomi/mimo-v2.6-flash:floor": {
-          "modelID": "xiaomi/mimo-v2.6-flash:floor",
-          "name": "MiMo-V2.6-Flash (:floor)",
-          "capabilities": {
-            "tools": true,
-            "input": ["text", "image", "audio", "video"],
-            "output": ["text"],
-          },
-          "limit": { "context": 1050000, "output": 131072 },
-          "cost": {
-            "input": 0.14,
-            "output": 0.28,
-            "cache": { "read": 0.0028 },
-          },
-        },
-        "deepseek/deepseek-v4-flash-0731:floor": {
-          "modelID": "deepseek/deepseek-v4-flash-0731:floor",
-          "name": "DeepSeek V4 Flash 0731 (:floor)",
-          "capabilities": {
-            "tools": true,
-            "input": ["text"],
-            "output": ["text"],
-          },
-          "limit": { "context": 1048576, "output": 943718 },
-          "cost": {
-            "input": 0.0152,
-            "output": 1.28,
-            "cache": { "read": 0.0152 },
-          },
-        },
-        "google/gemini-3.8-flash:floor": {
-          "modelID": "google/gemini-3.8-flash:floor",
-          "name": "Gemini 3.8 Flash (:floor)",
-          "capabilities": {
-            "tools": true,
-            "input": ["text", "image", "video", "audio", "pdf"],
-            "output": ["text"],
-          },
-          "limit": { "context": 1048576, "output": 65536 },
-          "cost": {
-            "input": 0.75,
-            "output": 3.75,
-            "cache": { "read": 0.075, "write": 0.041667 },
-          },
-        },
-        "moonshotai/kimi-k2.7-code:floor": {
-          "modelID": "moonshotai/kimi-k2.7-code:floor",
-          "name": "Kimi K2.7 Code (:floor)",
-          "capabilities": {
-            "tools": true,
-            "input": ["text", "image"],
-            "output": ["text"],
-          },
-          "limit": { "context": 262144, "output": 235929 },
-          "cost": {
-            "input": 0.6712,
-            "output": 3.35,
-            "cache": { "read": 0.18 },
-          },
-        },
-        "qwen/qwen3-coder-30b-a3b-instruct:floor": {
-          "modelID": "qwen/qwen3-coder-30b-a3b-instruct:floor",
-          "name": "Qwen3 Coder 30B MoE (:floor)",
-          "capabilities": {
-            "tools": true,
-            "input": ["text"],
-            "output": ["text"],
-          },
-          "limit": { "context": 262144, "output": 65536 },
-          "cost": { "input": 0.07, "output": 0.28 },
-        },
+        // :floor declarations for the live presets only (the 2026-11-13
+        // consolidation dropped eight others, none with a live consumer):
+        // this one carries the nomoney/openrouter volume lanes; the MiniMax
+        // one below also backs opencode-mem auto-capture.
         "deepseek/deepseek-v4.1-flash:floor": {
           "modelID": "deepseek/deepseek-v4.1-flash:floor",
           "name": "DeepSeek V4.1 Flash (:floor)",
@@ -227,36 +149,6 @@
             "input": 0.00405,
             "output": 0.72,
             "cache": { "read": 0.0054 },
-          },
-        },
-        "z-ai/glm-5.3:floor": {
-          "modelID": "z-ai/glm-5.3:floor",
-          "name": "GLM-5.3 (:floor)",
-          "capabilities": {
-            "tools": true,
-            "input": ["text"],
-            "output": ["text"],
-          },
-          "limit": { "context": 1048576, "output": 943718 },
-          "cost": {
-            "input": 0.11,
-            "output": 6,
-            "cache": { "read": 0.109 },
-          },
-        },
-        "minimax/minimax-m3:floor": {
-          "modelID": "minimax/minimax-m3:floor",
-          "name": "MiniMax-M3 (:floor)",
-          "capabilities": {
-            "tools": true,
-            "input": ["text", "image", "video"],
-            "output": ["text"],
-          },
-          "limit": { "context": 1048576, "output": 512000 },
-          "cost": {
-            "input": 0.3,
-            "output": 1.2,
-            "cache": { "read": 0.06 },
           },
         },
         // Declared at the cheapest eligible endpoint (Tenstorrent, fp8, 1M
