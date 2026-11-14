@@ -58,6 +58,12 @@ prompt in `oh-my-opencode-slim/pencil.md`, and it is the only agent allowed to c
   `plan`/`build` sessions, a two-line "open-pencil (42 tools)" pointer. The orchestrator and the
   omo-slim specialists carry nothing, because omo-slim compiles each agent's `mcps` list into
   `open-pencil_*` denies. To keep it cold per project without editing config: `/mcps` → disconnect.
+- **Observation loop (opt-in per project, 2026-11-14):** the denylist above stays wireframe-only
+  here, but a project where the owner points at layers and leaves feedback re-enables seven tools
+  in its own entry — `get_selection`, `select_nodes`, `viewport_zoom_to_fit` and the four comment
+  tools (`get_comments`, `add_comment`, `reply_to_comment`, `resolve_comment`; upstream
+  open-pencil/open-pencil#681 — the Comment tool pins threads to layers, agents read, reply,
+  resolve). Working example: `~/work/darius/la-ade-insta-static/.opencode/opencode.jsonc`.
 
 ## Notifications
 

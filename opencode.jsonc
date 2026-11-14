@@ -87,6 +87,15 @@
           // variables/design-system plumbing, vectors, booleans, diff, icons,
           // comments, settings or eval. `update_node` covers text, size and
           // corner radius, so set_text/set_radius/node_move/node_resize stay off.
+          //
+          // Observation-loop add-on (2026-11-14): a project where the owner
+          // points at layers and leaves feedback drops these seven from ITS OWN
+          // denylist — get_selection, select_nodes, viewport_zoom_to_fit,
+          // get_comments, add_comment, reply_to_comment, resolve_comment
+          // (upstream open-pencil/open-pencil#681: the Comment tool pins
+          // threads to layers; agents read, reply, resolve). The wireframe-only
+          // default here is deliberate and stays. Working example:
+          // ~/work/darius/la-ade-insta-static/.opencode/opencode.jsonc
           "OPENPENCIL_MCP_DISABLED_TOOLS": "get_selection,set_radius,set_text,node_resize,stock_photo,diff_create,diff_jsx,diff_visual,calc,viewport_zoom_to_fit,select_nodes,list_libraries,insert_library_component,page_bounds,get_comments,add_comment,reply_to_comment,resolve_comment,get_font_status,list_fonts,list_available_fonts,search_icons,insert_icon,fetch_icons,combine_as_variants,expose_instance_swap,create_slot,get_behaviour,set_behaviour,create_vector,create_slice,import_svg,set_effects,set_opacity,set_font,set_rotation,set_font_range,set_blend,set_locked,set_stroke_align,set_image_fill,node_move,flatten_nodes,node_bounds,node_ancestors,node_children,node_tree,node_bindings,node_replace_with,list_variables,list_collections,get_variable,find_variables,create_variable,set_variable,delete_variable,bind_variable,unbind_variable,get_collection,create_collection,delete_collection,boolean_union,boolean_subtract,boolean_intersect,boolean_exclude,path_get,path_set,path_scale,path_flip,path_move,viewport_get,viewport_set,export_svg,export_pdf,analyze_colors,analyze_typography,lint_fix,analyze_spacing,analyze_clusters,analyze_overlaps,diff_show,diff_apply,design_to_tokens,import_design_tokens,design_to_component_map,close_file,activate_document,get_settings,update_settings,get_codegen_prompt"
         }
       }
