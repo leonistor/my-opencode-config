@@ -46,9 +46,12 @@ Standing preferences for projects I own.
   that fills them are built in OpenPencil, in `docs/design/<slug>.fig`, before any `.tsx` is
   written. `pencil` is a global subagent (every project, like OpenSpec) that returns a component
   map; it needs the OpenPencil desktop app open with a document. The `open-pencil` MCP ships
-  **disabled** — enable it for the session (`/mcps` → connect, or `"enabled": true` in the
-  project's config) before delegating, and leave it off afterwards. Finished prototypes and
-  visual polish stay with `@designer`; React implementation with `@fixer`.
+  **disabled** — enable it for the session (`/mcps` → connect) before delegating, and leave it
+  off afterwards. To enable it permanently in one project, repeat the full server entry under
+  `mcp.servers.open-pencil` in that project's opencode config with no `disabled` flag: V2
+  replaces a same-name entry wholesale, so a bare `{ "enabled": true }` override is silently
+  ignored. Finished prototypes and visual polish stay with `@designer`; React implementation
+  with `@fixer`.
 
 ## Reuse before implementation
 

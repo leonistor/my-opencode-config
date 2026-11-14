@@ -51,8 +51,13 @@
   // entry otherwise spawns a bridge process in every session. Turn it on where
   // it is actually needed, without editing this file:
   //   - per session/location: `/mcps` → open-pencil → connect
-  //   - per project: add `"mcp": { "open-pencil": { "enabled": true } }` to that
-  //     project's opencode config (merged over this entry, so command/env stay).
+  //   - per project: repeat the FULL entry under "mcp.servers.open-pencil" in
+  //     that project's opencode config — type, command, environment — with no
+  //     "disabled" flag (defaults to false, i.e. connect). V2 replaces a
+  //     same-name server entry wholesale, so the old V1 partial toggle
+  //     `{ "open-pencil": { "enabled": true } }` (still accepted by the
+  //     schema!) is silently ignored by the runtime. Working example:
+  //     ~/work/darius/la-ade-insta-static/.opencode/opencode.jsonc.
   // The permanent off-switch for every agent is "open-pencil" in `disabled_mcps`
   // in oh-my-opencode-slim.json; that one is not meant to be toggled.
   //
@@ -65,23 +70,25 @@
   // open with a document: without it, tool calls answer "start the app" (or time
   // out on a wedged bridge) and the agent stops instead of retrying.
   "mcp": {
-    "open-pencil": {
-      "type": "local",
-      "enabled": false,
-      "command": ["openpencil-mcp"],
-      // Left on the host's default Code Mode on purpose. A per-server
-      // `"codemode": false` gives direct `open-pencil_<tool>` tools but the
-      // setting is server-wide, not per-agent: it would put all 42 schemas
-      // (~9.8k tokens) into every plan/build session too. In Code Mode the
-      // pencil subagent gets one catalog entry plus `search`, and a built-in
-      // session sees a two-line "open-pencil (42 tools)" pointer — measured in
-      // this host's own catalog after a config reload.
-      "environment": {
-        // The wireframe set: build, layout, components, text, verification. No
-        // variables/design-system plumbing, vectors, booleans, diff, icons,
-        // comments, settings or eval. `update_node` covers text, size and
-        // corner radius, so set_text/set_radius/node_move/node_resize stay off.
-        "OPENPENCIL_MCP_DISABLED_TOOLS": "get_selection,set_radius,set_text,node_resize,stock_photo,diff_create,diff_jsx,diff_visual,calc,viewport_zoom_to_fit,select_nodes,list_libraries,insert_library_component,page_bounds,get_comments,add_comment,reply_to_comment,resolve_comment,get_font_status,list_fonts,list_available_fonts,search_icons,insert_icon,fetch_icons,combine_as_variants,expose_instance_swap,create_slot,get_behaviour,set_behaviour,create_vector,create_slice,import_svg,set_effects,set_opacity,set_font,set_rotation,set_font_range,set_blend,set_locked,set_stroke_align,set_image_fill,node_move,flatten_nodes,node_bounds,node_ancestors,node_children,node_tree,node_bindings,node_replace_with,list_variables,list_collections,get_variable,find_variables,create_variable,set_variable,delete_variable,bind_variable,unbind_variable,get_collection,create_collection,delete_collection,boolean_union,boolean_subtract,boolean_intersect,boolean_exclude,path_get,path_set,path_scale,path_flip,path_move,viewport_get,viewport_set,export_svg,export_pdf,analyze_colors,analyze_typography,lint_fix,analyze_spacing,analyze_clusters,analyze_overlaps,diff_show,diff_apply,design_to_tokens,import_design_tokens,design_to_component_map,close_file,activate_document,get_settings,update_settings,get_codegen_prompt"
+    "servers": {
+      "open-pencil": {
+        "type": "local",
+        "disabled": true,
+        "command": ["openpencil-mcp"],
+        // Left on the host's default Code Mode on purpose. A per-server
+        // `"codemode": false` gives direct `open-pencil_<tool>` tools but the
+        // setting is server-wide, not per-agent: it would put all 42 schemas
+        // (~9.8k tokens) into every plan/build session too. In Code Mode the
+        // pencil subagent gets one catalog entry plus `search`, and a built-in
+        // session sees a two-line "open-pencil (42 tools)" pointer — measured in
+        // this host's own catalog after a config reload.
+        "environment": {
+          // The wireframe set: build, layout, components, text, verification. No
+          // variables/design-system plumbing, vectors, booleans, diff, icons,
+          // comments, settings or eval. `update_node` covers text, size and
+          // corner radius, so set_text/set_radius/node_move/node_resize stay off.
+          "OPENPENCIL_MCP_DISABLED_TOOLS": "get_selection,set_radius,set_text,node_resize,stock_photo,diff_create,diff_jsx,diff_visual,calc,viewport_zoom_to_fit,select_nodes,list_libraries,insert_library_component,page_bounds,get_comments,add_comment,reply_to_comment,resolve_comment,get_font_status,list_fonts,list_available_fonts,search_icons,insert_icon,fetch_icons,combine_as_variants,expose_instance_swap,create_slot,get_behaviour,set_behaviour,create_vector,create_slice,import_svg,set_effects,set_opacity,set_font,set_rotation,set_font_range,set_blend,set_locked,set_stroke_align,set_image_fill,node_move,flatten_nodes,node_bounds,node_ancestors,node_children,node_tree,node_bindings,node_replace_with,list_variables,list_collections,get_variable,find_variables,create_variable,set_variable,delete_variable,bind_variable,unbind_variable,get_collection,create_collection,delete_collection,boolean_union,boolean_subtract,boolean_intersect,boolean_exclude,path_get,path_set,path_scale,path_flip,path_move,viewport_get,viewport_set,export_svg,export_pdf,analyze_colors,analyze_typography,lint_fix,analyze_spacing,analyze_clusters,analyze_overlaps,diff_show,diff_apply,design_to_tokens,import_design_tokens,design_to_component_map,close_file,activate_document,get_settings,update_settings,get_codegen_prompt"
+        }
       }
     }
   },
