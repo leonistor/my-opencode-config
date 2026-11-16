@@ -33,7 +33,11 @@
     // ~/.plannotator/config.json turns it on via `inboxTool.opencode`. Plugins
     // load at process start, so this applies to a new session, not this one.
     "@plannotator/opencode",
-    "opencode-mem@latest",
+    // Disabled until a better version comes: ctx daemon (2.4.1) spins CPU at 40–76% during
+    // periodic core_refresh of ~/.local/share/opencode/opencode.db (1.3GB) while the running
+    // opencode server holds the DB open, failing with "SQLite source file changed while its
+    // read snapshot was active" and retrying in a loop.
+    // "opencode-mem@latest",
   ],
   "agents": {
     // oh-my-opencode-slim provides its own `explorer` subagent and the
