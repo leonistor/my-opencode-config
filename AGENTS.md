@@ -33,8 +33,25 @@ Standing preferences for projects I own.
   prefer one thin end-to-end slice through the real problem over building horizontal layers first.
 - **OpenSpec for green-field projects.** When we create a project from scratch, `openspec init` is
   part of the scaffolding unless I opt that project out. Existing repos keep what they have — add
-  OpenSpec to one only when I ask. Where `openspec/` exists, use it for change proposals
-  (`openspec change`) and decisions that matter — never a scratch file.
+  OpenSpec to one only when I ask. Where `openspec/` exists, use it for change proposals and
+  decisions that matter — never a scratch file.
+  - **OpenSpec 2.x (this machine: 2.1.0).** The root holds `openspec/config.yaml` (schema,
+    project `context:`, per-artifact `rules:`, `operations.<op>.guidance:`) and `openspec/specs/` +
+    `openspec/changes/`. There is no `project.md` any more: context that an agent could not infer
+    from the code goes under `context:` in `config.yaml`.
+  - **The workflow is artifact-driven and skill-led.** Start with `openspec new change <name>`,
+    then `openspec status --change <name> --json` for what is left to author; the global
+    `openspec-*` skills (`new-change`, `continue-change`, `ff-change`, `apply-change`,
+    `verify-change`, `archive-change`, `sync-specs`, `explore`, `propose`, `update-change`,
+    `bulk-archive`, `onboard`) are the entry points and carry the per-schema steps. Author
+    artifacts from `openspec instructions <artifact>` rather than from memory.
+  - **Validate before claiming done:** `openspec validate <name> --strict`. `openspec list --json`
+    resolves the root; a first `status` error starting with `Declared in` is a broken `store:`
+    reference, not an uninitialized project.
+  - **After an OpenSpec upgrade:** `openspec update` refreshes the generated instruction files and
+    skills (`--dry-run` to preview), then `openspec doctor` for relationship health. The skills
+    live in the global inventory (`~/.agents/skills`), so a project never vendors them; do not run
+    `openspec init` in a project that already has a root just to get the skills back.
 - **I pick; you bring the options.** Any research-and-evaluation whose result is choosing a package,
   library, tool, or service ends with the candidates compared — trade-offs, maintenance status,
   cost, ecosystem fit — plus your recommendation, and the choice is mine. Nothing gets adopted or
@@ -116,10 +133,22 @@ One thing in this config exists only to work around an upstream bug, with a clea
 
 `index.ts` keeps the package's `setup` and adds `ctx.tool.transform(...)` for the five tools, mirroring upstream `registerV2Tools`. When a release ships the fix (0.4.1+ with PR #84's dual-mode default export): delete the tool-registration block, and keep the wrapper until the subpath spec installs too.
 
-cmux is no longer a workaround. The cmux-tui rewrite retired the old `hooks`-generated
-feed/session plugin (and its duplicate-`cmux.server` deny-policy workaround) in favour of one
-auto-discovered plugin, `plugins/cmux-tui-journal.js`, installed by `cmux agent hook install
-opencode`. See README § Plugins; no deny policies remain.
+cmux is a supported integration, not a workaround, and it is currently **not installed** (checked
+2026-11-17). The command is `cmux hooks opencode install` — `cmux agent hook install` does not exist
+in 0.65.x, and nothing named `cmux-tui-journal.js` is written by any version seen here. The install
+generates two auto-discovered files in `plugins/`: `cmux-session.js` (session lifecycle → cmux's
+restorable session store) and `cmux-feed.js` (Feed approvals). Both return early unless
+`CMUX_SURFACE_ID` is set and honour `CMUX_OPENCODE_HOOKS_DISABLED=1`, so they cost nothing outside a
+cmux terminal and need no `plugins[]` entry in `opencode.jsonc`.
+
+- Re-run `cmux hooks opencode install --yes` after every cmux upgrade. There is no status or verify
+  command; the generated files carry a marker and cmux upgrades them in place. `--project` writes
+  `.opencode/plugins/cmux-feed.js` for a project-scoped Feed only.
+- Uninstall: `cmux hooks opencode uninstall` (`--project` for the project scope). The session store
+  at `~/.cmuxterm/opencode-hook-sessions.json` survives an uninstall.
+- What it buys: cmux attributes an OpenCode session to its workspace, so notifications read
+  `Completed in <workspace>` and a click lands on the right pane. Without it cmux records no agent
+  events at all — see README § Notifications for the current, unlabelled behaviour.
 
 ## Skills - Knowledge Injection
 

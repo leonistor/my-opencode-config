@@ -4,10 +4,16 @@
   "plugins": [
     // opencode-history-search: V1-only upstream (its V2 PRs sit unmerged). Superseded
     // 2026-11-12 by ctx (ctx.rs): CLI + skill installed in ~/.agents/skills — ctx
-    // itself needs no plugin entry. But ctx 2.4.1 rejects this machine's opencode.db
-    // (BOTH schema generations populated by the V1→V2 in-place migration; upstream
-    // report pending), so the frozen V2 port below covers OpenCode-history search
-    // until ctx imports it. Drop it then — it reads session_v2 read-only, 1.0.0.
+    // itself needs no plugin entry. But ctx 2.4.1 still rejects this machine's
+    // opencode.db: BOTH schema generations are populated by the V1→V2 in-place
+    // migration (message 14,238 + session_message ~78k rows), which ctx reports as
+    // a partial refresh with source failures and indexes only Continue/Zed. Its own
+    // daemon then retries the DB in a loop at 40–76% CPU while the opencode server
+    // holds it open ("SQLite source file changed while its read snapshot was
+    // active"). Verified 2026-11-17: 2.4.1 is the newest release and the schema
+    // ambiguity is still open upstream, so the frozen V2 port below keeps covering
+    // OpenCode-history search. Drop it when a ctx release fixes the import — the
+    // full story and the watch trigger are in RESOURCES.md § Agent memory.
     // Its data-dir resolution misses this machine (host DB at ~/.local/share/opencode,
     // a V1-migration location the plugin does not mirror; it expects
     // ~/Library/Application Support/opencode). Fixed by the symlink
@@ -19,10 +25,6 @@
     // subpath export, `opencode-pty/v2`, which OpenCode parses as a git spec).
     // Loaded via a local plugin package instead: plugins/opencode-pty/
     "@upstash/context7-opencode",
-    // cmux: OpenCode integration is now a loose plugin installed by
-    // `cmux agent hook install opencode` → plugins/cmux-tui-journal.js
-    // (auto-discovered, no array entry and no id collision). The old
-    // ./plugins/cmux feed/session bridge was retired with the cmux-tui rewrite.
     "oh-my-opencode-slim",
     // Plannotator's own plugin: the Inbox (threads, questions, attachments
     // annotated in place) plus plan review via `submit_plan`, which replaced
@@ -33,11 +35,30 @@
     // ~/.plannotator/config.json turns it on via `inboxTool.opencode`. Plugins
     // load at process start, so this applies to a new session, not this one.
     "@plannotator/opencode",
-    // Disabled until a better version comes: ctx daemon (2.4.1) spins CPU at 40–76% during
-    // periodic core_refresh of ~/.local/share/opencode/opencode.db (1.3GB) while the running
-    // opencode server holds the DB open, failing with "SQLite source file changed while its
-    // read snapshot was active" and retrying in a loop.
-    // "opencode-mem@latest",
+    // Long-term memory: auto-capture + user profile in a local libsql/Turso
+    // store, local ONNX embeddings (config: opencode-mem.jsonc), V2-native.
+    // Enabled 2026-11-17 (2.42.0). It is NOT the package the old comment here
+    // blamed: that CPU loop came from the `ctx` CLI's daemon (ctx.rs), and
+    // opencode-mem has no ctx dependency at all — verified against its
+    // package.json (libsql + transformers + onnxruntime only). Cost is one
+    // cheap capture call per prompt on the OpenRouter MiniMax `:floor` lane
+    // declared above, plus free local embeddings; keep extraction local if the
+    // capture lane ever matters. Research and the still-blocked ctx story:
+    // RESOURCES.md § Agent memory.
+    "opencode-mem@latest",
+    // cmux: no entry here on purpose. `cmux hooks opencode install` writes
+    // plugins/cmux-session.js (session lifecycle → cmux's restorable store) and
+    // plugins/cmux-feed.js (Feed approvals); both are auto-discovered from
+    // plugins/, so an array entry would only collide with them.
+    //   - inert outside cmux: the bundled source returns early unless
+    //     CMUX_SURFACE_ID is set (and honours CMUX_OPENCODE_HOOKS_DISABLED=1)
+    //   - re-run `cmux hooks opencode install --yes` after every cmux upgrade:
+    //     there is no status command, and the files say cmux upgrades them in
+    //     place. Project scope: add --project (writes .opencode/plugins/).
+    // NOT installed as of 2026-11-17 — plugins/ holds only opencode-pty/ and
+    // the last hook-session store is ~/.cmuxterm/opencode-hook-sessions.json
+    // from 11-07. Until it is, cmux records no agent events and desktop
+    // notifications carry no workspace identity (README § Notifications).
   ],
   "agents": {
     // oh-my-opencode-slim provides its own `explorer` subagent and the

@@ -61,10 +61,13 @@ scripts, and an HTTP endpoint for a statusline.
 ## Agent memory
 
 Evaluated 2026-10-25 for OpenCode **v2.1.4** on Apple Silicon (Bun 1.4.4, local Ollama running).
-Nothing here is wired in. The constraints that remove most of the field: it must load on OpenCode
-V2 (the `plugins` array, a `./server` export) and stay local — no cloud API key.
+The constraints that remove most of the field: it must load on OpenCode V2 (the `plugins` array, a
+`./server` export) and stay local — no cloud API key.
 
-### Recommended: `@mathew-cf/opencode-memory`
+**Status 2026-11-17:** `opencode-mem` (the runner-up below) is enabled in `opencode.jsonc`; nothing
+else here is wired in. `ctx` is installed but idle and blocked upstream — see its section.
+
+### Recommended at the time: `@mathew-cf/opencode-memory`
 
 https://github.com/mathew-cf/opencode-memory — memory as **git-tracked markdown**
 (`~/opencode-memory/`, seven category dirs) plus local embeddings (~90 MB on `bunx … init`).
@@ -80,16 +83,57 @@ it auto-applies edit permissions for `~/opencode-memory/**`; and its prompt pref
 built-in subagents, so omo-slim's `explorer`/`orchestrator` will not get them (`explore`/`general`
 are disabled here anyway).
 
-### Runner-up: `opencode-mem` (tickernelz)
+Not chosen on 2026-11-17 — the owner enabled `opencode-mem` instead (below). It stays the option
+that matches this repo's markdown-and-git philosophy, and the one to revisit if an opaque store,
+a localhost service or its audit burden becomes the friction.
 
-https://github.com/tickernelz/opencode-mem — 3.7k downloads/week, MIT, V2-native, updated
-2026-10-24. Local Turso/libSQL vector store, 12+ local embedding models, automatic capture,
-first-message context injection, web UI on `:4747`, TUI toasts.
+### Chosen 2026-11-17: `opencode-mem` (tickernelz)
 
-Trade-offs: heaviest footprint (`@tursodatabase` + `onnxruntime` native bindings, Apple Silicon only
-— no Intel support), memory in an opaque SQLite audited through a web UI, one more localhost
-service, and auto-extraction can be pointed at a model — keep it on local embeddings, since a
-compression model would burn the lanes the presets are tuned to protect.
+https://github.com/tickernelz/opencode-mem — 2.42.0 (published 2026-11-09), MIT, V2-native, ~1.9k
+stars and pushed daily. Local Turso/libSQL vector store, 12+ local embedding models, automatic
+capture, first-message context injection, web UI on `:4747`, TUI toasts. Enabled in
+`opencode.jsonc`; tuning lives in `opencode-mem.jsonc` (Xenova embeddings, project scope, 60-day
+retention, capture on the OpenRouter MiniMax `:floor` lane).
+
+Trade-offs as evaluated: heaviest footprint (`@tursodatabase` + `onnxruntime` native bindings, Apple
+Silicon only — no Intel support), memory in an opaque SQLite audited through a web UI, one more
+localhost service, and auto-extraction can be pointed at a model — keep it on local embeddings,
+since a compression model would burn the lanes the presets are tuned to protect.
+
+Ownership note: the earlier comment in `opencode.jsonc` disabled this package because "the ctx daemon
+spins CPU". That was a different program — `ctx` (ctx.rs, next section). Verified against
+opencode-mem 2.42.0's `package.json`: it depends on libsql/transformers/onnxruntime and has no ctx
+dependency, so the CPU loop could not have come from it.
+
+### `ctx` (ctx.rs) — history search across agents, installed but blocked
+
+https://github.com/ctxrs/ctx — CLI plus skill, no plugin entry. `~/.local/bin/ctx` **2.4.1** (newest
+release, 2026-11-05) with the skill in `~/.agents/skills/ctx`. Tantivy lexical search over OpenCode,
+Continue, Zed and Claude histories, optional local-E5 semantic; no LLM cost. Meant to replace the
+frozen `opencode-history-search-v2`.
+
+Checked 2026-11-17 — two separate faults, neither fixed yet:
+
+- **Schema ambiguity — the real blocker.** This machine's `opencode.db` was migrated in place from V1
+  to V2, so both generations are populated (`message` 14,238 rows and `session_message` 77,962, with
+  `part`/`session_part`/`session_v2` alongside). ctx reports that as an ambiguous message-schema
+  family: upstream ctxrs/ctx#1105, fixed by PR #1109 in **v2.2.5**, but a 2.3.0 user still reports it
+  and nothing in the 2.3.0–2.4.1 notes touches it. Locally `ctx status` shows
+  `Refresh partial (completed with source failures)` and indexes only Continue and Zed — OpenCode
+  contributes nothing.
+- **Daemon CPU loop.** While the OpenCode server holds the 1.3 GB DB open, ctx's `core_refresh`
+  retries for minutes at 40–76% CPU, failing with `SQLite source file changed while its read snapshot
+  was active`. That exact message has no upstream issue (prior art: #282, #802, #1030, and the #1132/
+  #1125 admission fix already shipped in 2.3.0) — worth filing if it matters.
+
+Safe use today: `ctx index mode manual` (the daemon never auto-indexes) and
+`ctx search … --refresh off` (strictly read-only over the published index).
+
+**Watch trigger:** a release **> 2.4.1** whose notes mention the import/ambiguous-schema fix. Then
+re-verify with `ctx import --provider opencode --path ~/.local/share/opencode/opencode.db` (exits
+non-zero on failure since 2.2.5) before re-enabling auto-indexing. When it works, drop
+`opencode-history-search-v2` and its `~/Library/Application Support/opencode/opencode.db` symlink in
+the same commit.
 
 ### MCP route: Basic Memory
 

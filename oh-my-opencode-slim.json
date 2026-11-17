@@ -5,7 +5,7 @@
     "opencode-go": {
       "orchestrator": {
         "model": "opencode-go/deepseek-v4.1-flash",
-        "variant": "high",
+        "variant": "max",
         "skills": [
           "*"
         ],
@@ -40,7 +40,7 @@
       },
       "fixer": {
         "model": "opencode-go/deepseek-v4.1-flash",
-        "variant": "high",
+        "variant": "max",
         "skills": [],
         "mcps": []
       }

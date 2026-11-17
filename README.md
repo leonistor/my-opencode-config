@@ -8,25 +8,28 @@ Global OpenCode v2 config for this machine.
 | `cli.json` | TUI only: theme, keybinds, `attention` (notifications/sound) |
 | `oh-my-opencode-slim.json` | Model presets — three since the 2026-11-13 consolidation: `opencode-go` (active; all lanes on the Go subscription), `nomoney` (Go-quota relief; the only mixed-provider preset — Go plan/designer lanes, OpenRouter cash on the oracle and `:floor` execution lanes, Mistral failover tails), `openrouter` (all-cash; floor routing on the volume lanes); top-level `agents` holds custom specialists |
 | `oh-my-opencode-slim/` | Agent prompt files (`pencil.md` is the OpenPencil wireframe agent) |
+| `opencode-mem.jsonc` | Tuning for the `opencode-mem` plugin: embeddings, capture model/lane, project scope, retention (README § Memory) |
 | `model-table.ts` | Backs `/suggest-models <preset>` |
 | `commands/` | Custom slash commands |
-| `plugins/` | Local plugins: the opencode-pty wrapper and the cmux hook (`cmux-tui-journal.js`) |
+| `plugins/` | Local plugins: the opencode-pty wrapper, plus the two cmux hook files once `cmux hooks opencode install` has run |
 
 Agent instructions: `AGENTS.md`. External tools and links: `RESOURCES.md`.
 
 ## Plugins
 
-Two local plugin artifacts live under `plugins/`:
+Local plugin artifacts live under `plugins/`:
 
 - `opencode-pty/` — a local package wrapping `opencode-pty/v2` (which OpenCode cannot
   load as a package spec) and registering the five pty tools the 0.4.0 V2 entry forgets.
   See `AGENTS.md` § Workarounds for the removal trigger.
-- `cmux-tui-journal.js` — the cmux-tui OpenCode hook, installed and updated by
-  `cmux agent hook install opencode`. It is auto-discovered (no `opencode.jsonc` `plugins`
-  entry) and is a no-op unless opencode is launched inside a cmux-tui terminal (which
-  inherits `CMUX_TUI_SOCKET` / `CMUX_TUI_TERMINAL_ID` / `CMUX_TUI_HOOK`). Re-run
-  `cmux agent hook install opencode` on a fresh clone or after a cmux upgrade. This
-  replaced the old `hooks`-generated `cmux/` + `cmux-feed.js` + `cmux-session.js` trio.
+- `cmux-session.js` + `cmux-feed.js` — the cmux OpenCode hooks, generated and updated by
+  `cmux hooks opencode install` (not present as of 2026-11-17; `cmux agent hook install`
+  does not exist in 0.65.x). Auto-discovered, no `opencode.jsonc` entry; both return
+  early unless `CMUX_SURFACE_ID` is set, and `CMUX_OPENCODE_HOOKS_DISABLED=1` disables
+  them per process. There is no status command — re-run the install with `--yes` on a
+  fresh clone or after a cmux upgrade. `--project` writes only `.opencode/plugins/cmux-feed.js`.
+  Installing them is what gives cmux per-workspace session attribution, and with it
+  project-labelled notifications; see § Notifications.
 
 ## How I work with agents
 
@@ -35,7 +38,12 @@ Conventions every agent session follows in my projects — the rules themselves 
 - **Bottom-up** — thin end-to-end slices first; abstractions only when a second real use appears.
 - **OpenSpec for green-field projects** — fresh projects are scaffolded with `openspec init`;
   existing repos are left alone unless asked. Spec changes and decisions live in `openspec/`,
-  not in chat or scratch files.
+  not in chat or scratch files. OpenSpec 2.x: the root is `openspec/config.yaml` plus
+  `specs/` and `changes/` (`project.md` is gone — context and per-artifact rules live in
+  `config.yaml`), a change starts with `openspec new change <name>`, and the global
+  `openspec-*` skills drive the artifact workflow. `openspec update` after an upgrade,
+  `openspec validate <name> --strict` before calling work done. Details: `AGENTS.md`
+  § Project conventions.
 - **Options reviewed before adoption** — package/tool research ends with candidates, trade-offs
   and a recommendation; the pick is mine, and precedes integration.
 
@@ -68,9 +76,22 @@ prompt in `oh-my-opencode-slim/pencil.md`, and it is the only agent allowed to c
 ## Notifications
 
 Notifications are set in `cli.json` → `attention` (`notifications`, `sound`, `volume`, `sound_pack`,
-`sounds`; there is no per-directory config). Every session sends the same payload, so two concurrent
-sessions (cmux + kitty) look identical in Notification Center. Give each launch its own block — the
-inline JSON merges over `cli.json`:
+`sounds`; there is no per-directory config).
+
+**What actually fires, and why several projects look alike (checked 2026-11-17).** The notifier is
+OpenCode's own built-in `opencode.notifications` plugin: it calls `attention.notify` with the *session
+title* as the banner title and a fixed body (`Session done`, `Permission needs input`, `Input needs
+response`, the error text). No directory, no project, no workspace. With two sessions open in two
+projects you get two banners that are distinguishable only by session title, both from "OpenCode",
+both with the same sound — and a click raises the app, not the pane.
+
+The layer that used to fix that is cmux's hook (README § Plugins), which attributes a session to its
+workspace and subtitles the banner `Completed in <workspace>`; the last such store
+(`~/.cmuxterm/opencode-hook-sessions.json`, 11-07) still shows it. The hooks are **not installed**,
+and cmux's event log records workspace events only — so today cmux contributes nothing to routing and
+everything is OpenCode's unlabelled banner. Installing the hooks, then letting cmux be the only
+notifier inside cmux, is the fix; until then, split the channels per launch instead — the inline JSON
+merges over `cli.json`:
 
 ```sh
 # cmux window — desktop banners, no sound
@@ -79,6 +100,25 @@ OPENCODE_CLI_CONFIG_CONTENT='{"attention":{"notifications":true,"sound":false}}'
 # kitty window — sound only, no banner
 OPENCODE_CLI_CONFIG_CONTENT='{"attention":{"notifications":false,"sound":true}}' opencode
 ```
+
+That splits cmux from kitty, not project A from project B. kitty adds its own unlabelled channel when
+left at defaults (`kitty.conf` sets no bell options), so `enable_audio_bell no` is the other half.
+cmux defaults `app.reorderOnNotification: true`, which re-sorts workspaces when a notification
+arrives — set it to `false` if a click keeps landing on the wrong workspace.
+
+## Memory
+
+`opencode-mem` (2.42.0, `plugins` in `opencode.jsonc`) keeps a long-term store: auto-capture per
+session, a user profile, and a `memory` tool for search. Data lives in `~/.opencode-mem/data`; tuning
+is `opencode-mem.jsonc` (local Xenova/nomic embeddings, project scope, 60-day retention, capture on
+the OpenRouter MiniMax `:floor` lane — one cheap call per captured prompt, never on a lane the
+presets protect). `autoUpdate` is on, so a version change is a config change worth noting.
+
+Two rules still apply: `AGENTS.md` is the authority and memory is recall, not a second source of
+truth; and because capture is automatic, audit what it stores on a schedule. `opencode-mem` replaces
+nothing else — the frozen `opencode-history-search-v2` still answers "what did we decide in that old
+session", and `ctx` (installed, idle, blocked upstream) is meant to take that over. Both stories:
+`RESOURCES.md` § Agent memory.
 
 ## Plannotator
 
