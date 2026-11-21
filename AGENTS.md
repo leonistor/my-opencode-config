@@ -35,7 +35,7 @@ Standing preferences for projects I own.
   part of the scaffolding unless I opt that project out. Existing repos keep what they have — add
   OpenSpec to one only when I ask. Where `openspec/` exists, use it for change proposals and
   decisions that matter — never a scratch file.
-  - **OpenSpec 2.x (this machine: 2.1.0).** The root holds `openspec/config.yaml` (schema,
+  - **OpenSpec 2.x (this machine: 2.1.1).** The root holds `openspec/config.yaml` (schema,
     project `context:`, per-artifact `rules:`, `operations.<op>.guidance:`) and `openspec/specs/` +
     `openspec/changes/`. There is no `project.md` any more: context that an agent could not infer
     from the code goes under `context:` in `config.yaml`.
