@@ -6,7 +6,7 @@ Global OpenCode v2 config for this machine.
 | --- | --- |
 | `opencode.jsonc` | The real config: providers, plugins, policies, permissions |
 | `cli.json` | TUI only: theme, keybinds, `attention` (notifications/sound) |
-| `oh-my-opencode-slim.json` | Model presets — three since the 2026-11-13 consolidation, none on `:floor` since 2026-11-22: `openrouter` (active since 2026-11-22; all-cash), `opencode-go` (all lanes on the Go subscription), `nomoney` (Go-quota relief; the only mixed-provider preset — Go plan/designer lanes, OpenRouter cash on the oracle and execution lanes, Mistral failover tails); top-level `agents` holds custom specialists |
+| `oh-my-opencode-slim.json` | Model presets — three since the 2026-11-13 consolidation: `openrouter` (active since 2026-11-22; all-cash, its ds/minimax primaries on `:floor` — retired and restored the same day), `opencode-go` (all lanes on the Go subscription), `nomoney` (Go-quota relief; the only mixed-provider preset — Go plan/designer lanes, OpenRouter cash on the oracle and execution lanes, Mistral failover tails); top-level `agents` holds custom specialists |
 | `oh-my-opencode-slim/` | Agent prompt files (`pencil.md` is the OpenPencil wireframe agent) |
 | `opencode-mem.jsonc` | Tuning for the `opencode-mem` plugin: embeddings, capture model/lane, project scope, retention (README § Memory) |
 | `model-table.ts` | Backs `/suggest-models <preset>` |

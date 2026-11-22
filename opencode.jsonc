@@ -171,7 +171,72 @@
     ],
   },
   "providers": {
-    "openrouter": {},
+    "openrouter": {
+      "models": {
+        // :floor is a routing variant, not a catalogue entry: it is absent from
+        // models.dev and GET /api/v1/models/{id}, so the openrouter preset's
+        // floor lanes must be hand-declared with their cost kept in sync.
+        // Re-check the cheapest endpoint with
+        // GET /api/v1/models/{id}/endpoints when the lane's price moves.
+        //
+        // Restored 2026-11-22 shortly after their retirement, by owner decision.
+        // Verified live the same day: `:floor` still routes to the cheapest
+        // endpoint (ds → Baidu fp8, minimax → StreamLake fp8), at rates equal to
+        // the plain catalogue entry (0.0498/0.1992/0.001 and
+        // 0.135/0.54/0.0135). The point is no longer a lower price — it is
+        // pinning the price floor instead of the post-2026-10-28 default
+        // router, which balances cost, speed and reliability.
+        "deepseek/deepseek-v4.1-flash:floor": {
+          "modelID": "deepseek/deepseek-v4.1-flash:floor",
+          "name": "DeepSeek V4.1 Flash (:floor)",
+          "capabilities": {
+            "tools": true,
+            "input": ["text", "image"],
+            "output": ["text"],
+            // Required: a declared model gets no variants from models.dev, and
+            // the host rejects an unknown variant. This rebuilds the plain
+            // model's ladder (models.dev: none|low|high|max) so omo-slim's
+            // `high`/`low` resolve instead of erroring at model resolution.
+            "reasoning": {
+              "supported": true,
+              "toggle": true,
+              "effort": ["low", "high", "max"],
+            },
+          },
+          // Cheapest eligible endpoint: Baidu, fp8, 1M ctx, max output 393216.
+          "limit": { "context": 1048576, "output": 393216 },
+          "cost": {
+            "input": 0.0498,
+            "output": 0.1992,
+            "cache": { "read": 0.000996 },
+          },
+        },
+        // Backs the openrouter designer lane. Cheapest endpoints: StreamLake and
+        // Wafer, both fp8, 0.135/0.54/cache 0.0135 — the same rate models.dev
+        // reports for the plain catalogue entry. Max output 512000 (models.dev).
+        "minimax/minimax-m3.1-flash:floor": {
+          "modelID": "minimax/minimax-m3.1-flash:floor",
+          "name": "MiniMax-M3.1-Flash (:floor)",
+          "capabilities": {
+            "tools": true,
+            "input": ["text", "image", "video"],
+            "output": ["text"],
+            // Same reason as the ds floor: rebuild the plain model's ladder
+            // (models.dev: low|medium|high|xhigh|max) so `medium` resolves.
+            "reasoning": {
+              "supported": true,
+              "effort": ["low", "medium", "high", "xhigh", "max"],
+            },
+          },
+          "limit": { "context": 1048576, "output": 512000 },
+          "cost": {
+            "input": 0.135,
+            "output": 0.54,
+            "cache": { "read": 0.0135 },
+          },
+        },
+      },
+    },
     // Mistral: API key lives in the environment (MISTRAL_API_KEY, set in
     // ~/.bash_profile); models are auto-discovered from models.dev until a
     // preset pins a selection here.

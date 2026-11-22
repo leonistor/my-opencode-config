@@ -2,11 +2,10 @@
 
 Presets for `~/.config/opencode/oh-my-opencode-slim.json`. The active preset is
 whatever its `preset` key names — that key is authoritative (currently
-`openrouter`, since 2026-11-22). Three presets exist, none on `:floor` since
-2026-11-22:
+`openrouter`, since 2026-11-22). Three presets exist:
 
-- **`openrouter`** — the daily driver since 2026-11-22. All-cash, plain
-  catalogue routing on every lane.
+- **`openrouter`** — the daily driver since 2026-11-22. All-cash; the
+  ds/minimax primaries use `:floor` (retired and restored on 2026-11-22).
 - **`opencode-go`** — the subscription lane set. Everything on the Go
   subscription, balance leaning cheap.
 - **`nomoney`** — Go-quota relief. The plan and designer lanes stay on Go's
@@ -131,7 +130,7 @@ roughly half the allowance burn off the subscription for single-digit cash.
 | --- | --- | --- | --- | --- |
 | orchestrator | `opencode-go/deepseek-v4.1-flash` | `high` | Go ($200) | The plan lane: highest token volume, ~97% cache read, the cheapest Go cache rate. |
 | oracle | `openrouter/z-ai/glm-5.3` | `high` | OpenRouter cash | Cross-family reasoner, 1M ctx, `high` proven — never `low` (GLM `@low` is the degenerate pair; see Gotchas). ~$3.85/mo on the measured mix at the 2026-11-13 rates; cheaper at the 2026-11-22 rates (0.07/1.40/0.069). GLM has no real cache discount, so a longer-session oracle drifts toward the input rate. Frees the Go V4 Pro allowance. |
-| explorer | `deepseek/deepseek-v4.1-flash` → `mistral/mistral-small-2603` | `low` / `none` | OpenRouter cash | Plain catalogue routing; the model carries a working `@low`, and its cache-read rate ($0.001/M, 2026-11-22) is the cheapest term on the lane. `:floor` retired 2026-11-22 — floor and plain prices converged. |
+| explorer | `deepseek/deepseek-v4.1-flash` → `mistral/mistral-small-2603` | `low` / `none` | OpenRouter cash | Plain catalogue routing; the model carries a working `@low`, and its cache-read rate ($0.001/M, 2026-11-22) is the cheapest term on the lane. Stayed plain when the `openrouter` lanes restored `:floor` the same day — the rates are equal either way. |
 | designer | `opencode-go/mimo-v2.6-flash` | — (no ladder) | Go ($120) | Cheapest vision lane in the catalogue and the lowest cache-read rate of any model here. No ladder, so it cannot degenerate the way GLM `@low` did. The measured designer mix prices at ≈$1–2/mo on it. |
 | fixer | `deepseek/deepseek-v4.1-flash` → `mistral/mistral-small-2603` | `high` / `high` | OpenRouter cash | Scoped implementation on the same proven profile, at per-token cash. |
 
@@ -166,65 +165,59 @@ visible, exactly as `openrouter` is written.
 
 ## The `openrouter` preset (all-cash, active since 2026-11-22)
 
-The subscription-independent daily driver: every lane on OpenRouter cash,
-plain catalogue routing throughout. Three lanes share
-`deepseek-v4.1-flash` deliberately — the only family with a measured ~0%
-error rate and a working effort ladder at this price; every chain ends on a
-cross-family model.
+The subscription-independent daily driver: every lane on OpenRouter cash. The
+ds/minimax primaries use `:floor` (retired and restored on 2026-11-22; see
+below). Three lanes share `deepseek-v4.1-flash` deliberately — the only family
+with a measured ~0% error rate and a working effort ladder at this price; every
+chain ends on a cross-family model.
 
 | Agent | Model | Variant | Why |
 | --- | --- | --- | --- |
-| orchestrator | `deepseek/deepseek-v4.1-flash` | `high` | Highest-token lane; 1M ctx, vision. |
+| orchestrator | `deepseek/deepseek-v4.1-flash:floor` | `high` | Highest-token lane; 1M ctx, vision. `:floor` pins the cheapest endpoint (Baidu fp8, 0.0498/0.1992/cache 0.001 — equal to plain today). |
 | oracle | `z-ai/glm-5.3` | `high` | Cross-family reasoner. Switched from `glm-5.3:floor` to the plain ID on 2026-11-13 — the floor variant was no longer cheaper on any rate (0.11/6.00/0.109 declared vs 0.084/3.60/0.079 live); 2026-11-22 rates are 0.07/1.40/0.069. |
-| explorer | `deepseek/deepseek-v4.1-flash` | `low` | Proven `@low` trim. |
-| designer | `minimax/minimax-m3.1-flash` | `medium` | Full ladder; plain catalogue (0.135/0.54/cache 0.0135, models.dev 2026-11-22) — the floor's cheapest endpoint (StreamLake/Wafer) sets the same rate, so `:floor` adds nothing. |
-| fixer | `deepseek/deepseek-v4.1-flash` | `high` | The lane where a broken step costs most; same proven profile as the orchestrator. |
+| explorer | `deepseek/deepseek-v4.1-flash:floor` | `low` | Proven `@low` trim on the pinned-cheapest endpoint; cross-family tail on mimo. |
+| designer | `minimax/minimax-m3.1-flash:floor` | `medium` | Full ladder; the cheapest endpoints (StreamLake/Wafer, 0.135/0.54/cache 0.0135) price the same as plain, so `:floor` only pins them. |
+| fixer | `deepseek/deepseek-v4.1-flash:floor` | `high` | The lane where a broken step costs most; same proven profile as the orchestrator. |
 
 ### Failover chains
 
 | lane | chain |
 | --- | --- |
-| orchestrator | ds-v4.1-flash `high` → qwen3.8-flash |
+| orchestrator | ds-v4.1-flash `:floor` `high` → qwen3.8-flash |
 | oracle | glm-5.3 `high` → qwen3.8-flash |
-| explorer | ds-v4.1-flash `low` → mimo-v2.6-flash |
-| designer | minimax-m3.1-flash `medium` → qwen3.8-flash |
-| fixer | ds-v4.1-flash `high` → qwen3.8-flash |
+| explorer | ds-v4.1-flash `:floor` `low` → mimo-v2.6-flash |
+| designer | minimax-m3.1-flash `:floor` `medium` → qwen3.8-flash |
+| fixer | ds-v4.1-flash `:floor` `high` → qwen3.8-flash |
 
 Entries advance on transient errors (429/403/401/410, 5xx/524, queue-full,
 spent allowance, empty response), not on quality. All entries share the
 `openrouter` provider ID, so a dead key or spent allowance skips the rest —
 only `nomoney`'s Mistral tails cover that. The cross-family tail is the
-reliability net; on the 2026-11-22 catalogue, plain ds-v4.1-flash is cheap
-enough (0.0498/0.1992/0.001) that the fallback's only job is staying up, not
-saving money.
+reliability net; on the 2026-11-22 catalogue, ds-v4.1-flash is cheap enough
+(0.0498/0.1992/0.001, floor or plain) that the fallback's only job is staying
+up, not saving money.
 
-### Why `:floor` was retired (2026-11-22)
+### Floor lanes, retired and restored (2026-11-22)
 
-- **The price gap collapsed.** The floor's whole point was routing below the
-  plain catalogue rate. On 2026-11-22 the cheapest ds-v4.1-flash endpoint
-  (Baidu, fp8) priced at 0.0498/0.1992/cache 0.001 — identical to the plain
-  catalogue entry. Floor == plain, so the hand-declared routing shortcut added
-  maintenance (a `cost` declaration that must track a moving floor, absent from
-  models.dev) and nothing else.
-- **The minimax floor reversed.** Its cheapest endpoint (Tenstorrent, fp8 —
-  the reason the lane existed) no longer serves the model. The 2026-11-22
-  cheapest endpoints (StreamLake/Wafer) price at 0.135/0.54 — the same rate
-  models.dev reports for the plain catalogue entry, so the floor no longer
-  routes below plain; it just adds a hand-declared lane for nothing. The
-  designer moved to plain.
-- **OpenRouter changed default routing.** The 2026-10-28 announcement
-  "How we rebuilt provider routing" made the default router balance cost,
-  speed, and reliability instead of pure price; `:floor` remained the explicit
-  price-only override. That override is exactly what the volume lanes wanted —
-  but with floor == plain for ds, plain routing now gives the same price
-  *plus* the reliability balancing.
-- **`:floor` semantics on the docs:** it sorts all eligible endpoints by price
-  and admits flex service-tier endpoints into the pool (billed at the flex
-  rate when a flex endpoint serves the request). It is a routing variant, not
-  a catalog entry — absent from models.dev and `GET /api/v1/models/{id}`, so
-  any future floor lane must be hand-declared in `opencode.jsonc` with its
-  cost kept in sync. This config carries zero floor declarations as of
-  2026-11-22.
+`:floor` was first retired on 2026-11-22 because the price gap had collapsed:
+the cheapest ds endpoint (Baidu, fp8) priced at 0.0498/0.1992/cache 0.001 —
+identical to plain — and minimax's cheapest (StreamLake/Wafer) at 0.135/0.54,
+identical to plain, with Tenstorrent gone. The owner reversed that the same day
+and the floors are back on the `openrouter` lanes.
+
+- **Why keep them at equal price:** `:floor` pins the cheapest eligible
+  endpoint. The 2026-10-28 default router balances cost, speed and reliability,
+  so a hot turn can be served by a pricier endpoint; floor stays the explicit
+  price-only override. Confirmed live on 2026-11-22: `:floor` requests served
+  from Baidu (ds) and StreamLake (minimax) — the rates declared in
+  `opencode.jsonc`.
+- **What it costs to keep:** a hand declaration in `opencode.jsonc` whose
+  `cost` must track the moving floor, since `:floor` is a routing variant
+  absent from models.dev and `GET /api/v1/models/{id}`. Floor also admits flex
+  service-tier endpoints into the pool, billed at the flex rate when one serves
+  the request.
+- **Scope:** `opencode-go` has no OpenRouter lanes; `nomoney`'s ds lanes and the
+  `opencode-mem` capture lane stayed plain.
 
 ## Gotchas (pricing)
 
@@ -276,10 +269,9 @@ saving money.
 - `~/.config/opencode/model-table.ts` — bun script; reads the preset, resolves
   `extends` chains, pulls live prices from models.dev (cached 24h in
   `~/.cache/opencode/models-dev.json`), falls back to `opencode.jsonc`
-  declarations for `:floor` (no live declarations since 2026-11-22, when the
-  last two were removed). Options: `--preset`, `--all`, `--refresh`,
-  `--json`, `--validate`, positional agent filters. Prints chain heads; the
-  chains live in the JSON.
+  declarations for `:floor` (the two restored on 2026-11-22). Options:
+  `--preset`, `--all`, `--refresh`, `--json`, `--validate`, positional agent
+  filters. Prints chain heads; the chains live in the JSON.
 - `/suggest-models` — wraps the script with `--validate` (availability +
   single-provider check; `nomoney`'s mixed-provider warning is expected).
 - `/models-doc` — answers from this file.
@@ -346,11 +338,24 @@ history (`git log -- oh-my-opencode-slim-models.md`).
   floor lost its edge — its cheapest endpoints (StreamLake/Wafer, 0.135/0.54)
   now price the same as the plain entry, and Tenstorrent (the lane's reason
   to exist) no longer serves the model. Both `:floor` declarations were
-  removed from `opencode.jsonc` (zero live since); `opencode-mem` capture moved
-  to plain `minimax-m3.1-flash`; the `openrouter` preset's ds/minimax lanes and
+  removed from `opencode.jsonc`; `opencode-mem` capture moved to plain
+  `minimax-m3.1-flash`; the `openrouter` preset's ds/minimax lanes and
   `nomoney`'s ds lanes went plain, keeping the cross-family tails. The active
   preset switched `opencode-go` → `openrouter` (all-cash). Verified against
   live endpoints and the 2026-10-28 "How we rebuilt provider routing"
   announcement, which kept `:floor` as the price-only override — still true
   today, just no longer worth a hand-declared lane. `/preset openrouter`
   applies it to a running session.
+- **2026-11-22 — `:floor` restored on the `openrouter` lanes (owner reversal).**
+  Same day as the retirement above. A live check confirmed the variant still
+  routes: `deepseek/deepseek-v4.1-flash:floor` served from Baidu,
+  `minimax/minimax-m3.1-flash:floor` from StreamLake. Both declarations went
+  back into `opencode.jsonc` at the cheapest-endpoint rates
+  (0.0498/0.1992/0.001 and 0.135/0.54/0.0135 — equal to plain today), and the
+  orchestrator/explorer/fixer (ds) and designer (minimax) primaries use them
+  again. The price argument for retiring them stands; the choice is to pin the
+  cheapest endpoint instead of trusting the default cost/speed/reliability
+  router. `nomoney`'s ds lanes and the `opencode-mem` capture lane stayed
+  plain. Validated with
+  `bun model-table.ts --preset openrouter --validate`: every model available,
+  one provider.

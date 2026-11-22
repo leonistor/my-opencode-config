@@ -107,7 +107,7 @@
       "orchestrator": {
         "model": [
           {
-            "id": "openrouter/deepseek/deepseek-v4.1-flash",
+            "id": "openrouter/deepseek/deepseek-v4.1-flash:floor",
             "variant": "high"
           },
           {
@@ -143,7 +143,7 @@
       "explorer": {
         "model": [
           {
-            "id": "openrouter/deepseek/deepseek-v4.1-flash",
+            "id": "openrouter/deepseek/deepseek-v4.1-flash:floor",
             "variant": "low"
           },
           {
@@ -160,7 +160,7 @@
       "designer": {
         "model": [
           {
-            "id": "openrouter/minimax/minimax-m3.1-flash",
+            "id": "openrouter/minimax/minimax-m3.1-flash:floor",
             "variant": "medium"
           },
           {
@@ -174,7 +174,7 @@
       "fixer": {
         "model": [
           {
-            "id": "openrouter/deepseek/deepseek-v4.1-flash",
+            "id": "openrouter/deepseek/deepseek-v4.1-flash:floor",
             "variant": "high"
           },
           {
