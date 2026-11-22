@@ -93,7 +93,7 @@ https://github.com/tickernelz/opencode-mem — 2.42.0 (published 2026-11-09), MI
 stars and pushed daily. Local Turso/libSQL vector store, 12+ local embedding models, automatic
 capture, first-message context injection, web UI on `:4747`, TUI toasts. Enabled in
 `opencode.jsonc`; tuning lives in `opencode-mem.jsonc` (Xenova embeddings, project scope, 60-day
-retention, capture on the OpenRouter MiniMax `:floor` lane).
+retention, capture on the OpenRouter MiniMax lane).
 
 Trade-offs as evaluated: heaviest footprint (`@tursodatabase` + `onnxruntime` native bindings, Apple
 Silicon only — no Intel support), memory in an opaque SQLite audited through a web UI, one more

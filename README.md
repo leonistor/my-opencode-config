@@ -6,7 +6,7 @@ Global OpenCode v2 config for this machine.
 | --- | --- |
 | `opencode.jsonc` | The real config: providers, plugins, policies, permissions |
 | `cli.json` | TUI only: theme, keybinds, `attention` (notifications/sound) |
-| `oh-my-opencode-slim.json` | Model presets — three since the 2026-11-13 consolidation: `opencode-go` (active; all lanes on the Go subscription), `nomoney` (Go-quota relief; the only mixed-provider preset — Go plan/designer lanes, OpenRouter cash on the oracle and `:floor` execution lanes, Mistral failover tails), `openrouter` (all-cash; floor routing on the volume lanes); top-level `agents` holds custom specialists |
+| `oh-my-opencode-slim.json` | Model presets — three since the 2026-11-13 consolidation, none on `:floor` since 2026-11-22: `openrouter` (active since 2026-11-22; all-cash), `opencode-go` (all lanes on the Go subscription), `nomoney` (Go-quota relief; the only mixed-provider preset — Go plan/designer lanes, OpenRouter cash on the oracle and execution lanes, Mistral failover tails); top-level `agents` holds custom specialists |
 | `oh-my-opencode-slim/` | Agent prompt files (`pencil.md` is the OpenPencil wireframe agent) |
 | `opencode-mem.jsonc` | Tuning for the `opencode-mem` plugin: embeddings, capture model/lane, project scope, retention (README § Memory) |
 | `model-table.ts` | Backs `/suggest-models <preset>` |
@@ -111,7 +111,7 @@ arrives — set it to `false` if a click keeps landing on the wrong workspace.
 `opencode-mem` (2.42.0, `plugins` in `opencode.jsonc`) keeps a long-term store: auto-capture per
 session, a user profile, and a `memory` tool for search. Data lives in `~/.opencode-mem/data`; tuning
 is `opencode-mem.jsonc` (local Xenova/nomic embeddings, project scope, 60-day retention, capture on
-the OpenRouter MiniMax `:floor` lane — one cheap call per captured prompt, never on a lane the
+the OpenRouter MiniMax lane — one cheap call per captured prompt, never on a lane the
 presets protect). `autoUpdate` is on, so a version change is a config change worth noting.
 
 Two rules still apply: `AGENTS.md` is the authority and memory is recall, not a second source of

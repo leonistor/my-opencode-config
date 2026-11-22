@@ -126,7 +126,7 @@
   // an authenticated provider above, or "opencodeModel": "inherit".
   //
   "opencodeProvider": "openrouter",
-  "opencodeModel": "minimax/minimax-m3.1-flash:floor",
+  "opencodeModel": "minimax/minimax-m3.1-flash",
   "opencodeVariant": "low",
   // Optional model reasoning variant for internal LLM calls (e.g. "xhigh");
   // also applies when opencodeModel is "inherit":

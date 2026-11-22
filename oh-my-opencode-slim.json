@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
-  "preset": "opencode-go",
+  "preset": "openrouter",
   "presets": {
     "opencode-go": {
       "orchestrator": {
@@ -69,10 +69,6 @@
       "explorer": {
         "model": [
           {
-            "id": "openrouter/deepseek/deepseek-v4.1-flash:floor",
-            "variant": "low"
-          },
-          {
             "id": "openrouter/deepseek/deepseek-v4.1-flash",
             "variant": "low"
           },
@@ -95,10 +91,6 @@
       "fixer": {
         "model": [
           {
-            "id": "openrouter/deepseek/deepseek-v4.1-flash:floor",
-            "variant": "high"
-          },
-          {
             "id": "openrouter/deepseek/deepseek-v4.1-flash",
             "variant": "high"
           },
@@ -114,10 +106,6 @@
     "openrouter": {
       "orchestrator": {
         "model": [
-          {
-            "id": "openrouter/deepseek/deepseek-v4.1-flash:floor",
-            "variant": "high"
-          },
           {
             "id": "openrouter/deepseek/deepseek-v4.1-flash",
             "variant": "high"
@@ -155,10 +143,6 @@
       "explorer": {
         "model": [
           {
-            "id": "openrouter/deepseek/deepseek-v4.1-flash:floor",
-            "variant": "low"
-          },
-          {
             "id": "openrouter/deepseek/deepseek-v4.1-flash",
             "variant": "low"
           },
@@ -176,10 +160,6 @@
       "designer": {
         "model": [
           {
-            "id": "openrouter/minimax/minimax-m3.1-flash:floor",
-            "variant": "medium"
-          },
-          {
             "id": "openrouter/minimax/minimax-m3.1-flash",
             "variant": "medium"
           },
@@ -193,10 +173,6 @@
       },
       "fixer": {
         "model": [
-          {
-            "id": "openrouter/deepseek/deepseek-v4.1-flash:floor",
-            "variant": "high"
-          },
           {
             "id": "openrouter/deepseek/deepseek-v4.1-flash",
             "variant": "high"
