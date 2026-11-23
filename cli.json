@@ -7,7 +7,7 @@
   "attention": {
     "notifications": true,
     "sound": true,
-    "volume": 0.4,
+    "volume": 0.6,
     "sound_pack": "opencode.default"
   },
   "plugins": ["oh-my-opencode-slim"],
@@ -20,7 +20,12 @@
   "session": {
     "sidebar": "auto",
     "scrollbar": false,
-    "thinking": "hide"
+    "thinking": "show",
+    "verbosity": "medium",
+    "tps": false
   },
-  "animations": true
+  "animations": true,
+  "tabs": {
+    "mode": "off"
+  }
 }

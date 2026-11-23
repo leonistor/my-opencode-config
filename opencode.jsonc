@@ -103,7 +103,7 @@
         // Left on the host's default Code Mode on purpose. A per-server
         // `"codemode": false` gives direct `open-pencil_<tool>` tools but the
         // setting is server-wide, not per-agent: it would put all 42 schemas
-        // (~9.8k tokens) into every plan/build session too. In Code Mode the
+        // (~8.1k tokens) into every plan/build session too. In Code Mode the
         // pencil subagent gets one catalog entry plus `search`, and a built-in
         // session sees a two-line "open-pencil (42 tools)" pointer — measured in
         // this host's own catalog after a config reload.
@@ -113,15 +113,23 @@
           // comments, settings or eval. `update_node` covers text, size and
           // corner radius, so set_text/set_radius/node_move/node_resize stay off.
           //
+          // 0.17.0 renamed most of the surface (117 tools, all verb-first;
+          // boolean_union → boolean {op}, path_* → get_path/set_path/
+          // transform_path, get_comments → list_comments, and so on). The list
+          // below is regenerated against the running 0.17.0 server and leaves
+          // exactly 42 tools enabled. Disabled names are matched literally, so a
+          // stale name silently re-enables its renamed replacement — re-run the
+          // comparison after every OpenPencil upgrade.
+          //
           // Observation-loop add-on (2026-11-14): a project where the owner
           // points at layers and leaves feedback drops these seven from ITS OWN
-          // denylist — get_selection, select_nodes, viewport_zoom_to_fit,
-          // get_comments, add_comment, reply_to_comment, resolve_comment
-          // (upstream open-pencil/open-pencil#681: the Comment tool pins
-          // threads to layers; agents read, reply, resolve). The wireframe-only
-          // default here is deliberate and stays. Working example:
+          // denylist — get_selection, set_selection, zoom_to_fit, list_comments,
+          // add_comment, reply_to_comment, resolve_comment (upstream
+          // open-pencil/open-pencil#681: the Comment tool pins threads to
+          // layers; agents read, reply, resolve). The wireframe-only default
+          // here is deliberate and stays. Working example:
           // ~/work/darius/la-ade-insta-static/.opencode/opencode.jsonc
-          "OPENPENCIL_MCP_DISABLED_TOOLS": "get_selection,set_radius,set_text,node_resize,stock_photo,diff_create,diff_jsx,diff_visual,calc,viewport_zoom_to_fit,select_nodes,list_libraries,insert_library_component,page_bounds,get_comments,add_comment,reply_to_comment,resolve_comment,get_font_status,list_fonts,list_available_fonts,search_icons,insert_icon,fetch_icons,combine_as_variants,expose_instance_swap,create_slot,get_behaviour,set_behaviour,create_vector,create_slice,import_svg,set_effects,set_opacity,set_font,set_rotation,set_font_range,set_blend,set_locked,set_stroke_align,set_image_fill,node_move,flatten_nodes,node_bounds,node_ancestors,node_children,node_tree,node_bindings,node_replace_with,list_variables,list_collections,get_variable,find_variables,create_variable,set_variable,delete_variable,bind_variable,unbind_variable,get_collection,create_collection,delete_collection,boolean_union,boolean_subtract,boolean_intersect,boolean_exclude,path_get,path_set,path_scale,path_flip,path_move,viewport_get,viewport_set,export_svg,export_pdf,analyze_colors,analyze_typography,lint_fix,analyze_spacing,analyze_clusters,analyze_overlaps,diff_show,diff_apply,design_to_tokens,import_design_tokens,design_to_component_map,close_file,activate_document,get_settings,update_settings,get_codegen_prompt"
+          "OPENPENCIL_MCP_DISABLED_TOOLS": "activate_document,add_comment,analyze_clusters,analyze_colors,analyze_overlaps,analyze_spacing,analyze_typography,apply_patch,bind_variable,boolean,close_document,combine_as_variants,create_collection,create_slice,create_slot,create_variable,create_vector,delete_collection,delete_variable,diff_nodes,diff_pixels,export_component_map,export_design_tokens,export_pdf,export_svg,expose_instance_swap,flatten_nodes,get_ancestors,get_behaviour,get_bindings,get_codegen_prompt,get_collection,get_font_status,get_icons,get_path,get_selection,get_settings,get_variable,get_variable_modes,get_viewport,import_design_tokens,import_mermaid,import_svg,insert_icon,insert_library_component,lint_fix,list_available_fonts,list_collections,list_comments,list_libraries,list_statuses,list_variables,preview_patch,replace_node,reply_to_comment,resolve_comment,search_icons,search_stock_photos,search_web,set_behaviour,set_blend_mode,set_effects,set_font,set_image_fill,set_path,set_radius,set_selection,set_status,set_text,set_variable,set_variable_mode,set_viewport,transform_path,update_settings,zoom_to_fit"
         }
       }
     }

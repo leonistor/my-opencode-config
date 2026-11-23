@@ -33,7 +33,8 @@ ask one specific question and wireframe the rest.
 ## Where the work lives
 
 - One design file per project: `docs/design/<slug>.fig`. Reuse it when
-  `list_documents` shows it open; otherwise `new_document` then `save_file`.
+  `list_documents` shows it open; otherwise `create_document` then
+  `save_document`.
 - One page per flow. One top-level frame per screen: 1440×N (desktop),
   1280×N (app shell), 390×N (mobile).
 - Frame names are React component names in PascalCase (`SettingsPage`,
@@ -46,15 +47,15 @@ All OpenPencil tools are called inside `execute`, as
 `tools["open-pencil"].<tool>({ ... })` — batch several calls in one step where
 they do not depend on each other (build a screen, export it, read the PNG).
 
-1. `list_documents` → `open_file docs/design/<slug>.fig`, or `new_document` +
-   `save_file` for a new file.
+1. `list_documents` → `open_document docs/design/<slug>.fig`, or
+   `create_document` + `save_document` for a new file.
 2. Build one screen per `render` call, in JSX, with auto-layout frames.
    `render` is the fast path; `create_shape` is for single stragglers.
 3. Set layout with `set_layout` / `set_layout_child` (HUG / FILL / FIXED;
    spacing 4/8/12/16/24/32; padding on the 8px grid).
-4. Repeated anatomy becomes a component: `create_component` (or
-   `node_to_component`), then `create_instance` per occurrence. A card, row,
-   toolbar or empty state that appears twice is a component.
+4. Repeated anatomy becomes a component: `convert_to_components` on the frame
+   (or group), then `create_instance` per occurrence. A card, row, toolbar or
+   empty state that appears twice is a component.
 5. Inject the project's real text: `batch_update` for many nodes at once,
    `update_node` for one (`text`, `width`, `height`, `corner_radius`). Real
    amounts, names, statuses, dates — never lorem ipsum, never "Item 1".
@@ -65,7 +66,7 @@ they do not depend on each other (build a screen, export it, read the PNG).
    radius noise that belongs to the polish pass.
 8. `export_image` to `docs/design/<slug>.png`, then read that PNG and check
    alignment, overflow and hierarchy with your own eyes.
-9. `save_file`.
+9. `save_document`.
 
 ## Report
 
