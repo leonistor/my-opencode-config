@@ -192,7 +192,7 @@ In a `:::question` block, keep the choices in their natural order and never move
 
 ## Plannotator: my intent (2026-11-03)
 
-The managed block above is upstream's and is rewritten as releases land (v1 → v8 in nine days).
+The managed block above is upstream's and is rewritten as releases land (v1 → v9 in a month).
 This section is mine and outlives it — where the two differ, this one wins.
 
 - **A decision is a choice between artefacts, paths, scopes, layouts, languages, dependencies,
@@ -256,7 +256,8 @@ up and testing it for a brainstorm session; they apply whatever host you are on.
   If `plannotator_inbox` is not in your tool list, this host is not wired for it — report it and run
   the recipe under "send protocol + wiring self-check" below; never go without silently.
 - **The managed block is the CLI's, not the plugin's.** `plannotator` writes it at Inbox start and
-  brings an untouched earlier block up to the current version; the text went v1 → v8 in nine days.
+  brings an untouched earlier block up to the current version; the text went v1 → v9 in a month
+  (v9 current, 2026-11-24).
   A block edited by hand is pinned and never refreshed, so house rules go below the markers.
 - **`wait_for_reply` is gone (0.28.46+).** `plannotator_inbox` answers `action_removed`; a reply
   arrives by itself once the session is idle, and a missed one is read back with `read_thread`.
@@ -288,6 +289,15 @@ How every session on this machine uses the Inbox. The plugin's injected line say
      restart drops live sessions, so never bounce the host yourself.
   Until the wiring works, fall back to asking in the chat. The Inbox's silence is never the
   person's answer.
+- **The Inbox process is long-lived as well.** `plannotator inbox status --json` prints `version`,
+  what the running Inbox serves, beside `cli_version`, what is installed. Updating installs a new
+  CLI and plugin without restarting the running Inbox: on 2026-11-22/23 it served 0.29.0 through
+  the 0.29.1, 0.29.2 and 0.29.3 installs, so every send was parsed by 0.29.0 code, which predates
+  the 0.29.2 `:::action` run card and the 0.29.3 reply fixes. When the two versions differ, run
+  `plannotator inbox restart` and check again; go on with the Inbox meanwhile, an open review keeps
+  running on the old build. `plannotator update`'s own install records (`update.log`,
+  `update-result.json`) last show 0.28.51 on 2026-11-07, so the version a process reports is the
+  only reliable account of what is live.
 - **A plan without review is not approved.** Ending plan mode must go through `submit_plan` when
   the tool exists; `commands/plannotator-*.md` are the CLI fallbacks. If neither could run, say so
   in one sentence and stop — never present a plan as reviewed.
