@@ -69,6 +69,11 @@ Standing preferences for projects I own.
   replaces a same-name entry wholesale, so a bare `{ "enabled": true }` override is silently
   ignored. Finished prototypes and visual polish stay with `@designer`; React implementation
   with `@fixer`.
+- **Cost hygiene.** The bill is volume, not model choice: an agent session re-reads its whole
+  context every turn, and on the `:floor` lanes ~99% of those tokens are cache reads. Start a
+  fresh session per milestone rather than running a 300-turn one, and size the subagent fan-out
+  to the work — three parallel lanes cover a sweep; a lane per file just multiplies the same
+  context. When a change touches many files, batch them into fewer lanes instead.
 
 ## Reuse before implementation
 

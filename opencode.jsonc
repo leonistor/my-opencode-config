@@ -1,6 +1,18 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "default_agent": "plan",
+  // Compaction: the bill on this account is turns x context, and a 1M window
+  // lets a session drift to ~500k tokens before the default 15% buffer fires.
+  // The seven heavy sessions of 23-24 Nov averaged 180-260k tokens of context
+  // per turn, 99% of it cache reads. 70% keeps a 1M model at ~300k, roughly
+  // halving the cached tokens a long session pays for, at the cost of one
+  // summary per ~300k tokens. Raise it if summaries start losing detail you
+  // need; lower it for lanes that genuinely need a bigger working set.
+  "compaction": {
+    "auto": true,
+    "keep": { "tokens": 15000 },
+    "buffer": "70%",
+  },
   "plugins": [
     // opencode-history-search: V1-only upstream (its V2 PRs sit unmerged). Superseded
     // 2026-11-12 by ctx (ctx.rs): CLI + skill installed in ~/.agents/skills — ctx
@@ -180,6 +192,28 @@
   },
   "providers": {
     "openrouter": {
+      // Routing guard, added 2026-11-24 after an $18 bill over two days on
+      // ~790M tokens. `:floor` sorts by prompt price only. Baidu is the
+      // cheapest host on every axis (cache read $0.001/M), but the next host in
+      // that sort is Wafer ($0.051 prompt, $0.018/M cache read — 18x). Cache
+      // reads are 99% of the tokens in a long session, so one Baidu timeout
+      // re-prices the whole turn. Implied cache price per session before this:
+      // $0.001-$0.034, median $0.0153. These are the expensive-cache hosts;
+      // every model in use keeps at least one endpoint without them, and the
+      // deepseek floor lane additionally pins its order below.
+      "body": {
+        "provider": {
+          "ignore": [
+            "wafer/us",
+            "wafer/mxfp4",
+            "cloudflare",
+            "google-vertex/global",
+            "modal",
+            "mancer/fp8",
+            "ionstream",
+          ],
+        },
+      },
       "models": {
         // :floor is a routing variant, not a catalogue entry: it is absent from
         // models.dev and GET /api/v1/models/{id}, so the openrouter preset's
@@ -188,15 +222,23 @@
         // GET /api/v1/models/{id}/endpoints when the lane's price moves.
         //
         // Restored 2026-11-22 shortly after their retirement, by owner decision.
-        // Verified live the same day: `:floor` still routes to the cheapest
-        // endpoint (ds → Baidu fp8, minimax → StreamLake fp8), at rates equal to
-        // the plain catalogue entry (0.0498/0.1992/0.001 and
-        // 0.135/0.54/0.0135). The point is no longer a lower price — it is
-        // pinning the price floor instead of the post-2026-10-28 default
-        // router, which balances cost, speed and reliability.
+        // Re-measured 2026-11-24: `:floor` alone does not hold the floor under
+        // load. It sorts by prompt price, so Baidu is first but Wafer is second
+        // (0.051 prompt, 0.018/M cache read) and absorbs every Baidu 429 —
+        // which is where most of an $18 two-day bill went. The deepseek entry
+        // now pins `provider.order` to the cheap-cache hosts; the provider-level
+        // `ignore` above covers the other models.
         "deepseek/deepseek-v4.1-flash:floor": {
           "modelID": "deepseek/deepseek-v4.1-flash:floor",
           "name": "DeepSeek V4.1 Flash (:floor)",
+          // Cache reads run at 0.0010 / 0.0018 / 0.0020 here. Order replaces
+          // `:floor`'s price sort, so it also drops flex-tier admission; that
+          // is intended — the tier is not where the savings are.
+          "body": {
+            "provider": {
+              "order": ["baidu/fp8", "alibaba", "coreweave/fp8"],
+            },
+          },
           "capabilities": {
             "tools": true,
             "input": ["text", "image"],
