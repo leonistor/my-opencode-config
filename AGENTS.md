@@ -139,7 +139,7 @@ One thing in this config exists only to work around an upstream bug, with a clea
 `index.ts` keeps the package's `setup` and adds `ctx.tool.transform(...)` for the five tools, mirroring upstream `registerV2Tools`. When a release ships the fix (0.4.1+ with PR #84's dual-mode default export): delete the tool-registration block, and keep the wrapper until the subpath spec installs too.
 
 cmux is a supported integration, not a workaround, and it is currently **not installed** (checked
-2026-11-17). The command is `cmux hooks opencode install` — `cmux agent hook install` does not exist
+2026-11-24). The command is `cmux hooks opencode install` — `cmux agent hook install` does not exist
 in 0.65.x, and nothing named `cmux-tui-journal.js` is written by any version seen here. The install
 generates two auto-discovered files in `plugins/`: `cmux-session.js` (session lifecycle → cmux's
 restorable session store) and `cmux-feed.js` (Feed approvals). Both return early unless
@@ -148,12 +148,19 @@ cmux terminal and need no `plugins[]` entry in `opencode.jsonc`.
 
 - Re-run `cmux hooks opencode install --yes` after every cmux upgrade. There is no status or verify
   command; the generated files carry a marker and cmux upgrades them in place. `--project` writes
-  `.opencode/plugins/cmux-feed.js` for a project-scoped Feed only.
+  `.opencode/plugins/cmux-feed.js` for a project-scoped Feed only. `cmux --version` is the check that
+  an upgrade happened at all: the appcast shipped with v0.65.2.2 (the emSign certificate fix) still
+  lists 0.65.2, so Sparkle reports "up to date" while that patch waits for a manual DMG or
+  `brew upgrade --cask cmux` (checked 2026-11-24).
 - Uninstall: `cmux hooks opencode uninstall` (`--project` for the project scope). The session store
   at `~/.cmuxterm/opencode-hook-sessions.json` survives an uninstall.
 - What it buys: cmux attributes an OpenCode session to its workspace, so notifications read
-  `Completed in <workspace>` and a click lands on the right pane. Without it cmux records no agent
-  events at all — see README § Notifications for the current, unlabelled behaviour.
+  `Completed in <workspace>`, a click lands on the right pane, Feed approvals arrive and the session
+  is restorable after a relaunch. Status alone is not hook-driven: with no hooks installed, cmux
+  still logs `program_status.changed` per OpenCode session (`ses_…`, `working`/`idle`) by watching
+  the terminal — 2,372 session events since 2026-10-30, latest 2026-11-24. Because plugins load when
+  the `opencode serve --service` host starts, an install only reaches running sessions after a host
+  restart.
 
 ## Skills - Knowledge Injection
 
