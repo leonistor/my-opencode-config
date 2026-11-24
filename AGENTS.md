@@ -87,6 +87,14 @@ Standing preferences for projects I own.
 - When evaluating a new dependency, consider its maintenance status, activity, license, documentation, API quality, TypeScript support, ecosystem fit, bundle/runtime cost, and compatibility with the project.
 - Every new dependency goes through "Project conventions — I pick; you bring the options": never introduce one without my confirmed pick.
 
+## Cookbook
+
+`cookbook/README.md` indexes recipes for agentic tools and workflows — agentation
+in a Vite app, OpenPencil wireframes vs full design, OpenSpec roadmap/status sync,
+adversarial docs review. When a task matches a recipe, read it before acting. A
+recipe that keeps being needed unprompted gets a thin global skill pointing at
+it, never a second copy of the text.
+
 ## Change / edit mode
 
 - Use sub-agents when they materially improve implementation quality, research depth, or parallelism.
