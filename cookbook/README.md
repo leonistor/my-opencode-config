@@ -13,6 +13,7 @@ that have already cost time.
 | [openpencil-design](openpencil-design.md) | Wireframes and full design from one editor, without the wrong tool surface | Setup + decision layer |
 | [openspec-roadmap-sync](openspec-roadmap-sync.md) | A roadmap/status view that follows the change state instead of drifting | Procedure (generated artefact) |
 | [adversarial-docs-review](adversarial-docs-review.md) | Docs that claim more than the code does, found and fixed with evidence | Procedure (review pass) |
+| [vocabulary-standardization](vocabulary-standardization.md) | One concept under several names; retiring a term without half-renames | Procedure (rename + guard) |
 
 ## How a recipe is written
 
