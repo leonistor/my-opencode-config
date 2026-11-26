@@ -1,22 +1,35 @@
 #!/usr/bin/env bun
 /**
- * lane-rates.ts — fit what each lane actually paid per million tokens.
+ * lane-rates.ts — what each lane actually paid, against what the catalogue says.
  *
  * The declared cost tables (models.dev, and the hand declarations kept for
  * `:floor` lanes) are not what OpenRouter bills: the router picks an endpoint
  * per request, so the rate that lands on the invoice is a property of the
- * traffic, not of the catalogue entry. This fits the truth out of the session
- * DB: per assistant message, cost ≈ a·input + b·(output+reasoning) + c·cacheRead
- * (least squares, $/M). The fitted c is the number to compare against the
- * endpoint notes in oh-my-opencode-slim-models.md — a cache-read-heavy lane
- * fitted at ≫ 0.005 $/M is being served by an expensive-cache host.
+ * traffic, not of the catalogue entry. The DB records that bill per message
+ * (verified: the 11-22 plain lane solves to Wafer's vector to four decimals),
+ * so the honest measurement is per message:
+ *
+ *     ratio = billed / (in·cat.in + (out+reasoning)·cat.out + cache·cat.cache)
+ *
+ * and the lane's cost posture is the **median** and **p90** of that ratio, not
+ * a fitted rate. A three-term least squares was tried first and is wrong here:
+ * cache read is ~88% of the tokens and moves with input, so the fit is
+ * ill-conditioned and returns impossible coefficients (the floor week fitted
+ * output at -0.142 $/M while every honest lane warned).
+ *
+ * Catalogue vectors come from `~/.cache/opencode/models-dev.json`, the copy the
+ * host itself resolves against; a `:floor` key falls back to its plain model.
  *
  * Usage:
  *   bun lane-rates.ts                  # last 7 days, all lanes
- *   bun lane-rates.ts --days 2         # shorter window
+ *   bun lane-rates.ts --days 1         # after a routing change
  *   bun lane-rates.ts --since 2026-11-22
  *   bun lane-rates.ts --lane oracle    # substring filter on agent or model
  *   bun lane-rates.ts --json           # machine-readable
+ *
+ * Reading it: a lane near 1.00 is on the catalogue vector; a cheap order pin
+ * sits under 1.0; >1.5 means the router moved it to a pricier endpoint. The
+ * pin on 2026-11-25 sampled 1.09; Wafer weeks sampled 2.5–2.9.
  *
  * Exit code: 0 always (a warning is printed, not encoded — this runs beside
  * `model-table.ts` in a morning check, where a non-zero exit means nothing).
@@ -25,8 +38,10 @@
 import { Database } from "bun:sqlite";
 
 const DB = `${process.env.HOME}/.local/share/opencode/opencode.db`;
-const WARN_CACHE_READ = 0.005; // $/M — Wafer-class drift sits at 0.014–0.018
-const WARN_MESSAGE = 0.004; // $/message — measured floor-week band
+const CATALOGUE = `${process.env.HOME}/.cache/opencode/models-dev.json`;
+const WARN_RATIO_MEDIAN = 1.5; // the lane is routed above its catalogue
+const WARN_RATIO_P90 = 3; // one turn in ten lands on a much pricier host
+const WARN_MESSAGE_P90 = 0.008; // $/message p90 — a long turn on a pricier host
 
 type Args = { days: number; since?: number; lane?: string; json: boolean };
 
@@ -50,74 +65,65 @@ function parseArgs(argv: string[]): Args {
   return a;
 }
 
-type Row = { i: number; o: number; c: number; cost: number };
-type Lane = { agent: string; model: string; variant: string; rows: Row[] };
+type Rate = { input: number; output: number; cache: number };
+type Msg = { i: number; o: number; c: number; cost: number; ratio: number };
+type Lane = { agent: string; model: string; variant: string; msgs: Msg[] };
 
-function solve3(
-  m: number[][],
-  b: number[],
-): [number, number, number] | null {
-  // Gaussian elimination on the 3x3 normal equations; singular -> null.
-  const a = m.map((r, i) => [...r, b[i]]);
-  for (let col = 0; col < 3; col++) {
-    let piv = col;
-    for (let r = col + 1; r < 3; r++)
-      if (Math.abs(a[r][col]) > Math.abs(a[piv][col])) piv = r;
-    [a[col], a[piv]] = [a[piv], a[col]];
-    if (Math.abs(a[col][col]) < 1e-18) return null;
-    for (let r = 0; r < 3; r++) {
-      if (r === col) continue;
-      const f = a[r][col] / a[col][col];
-      for (let k = col; k < 4; k++) a[r][k] -= f * a[col][k];
-    }
+async function catalogue(): Promise<Map<string, Rate>> {
+  const text = await Bun.file(CATALOGUE).text().catch(() => null);
+  if (!text) {
+    console.error(
+      `no catalogue at ${CATALOGUE} — open OpenCode once so the host refreshes it`,
+    );
+    process.exit(2);
   }
-  return [a[0][3] / a[0][0], a[1][3] / a[1][1], a[2][3] / a[2][2]] as [
-    number,
-    number,
-    number,
-  ];
+  const models = JSON.parse(text)?.openrouter?.models as Record<
+    string,
+    { cost?: { input?: number; output?: number; cache_read?: number } }
+  >;
+  const out = new Map<string, Rate>();
+  for (const [id, m] of Object.entries(models ?? {})) {
+    const c = m.cost;
+    if (!c || c.input == null || c.output == null) continue;
+    out.set(id, {
+      input: c.input,
+      output: c.output,
+      cache: c.cache_read ?? 0,
+    });
+  }
+  return out;
 }
 
-function fit(rows: Row[]): { rate: [number, number, number]; sse: number } | null {
-  if (rows.length < 30) return null; // fewer than 30 messages can't separate 3 terms
-  const m = Array.from({ length: 3 }, () => Array(3).fill(0));
-  const b = Array(3).fill(0);
-  for (const r of rows) {
-    const x = [r.i / 1e6, r.o / 1e6, r.c / 1e6];
-    for (let p = 0; p < 3; p++) {
-      for (let q = 0; q < 3; q++) m[p][q] += x[p] * x[q];
-      b[p] += x[p] * r.cost;
-    }
-  }
-  const rate = solve3(m, b);
-  if (!rate) return null;
-  let sse = 0;
-  for (const r of rows) {
-    const pred =
-      (r.i * rate[0] + r.o * rate[1] + r.c * rate[2]) / 1e6;
-    sse += (pred - r.cost) ** 2;
-  }
-  return { rate, sse };
+function rateFor(id: string, rates: Map<string, Rate>): Rate | undefined {
+  return rates.get(id) ?? rates.get(id.replace(/:floor$/, ""));
 }
 
-function main() {
+function quantile(sorted: number[], q: number): number {
+  if (sorted.length === 0) return Number.NaN;
+  return sorted[Math.min(sorted.length - 1, Math.floor(q * sorted.length))];
+}
+
+async function main() {
   const args = parseArgs(process.argv.slice(2));
+  const rates = await catalogue();
   const sinceMs =
     args.since ?? Date.now() - args.days * 24 * 60 * 60 * 1000;
+
   const db = new Database(DB, { readonly: true });
-  const stmt = db.query(
-    `select json_extract(data,'$.agent') agent,
-            json_extract(data,'$.model.id') model,
-            json_extract(data,'$.model.variant') variant,
-            json_extract(data,'$.tokens.input') i,
-            json_extract(data,'$.tokens.output') o,
-            json_extract(data,'$.tokens.reasoning') r,
-            json_extract(data,'$.tokens.cache.read') c,
-            json_extract(data,'$.cost') cost
-       from session_message
-      where type='assistant' and time_created >= ?`,
-  );
-  const raw = stmt.all(sinceMs) as {
+  const raw = db
+    .query(
+      `select json_extract(data,'$.agent') agent,
+              json_extract(data,'$.model.id') model,
+              json_extract(data,'$.model.variant') variant,
+              json_extract(data,'$.tokens.input') i,
+              json_extract(data,'$.tokens.output') o,
+              json_extract(data,'$.tokens.reasoning') r,
+              json_extract(data,'$.tokens.cache.read') c,
+              json_extract(data,'$.cost') cost
+         from session_message
+        where type='assistant' and time_created >= ?`,
+    )
+    .all(sinceMs) as {
     agent: string | null;
     model: string | null;
     variant: string | null;
@@ -129,27 +135,40 @@ function main() {
   }[];
 
   const lanes = new Map<string, Lane>();
+  let skipped = 0;
   for (const m of raw) {
-    if (!m.agent || !m.model || m.cost == null) continue;
+    if (!m.agent || !m.model || m.cost == null || !Number.isFinite(m.cost)) {
+      skipped++;
+      continue;
+    }
+    const rate = rateFor(m.model, rates);
+    if (!rate) {
+      skipped++;
+      continue;
+    }
+    const i = m.i ?? 0;
+    const o = (m.o ?? 0) + (m.r ?? 0);
+    const c = m.c ?? 0;
+    const list = (i * rate.input + o * rate.output + c * rate.cache) / 1e6;
+    if (list <= 0) {
+      skipped++;
+      continue;
+    }
     const key = `${m.agent}|${m.model}|${m.variant ?? "default"}`;
     if (!lanes.has(key))
       lanes.set(key, {
         agent: m.agent,
         model: m.model,
         variant: m.variant ?? "default",
-        rows: [],
+        msgs: [],
       });
-    lanes.get(key)!.rows.push({
-      i: m.i ?? 0,
-      o: (m.o ?? 0) + (m.r ?? 0),
-      c: m.c ?? 0,
-      cost: m.cost,
-    });
+    lanes.get(key)!.msgs.push({ i, o, c, cost: m.cost, ratio: m.cost / list });
   }
 
   const out: unknown[] = [];
   const warnings: string[] = [];
   for (const lane of lanes.values()) {
+    const msgs = lane.msgs;
     const needle = args.lane;
     if (
       needle &&
@@ -157,61 +176,69 @@ function main() {
       !lane.model.includes(needle)
     )
       continue;
-    const total = lane.rows.reduce((s, r) => s + r.cost, 0);
-    const ti = lane.rows.reduce((s, r) => s + r.i, 0);
-    const to = lane.rows.reduce((s, r) => s + r.o, 0);
-    const tc = lane.rows.reduce((s, r) => s + r.c, 0);
-    const perMsg = total / lane.rows.length;
-    const f = fit(lane.rows);
+    const cash = msgs.reduce((s, m) => s + m.cost, 0);
+    const ti = msgs.reduce((s, m) => s + m.i, 0);
+    const to = msgs.reduce((s, m) => s + m.o, 0);
+    const tc = msgs.reduce((s, m) => s + m.c, 0);
+    const perMsg = msgs.map((m) => m.cost).sort((a, b) => a - b);
+    const ratios = msgs.map((m) => m.ratio).sort((a, b) => a - b);
+    const n = msgs.length;
+    const median = quantile(ratios, 0.5);
+    const p90 = quantile(ratios, 0.9);
+    const perMsgP90 = quantile(perMsg, 0.9);
     const entry = {
       agent: lane.agent,
       model: lane.model,
       variant: lane.variant,
-      messages: lane.rows.length,
-      cash: +total.toFixed(4),
-      perMessage: +perMsg.toFixed(5),
+      messages: n,
+      cash: +cash.toFixed(4),
+      perMessage: +(cash / n).toFixed(5),
+      perMessageP90: +perMsgP90.toFixed(5),
+      ratioMedian: +median.toFixed(2),
+      ratioP90: +p90.toFixed(2),
       inputM: +(ti / 1e6).toFixed(2),
       outputM: +(to / 1e6).toFixed(2),
       cacheReadM: +(tc / 1e6).toFixed(1),
-      fitted: f
-        ? {
-            input: +f.rate[0].toFixed(4),
-            output: +f.rate[1].toFixed(4),
-            cacheRead: +f.rate[2].toFixed(5),
-          }
-        : null,
-      fitRms: f ? +Math.sqrt(f.sse / lane.rows.length).toFixed(6) : null,
+      cacheShare: +((tc / Math.max(1, ti + to + tc)) * 100).toFixed(0),
     };
     out.push(entry);
-    if (f && f.rate[2] > WARN_CACHE_READ)
+    const label = `${lane.agent} (${lane.model} @${lane.variant})`;
+    if (n >= 20 && median > WARN_RATIO_MEDIAN)
       warnings.push(
-        `WARN ${lane.agent} (${lane.model} @${lane.variant}): fitted cache read $${f.rate[2].toFixed(5)}/M > $${WARN_CACHE_READ} — an expensive-cache endpoint is serving this lane`,
+        `WARN ${label}: billed ${median.toFixed(2)}x catalogue at the median over ${n} messages — the router moved this lane off its cheap endpoints`,
       );
-    if (perMsg > WARN_MESSAGE)
+    if (n >= 10 && p90 > WARN_RATIO_P90)
       warnings.push(
-        `WARN ${lane.agent} (${lane.model} @${lane.variant}): $${perMsg.toFixed(5)}/message > $${WARN_MESSAGE} — the floor-week band`,
+        `WARN ${label}: p90 ${p90.toFixed(2)}x catalogue — one turn in ten is landing on a much pricier host`,
+      );
+    if (n >= 10 && perMsgP90 > WARN_MESSAGE_P90)
+      warnings.push(
+        `WARN ${label}: p90 $${perMsgP90.toFixed(5)}/message > $${WARN_MESSAGE_P90} — long turns are landing on a pricier host`,
       );
   }
 
   out.sort((x, y) => ((y as any).cash ?? 0) - ((x as any).cash ?? 0));
 
   if (args.json) {
-    console.log(JSON.stringify({ sinceMs, lanes: out, warnings }, null, 2));
+    console.log(
+      JSON.stringify({ sinceMs, skipped, lanes: out, warnings }, null, 2),
+    );
   } else {
     const d = new Date(sinceMs).toISOString().slice(0, 10);
-    console.log(`fitted lane rates since ${d} (thresholds: cache read $${WARN_CACHE_READ}/M, $${WARN_MESSAGE}/msg)\n`);
     console.log(
-      "agent         model                                       variant   msgs    cash  $/msg   in/M    out/M   c/M    fit in  out   cR",
+      `billed vs catalogue since ${d} (median > ${WARN_RATIO_MEDIAN}x warns, ${skipped} rows skipped)\n`,
+    );
+    console.log(
+      "agent         model                                   variant   msgs    cash   $/msg   med  p90  cache%",
     );
     for (const e of out as any[]) {
-      const f = e.fitted;
       console.log(
-        `${String(e.agent).padEnd(13)} ${String(e.model).padEnd(42)} ${String(e.variant).padEnd(8)} ${String(e.messages).padStart(5)} $${String(e.cash).padStart(6)} ${e.perMessage.toFixed(5)} ${(e.inputM).toFixed(1).padStart(5)} ${(e.outputM).toFixed(1).padStart(7)} ${(e.cacheReadM).toFixed(0).padStart(6)}   ${f ? `${f.input.toFixed(3)} ${f.output.toFixed(3)} ${f.cacheRead.toFixed(4)}` : "n<30 — not fitted"}`,
+        `${String(e.agent).padEnd(13)} ${String(e.model).padEnd(39)} ${String(e.variant).padEnd(8)} ${String(e.messages).padStart(5)} $${String(e.cash).padStart(7)} ${String(e.perMessage).padStart(7)} ${String(e.ratioMedian).padStart(5)} ${String(e.ratioP90).padStart(4)} ${String(e.cacheShare).padStart(5)}%`,
       );
     }
     console.log();
     if (warnings.length) for (const w of warnings) console.log(w);
-    else console.log("no warnings: every fitted lane sits under both thresholds.");
+    else console.log("no warnings: every lane bills near its catalogue vector.");
   }
 }
 
