@@ -5,7 +5,9 @@ whatever its `preset` key names — that key is authoritative (currently
 `openrouter`, since 2026-11-22). Three presets exist:
 
 - **`openrouter`** — the daily driver since 2026-11-22. All-cash; the
-  ds/minimax primaries use `:floor` (retired and restored on 2026-11-22).
+  ds/minimax primaries use `:floor` (retired and restored on 2026-11-22, retired
+  again on the deepseek lanes on 2026-11-26 — only the designer's minimax floor is
+  left, and the oracle runs Inkling 2 Small).
 - **`opencode-go`** — the subscription lane set. Everything on the Go
   subscription, balance leaning cheap.
 - **`nomoney`** — Go-quota relief. The plan and designer lanes stay on Go's
@@ -79,7 +81,10 @@ few dollars — not the cache-read term, which is what these rows are for.
 Read from the same table plus `GET /api/v1/key` on the OpenRouter key, which
 agree within a dollar (`usage_weekly` $21.03 against $21.9 in the DB). This is
 the first week that bills real money on every lane, so it replaces the
-subscription-era projections above rather than adding to them.
+subscription-era projections above rather than adding to them. **Decided
+2026-11-26, owner pick B:** the deepseek `:floor` lanes and their
+`provider.order` pin are retired for the plain catalogue entry on the default
+router — see § Floor lanes and the decision log.
 
 | Day | msgs | fresh in | out+reasoning | cache read | cash |
 | --- | --- | --- | --- | --- | --- |
@@ -91,7 +96,7 @@ subscription-era projections above rather than adding to them.
 
 Per lane over 11-19…11-26: orchestrator $12.7 (2,961 msgs, 634M cache read),
 oracle `glm-5.3` $2.27 (165), fixer $1.83 (512), designer `minimax-m3.1-flash`
-$1.66 (363, but **287k cache read per message** — the longest-lived context in
+$1.67 (363, but **287k cache read per message** — the longest-lived context in
 the fleet), explorer $1.09 (429). The account held $17 of credit at 2026-11-26.
 
 - **The preset's own projection is off by an order of magnitude.** The rows
@@ -106,10 +111,14 @@ the fleet), explorer $1.09 (429). The account held $17 of credit at 2026-11-26.
 - **The 2026-11-24 `provider.order` pin moved the lane and barely moved the
   bill.** Post-pin (11-25) the fit is **0.2639 / 0.511 / 0.0040**: cache read
   down 3.6×, fresh input up 5× — `baidu/fp8` is first in the order and Baidu
-  currently prices prompt at 0.300/M (6× the cheapest endpoint) with 0.006
-  cache read. Per-message cost went from $0.0040 to $0.0035. Verified live with
-  `usage.include: true` requests: CoreWeave answers 0.13/0.59/0.0020, Wafer
-  0.051/0.567/0.018, Baidu 0.30/1.20/0.006.
+  priced prompt at 0.300/M (6× the cheapest endpoint) with 0.006 cache read, so
+  the pin traded a cheap term for an expensive one. Per-message cost went
+  $0.0040 → $0.0035. All three vectors verified live with `usage.include: true`:
+  CoreWeave 0.13/0.59/0.0020, Wafer 0.051/0.567/0.018, Baidu 0.30/1.20/0.006.
+  Both the bad pin and the good one are gone with pick B: the default router
+  prices this model around its catalogue vector (0.14/0.42/0.0042) and picks
+  among endpoints on cost *and* speed *and* reliability, which is what kept
+  throwing the retries in § Hiccups.
 - **What the measured shape says to pin.** At the lane's own 9.7k fresh in /
   162k cache read / 0.55k out per message, a single-endpoint cost is
   `0.0097·in + 0.162·cache + 0.00055·out` per M: `river` 0.12/0.48/0.0024
@@ -117,11 +126,26 @@ the fleet), explorer $1.09 (429). The account held $17 of credit at 2026-11-26.
   0.13/0.59/0.0020 → $0.0019, `wafer/us` → $0.0037, `baidu/fp8` → $0.0045.
   Fresh input is no longer the rounding error it was when cache read was
   $0.001, so a cheap-prompt/expensive-cache host is now the wrong default.
-- **The subscription lanes are dark.** Both the `opencode` and `opencode-go`
-  entries in `auth.json` hold the same key and it answers `api_key_expired`
-  (2026-11-26) — the `opencode-go` preset cannot serve a single request, and
-  console usage cannot be read. Nothing in the last week's logs says so,
-  because the active preset never asks for it.
+- **The designer floor was paying twice for a number in this file.** Its 365
+  rows fit the old declaration to three decimals (0.135/0.54/0.0135 — Wafer
+  nvfp4), yet `:floor` on 2026-11-26 probes to **Inferact vLLM at
+  0.075/0.30/0.0075**, half that. The reason is the hand-declared
+  `limit.output: 512000`: OpenRouter drops any endpoint whose max output cannot
+  satisfy the requested `max_tokens`, the host sends `max_tokens` = that limit,
+  and Inferact caps at 131072 — so the floor silently fell to the
+  *second*-cheapest host on every turn. Probed at the boundary: `max_tokens`
+  131072 → Inferact, 131073 → Wafer. Fixed by declaring `output: 131072`
+  (the lane's worst-ever message generated 27,820 tokens, so nothing that has
+  ever happened gets truncated) and re-declaring its cost at Inferact's rates.
+  Same week, same traffic: **$0.93 instead of $1.67**.
+- **The subscription lanes are live, and `auth.json` is a decoy.** Zen and Go
+  credentials resolve from the DB `credential` table (the active row is the
+  `OpenCode Go` integration, re-keyed 06:36 on 2026-11-26); `auth.json` is a
+  legacy file untouched since 11-07 that still holds an expired key. A probe
+  that read the file and called the endpoint reported `api_key_expired` for a
+  lane that works — check `opencode auth list` or the table, not the file. Live
+  `GET /zen/go/v1/usage` just after the re-key: rolling 0%, weekly 0%,
+  **monthly 98%**, resetting today 06:11.
 - **`variant` is recorded as `default` on almost every orchestrator turn.**
   Subagent lanes carry theirs (`fixer high|max`, `explorer low`, `designer
   medium`, `oracle high|max`); the orchestrator carried `high` on 148 of 3,100
@@ -222,58 +246,117 @@ visible, exactly as `openrouter` is written.
 ## The `openrouter` preset (all-cash, active since 2026-11-22)
 
 The subscription-independent daily driver: every lane on OpenRouter cash. The
-ds/minimax primaries use `:floor` (retired and restored on 2026-11-22; see
-below). Three lanes share `deepseek-v4.1-flash` deliberately — the only family
-with a measured ~0% error rate and a working effort ladder at this price; every
-chain ends on a cross-family model.
+ds primaries are plain catalogue IDs on the default router since 2026-11-26
+(pick B, § Measured cash spend); only the designer's minimax lane still carries
+a `:floor`. Three lanes share `deepseek-v4.1-flash` deliberately — the only
+family with a measured ~0% error rate and a working effort ladder at this price;
+every chain ends on a cross-family model.
 
 | Agent | Model | Variant | Why |
 | --- | --- | --- | --- |
-| orchestrator | `deepseek/deepseek-v4.1-flash:floor` | `high` | Highest-token lane; 1M ctx, vision. `:floor` pins the cheapest endpoint (Baidu fp8, 0.0498/0.1992/cache 0.001 — equal to plain today). |
-| oracle | `z-ai/glm-5.3` | `high` | Cross-family reasoner. Switched from `glm-5.3:floor` to the plain ID on 2026-11-13 — the floor variant was no longer cheaper on any rate (0.11/6.00/0.109 declared vs 0.084/3.60/0.079 live); 2026-11-22 rates are 0.07/1.40/0.069. |
-| explorer | `deepseek/deepseek-v4.1-flash:floor` | `low` | Proven `@low` trim on the pinned-cheapest endpoint; cross-family tail on mimo. |
-| designer | `minimax/minimax-m3.1-flash:floor` | `medium` | Full ladder; the cheapest endpoints (StreamLake/Wafer, 0.135/0.54/cache 0.0135) price the same as plain, so `:floor` only pins them. |
-| fixer | `deepseek/deepseek-v4.1-flash:floor` | `high` | The lane where a broken step costs most; same proven profile as the orchestrator. |
+| orchestrator | `deepseek/deepseek-v4.1-flash` | `high` | Highest-token lane; 1M ctx, vision. Plain ID so the default router balances cost, speed and reliability instead of sorting on prompt price alone. |
+| oracle | `thinkingmachines/inkling-2-small` | `high` | Cross-family reasoner, new primary 2026-11-26 (owner pick A). AA Index 30.6 against GLM 5.3's 31.7 — same class, different house — HLE-Diamond 28.7 vs GLM-5.3-Flash's 18.2, ARC-AGI-2 81.7 (best open-weight measured), and the hallucination rate fell 61% → 27% because it declines what it is unsure of, which is the right failure mode for a read-only review lane. 0.30/1.00/0.030; cheapest endpoint `primeintellect/flex` at 0.075/0.25/0.015. Weak spot: long terminal sessions (Terminal-Bench 4.0 13.1%). Ladder is minimal…max, so `high` is valid and `none` is not. |
+| explorer | `deepseek/deepseek-v4.1-flash` | `low` | Proven `@low` trim; cross-family tail on mimo. |
+| designer | `minimax/minimax-m3.1-flash:floor` | `medium` | Full ladder; the last floor lane, and the one pin worth keeping — `:floor` reaches Inferact vLLM at 0.075/0.30/0.0075 as long as `limit.output` stays at 131072 (see § Measured cash spend). |
+| fixer | `deepseek/deepseek-v4.1-flash` | `high` | The lane where a broken step costs most; same proven profile as the orchestrator. |
 
 ### Failover chains
 
 | lane | chain |
 | --- | --- |
-| orchestrator | ds-v4.1-flash `:floor` `high` → qwen3.8-flash |
-| oracle | glm-5.3 `high` → qwen3.8-flash |
-| explorer | ds-v4.1-flash `:floor` `low` → mimo-v2.6-flash |
+| orchestrator | ds-v4.1-flash `high` → qwen3.8-flash |
+| oracle | inkling-2-small `high` → glm-5.3 `high` |
+| explorer | ds-v4.1-flash `low` → mimo-v2.6-flash |
 | designer | minimax-m3.1-flash `:floor` `medium` → qwen3.8-flash |
-| fixer | ds-v4.1-flash `:floor` `high` → qwen3.8-flash |
+| fixer | ds-v4.1-flash `high` → qwen3.8-flash |
 
 Entries advance on transient errors (429/403/401/410, 5xx/524, queue-full,
 spent allowance, empty response), not on quality. All entries share the
 `openrouter` provider ID, so a dead key or spent allowance skips the rest —
 only `nomoney`'s Mistral tails cover that. The cross-family tail is the
-reliability net; on the 2026-11-22 catalogue, ds-v4.1-flash is cheap enough
-(0.0498/0.1992/0.001, floor or plain) that the fallback's only job is staying
-up, not saving money.
+reliability net; ds-v4.1-flash is cheap enough (catalogue 0.14/0.42/0.0042) that
+the fallback's only job is staying up, not saving money. On the oracle the tail
+is the *other* cross-family reasoner, so a bad Inkling week still answers in a
+different house style than the volume lanes.
 
-### Floor lanes, retired and restored (2026-11-22)
+### The counter-argument, kept on the record
 
-`:floor` was first retired on 2026-11-22 because the price gap had collapsed:
-the cheapest ds endpoint (Baidu, fp8) priced at 0.0498/0.1992/cache 0.001 —
-identical to plain — and minimax's cheapest (StreamLake/Wafer) at 0.135/0.54,
-identical to plain, with Tenstorrent gone. The owner reversed that the same day
-and the floors are back on the `openrouter` lanes.
+The new oracle head was asked to audit this change before it was committed
+(`@oracle`, 2026-11-26, 5 messages, no errors). Its strongest point, which is
+fair and partly answered by § The counter below rather than dismissed:
 
-- **Why keep them at equal price:** `:floor` pins the cheapest eligible
-  endpoint. The 2026-10-28 default router balances cost, speed and reliability,
-  so a hot turn can be served by a pricier endpoint; floor stays the explicit
-  price-only override. Confirmed live on 2026-11-22: `:floor` requests served
-  from Baidu (ds) and StreamLake (minimax) — the rates declared in
-  `opencode.jsonc`.
-- **What it costs to keep:** a hand declaration in `opencode.jsonc` whose
-  `cost` must track the moving floor, since `:floor` is a routing variant
-  absent from models.dev and `GET /api/v1/models/{id}`. Floor also admits flex
-  service-tier endpoints into the pool, billed at the flex rate when one serves
-  the request.
+- **What it argues was lost:** deleting the pin removed the only mechanism that
+  made this lane's dominant cost term *visible*, replacing it with an opaque
+  router, on the strength of one pre-pin week and one post-pin day — and a
+  re-park on a Wafer-class host is silent until the invoice. It also notes the
+  change bundles two unmeasured bets (routing and the Inkling swap), so a
+  regression has two suspects.
+- **Answer here:** `lane-rates.ts` is the tripwire it asked for (fitted cache
+  read per lane per day, warns above $0.005/M), the `ignore` list is the
+  router-level guard, and the two bets are separable in git — the routing
+  change and the oracle swap are one commit each, so either reverts alone.
+- **Where it is right and the file should stay honest:** 11-23 was not the
+  router misbehaving, it was the router doing exactly what `:floor` asked, and
+  a *cost-only* override is the wrong dial for a cache-read-dominated lane. If
+  the fitted cache read climbs back above ~$0.01/M with the ignore list intact,
+  the correct move is not a prompt-price floor: it is a **cache-read-aware
+  allow-list** (`provider.order` on the cheap-cache hosts, fallbacks kept) — the
+  third option, which is what the 11-24 pin almost was.
+
+### Floor lanes, retired, restored, retired again (2026-11-22 → 2026-11-26)
+
+`:floor` was first retired on 2026-11-22 because the price gap had collapsed,
+restored by the owner the same day, and retired a second time on 2026-11-26 on
+the deepseek lanes after one measured week showed the mechanism, not its
+constant, was the cost (§ Measured cash spend). The minimax designer lane keeps
+its floor and its declaration is the one thing left to keep in sync.
+
+- **What it actually bought:** nothing measurable. `:floor` sorts by prompt
+  price, so a lane whose cost is 99% cache read landed on Wafer (cache 0.018/M,
+  18× the declared 0.000996) whenever the cheap host throttled — $14.4 over two
+  days. The 11-24 `provider.order` pin then reached $0.0035/msg against the
+  default router's own band, at the price of a hand declaration per lane.
+- **What pick B costs:** the default router can serve a hot turn from a pricier
+  endpoint (Mancer 0.075, Ionstream 0.020, Cloudflare/Modal 0.030 cache read).
+  Those are now excluded by the provider-level `ignore` list in
+  `opencode.jsonc`, which is the guard that survives the floors.
+  **And it is the only thing that makes B safe:** the 63 orchestrator messages
+  of 2026-11-22 — run plain, before that `ignore` list existed — fit to
+  **0.051 / 0.567 / 0.0180**, Wafer's vector exactly. So "plain ID" on its own
+  is not the cheap option; plain ID *plus the cache-read deny-list* is, and a
+  live probe on 2026-11-26 confirms it (served by River at 0.12/0.48/0.0024).
+  If someone prunes that ignore list, the lane re-parks and the bill re-prices;
+  `lane-rates.ts` is the tripwire.
+- **B measured against A, one hour after the change.** Four live probes of the
+  plain deepseek entry with the `ignore` list and no order pin: **River**
+  (0.12/0.48/0.0024 — and its warm-cache turn billed at 0.0024/M cache read,
+  6× under the week's average), **Cohere** (0.195/0.66/0.003), **Parasail**
+  (0.30/1.20/0.006) and **InferenceNet fp8** (0.103/0.60/0.008). No Wafer
+  anywhere: the deny list does exclude the expensive-cache host, which is the
+  argument for deleting the pin. But the router also spreads *prompt* price
+  2.5× across those four, so the honest projection for B on the same volume is
+  **$8–11/wk against $12.7 measured, not $7.2** — the cache-read leak (≈$6.6/wk
+  at this week's mix) is fixed, and the input term is now the router's call. If
+  `lane-rates.ts` fits the input rate above ~0.15 after a day of traffic, the
+  next lever is the expensive-prompt tail of that model (Parasail, Together,
+  Baidu, SiliconFlow, Venice — 0.30–0.45 prompt), which the current list does
+  not name because it was built for cache reads.
+  On the oracle's own weekly mix (0.75M fresh in, 0.14M out, 8.2M cache read),
+  the Inkling hosts answer at $0.285–0.30 prompt → ≈$0.6/wk against GLM's
+  measured $2.27, so the model swap saves more than any endpoint choice there.
+- **What it removes:** the two hand declarations' `cost` tables, the ladder
+  rebuild in `capabilities` (a declared model gets no variants from models.dev,
+  which is why they were needed), and the `model-table.ts` fallback that reads
+  them for `:floor` IDs.
+- **The one floor worth keeping, and how fragile it is:** minimax reaches
+  Inferact only because `limit.output` is exactly its 131072 max output, so the
+  endpoint survives OpenRouter's `max_tokens` check. Equal-or-better is the
+  boundary today; if OpenRouter ever requires strict headroom, the lane drops
+  back to Wafer at 2× with no error and no log line. `bun lane-rates.ts --lane
+  minimax` is the detector. Both hosts are nvfp4-quantised, so a switch between
+  them is not a quality change either way.
 - **Scope:** `opencode-go` has no OpenRouter lanes; `nomoney`'s ds lanes and the
-  `opencode-mem` capture lane stayed plain.
+  `opencode-mem` capture lane stayed plain and are unchanged.
 
 ## Gotchas (pricing)
 
@@ -311,7 +394,9 @@ and the floors are back on the `openrouter` lanes.
 - **Ladders** (set `variant` only from these): DeepSeek-V4.1-Flash
   `none|low|high|max`; MiniMax-M3.1-Flash `low|medium|high|xhigh|max`;
   GLM-5.3 / GLM-5.3-Flash / Kimi-K3 `low|high|max`; MiniMax-M3 /
-  Nemotron-3-Super `low|medium|high`. **Toggle-only — set no `variant`:**
+  Nemotron-3-Super `low|medium|high`; Inkling 2 Small
+  `minimal|low|medium|high|max` (no `none`), Inkling 2 Mini and Inkling add
+  `none`. **Toggle-only — set no `variant`:**
   `qwen3.8-flash`, `mimo-v2.6-flash`, `mimo-v2.6-pro`. The host rejects a
   variant the model does not declare.
 - **An agent-level `variant` beats a chain entry's, and survives `extends`.**
@@ -330,6 +415,17 @@ and the floors are back on the `openrouter` lanes.
   filters. Prints chain heads; the chains live in the JSON.
 - `/suggest-models` — wraps the script with `--validate` (availability +
   single-provider check; `nomoney`'s mixed-provider warning is expected).
+- `~/.config/opencode/lane-rates.ts` — the other half: what the lanes
+  **actually paid**. Least squares of per-message `cost` against `input`,
+  `output + reasoning`, `cache read` straight out of `session_message`, grouped
+  by agent+model+variant, warning over 0.005 $/M fitted cache read or 0.004
+  $/message (the floor-week band). Declared rates are a claim; this is the
+  measurement, and it is what makes "trust the default router" safe — it
+  notices a re-park on an expensive-cache host before the invoice does.
+  Options `--days`, `--since`, `--lane`, `--json`; needs ≥30 messages in the
+  window to fit. This file and `model-table.ts` disagreeing is the signal that
+  routing moved, not that either is broken. Run it after a preset change, not
+  only when a bill surprises.
 - `/models-doc` — answers from this file.
 
 ## Decision log
@@ -415,3 +511,50 @@ history (`git log -- oh-my-opencode-slim-models.md`).
   plain. Validated with
   `bun model-table.ts --preset openrouter --validate`: every model available,
   one provider.
+- **2026-11-26 — `:floor` retired a second time on the deepseek lanes (owner
+  pick B), after one measured week.** The 11-23/24 bill ($14.4 on 3,712
+  messages) fitted to Wafer's vector, not the declared one: `:floor` sorts by
+  prompt price and a cache-read-dominated lane pays for the *second* host's
+  cache rate. The 11-24 `provider.order` pin fixed the cache term (0.0040) and
+  broke the input term (0.2639), landing at $0.0035/msg against $0.0040 before.
+  Both mechanisms are gone: orchestrator/explorer/fixer use the plain
+  `deepseek/deepseek-v4.1-flash` (catalogue 0.14/0.42/0.0042) on the default
+  router, the `opencode.jsonc` floor declaration and its `capabilities` ladder
+  rebuild are deleted, and the provider-level `ignore` list stays as the only
+  endpoint guard. The minimax designer floor stays — with one fix, next entry.
+  Re-measure the ds lanes after a day of traffic before quoting this section.
+- **2026-11-26 — designer floor kept, its `limit.output` cut 512000 → 131072,
+  and its cost re-declared at 0.075/0.30/0.0075.** The declaration was the
+  expensive part, not the routing: OpenRouter filters out endpoints whose max
+  output cannot satisfy the requested `max_tokens`, the host asks for
+  `limit.output`, and Inferact vLLM caps at 131072 — so every designer turn ran
+  on Wafer at exactly twice Inferact's rates while the file still said the floor
+  "only pins" hosts that price the same as plain. Boundary probed both ways
+  (131072 → Inferact, 131073 → Wafer). The lane's largest generated message in
+  the window is 27,820 tokens, so the new cap is 4.7× headroom and truncates
+  nothing observed. ~$0.7/wk back, and this is the only lane where a floor is
+  worth its upkeep. **Verified after the edit:** a live `@designer` canary
+  (17,016 fresh in, 153 out) billed **$0.0013221 — Inferact's vector to four
+  decimals** (0.075/0.30 predicts $0.001322; Wafer's predicts $0.002380, 80%
+  off). The answers were normal UI judgment, so the cheaper endpoint is not a
+  quality downgrade.
+- **2026-11-26 — oracle primary is `thinkingmachines/inkling-2-small @ high`
+  (owner pick A), GLM-5.3 kept as the chain tail.** A cross-family second
+  opinion at GLM's class (AA 30.6 vs 31.7) and a lower measured cost on this
+  lane's own mix: the oracle billed $2.27 for 165 messages on GLM (0.75M fresh
+  in, 8.2M cache read — $0.0138/msg, nearly double GLM's catalogue prices, so
+  the same endpoint-sorting problem), where Inkling at its catalogue vector and
+  0.030 cache read projects ≈$0.006/msg. Watch two things on the first reviews:
+  whether it reads code as well as GLM in this harness (its Terminal-Bench
+  weakness is long terminal sessions, not read-only review), and whether it
+  over-declines — the 27% hallucination rate is bought by refusing ~47% of what
+  it is unsure of, which is right for an oracle but would show up as thin
+  findings. `nomoney` keeps GLM-5.3 as its oracle.
+- **2026-11-26 — the new oracle head was canaried before committing.** A live
+  `@oracle` dispatch on the Inkling chain ran 5 messages on
+  `thinkingmachines/inkling-2-small @ high`, no errors, $0.0121 total
+  ($0.0024/msg against the GLM week's $0.0138 — small samples, different
+  context sizes, so read it as "not more expensive"), and returned a usable
+  review that cited the right sections of this file and argued against the
+  change it was asked to audit. The `variant: high` resolves against models.dev's
+  Inkling ladder.

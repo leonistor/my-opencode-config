@@ -107,7 +107,7 @@
       "orchestrator": {
         "model": [
           {
-            "id": "openrouter/deepseek/deepseek-v4.1-flash:floor",
+            "id": "openrouter/deepseek/deepseek-v4.1-flash",
             "variant": "high"
           },
           {
@@ -127,11 +127,12 @@
       "oracle": {
         "model": [
           {
-            "id": "openrouter/z-ai/glm-5.3",
+            "id": "openrouter/thinkingmachines/inkling-2-small",
             "variant": "high"
           },
           {
-            "id": "openrouter/qwen/qwen3.8-flash"
+            "id": "openrouter/z-ai/glm-5.3",
+            "variant": "high"
           }
         ],
         "variant": "high",
@@ -143,7 +144,7 @@
       "explorer": {
         "model": [
           {
-            "id": "openrouter/deepseek/deepseek-v4.1-flash:floor",
+            "id": "openrouter/deepseek/deepseek-v4.1-flash",
             "variant": "low"
           },
           {
@@ -174,7 +175,7 @@
       "fixer": {
         "model": [
           {
-            "id": "openrouter/deepseek/deepseek-v4.1-flash:floor",
+            "id": "openrouter/deepseek/deepseek-v4.1-flash",
             "variant": "high"
           },
           {

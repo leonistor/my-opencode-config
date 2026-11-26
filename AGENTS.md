@@ -77,7 +77,10 @@ Standing preferences for projects I own.
   ignored. Finished prototypes and visual polish stay with `@designer`; React implementation
   with `@fixer`.
 - **Cost hygiene.** The bill is volume, not model choice: an agent session re-reads its whole
-  context every turn, and on the `:floor` lanes ~99% of those tokens are cache reads. Start a
+  context every turn, and ~99% of those tokens are cache reads, so the lane's **cache-read rate**
+  is the number to compare and the endpoint that serves it is the number to check — `:floor` sorts
+  by prompt price and silently re-prices a long session on the second host. See
+  `oh-my-opencode-slim-models.md` § Measured cash spend. Start a
   fresh session per milestone rather than running a 300-turn one, and size the subagent fan-out
   to the work — three parallel lanes cover a sweep; a lane per file just multiplies the same
   context. When a change touches many files, batch them into fewer lanes instead.

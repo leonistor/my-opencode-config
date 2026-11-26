@@ -193,14 +193,12 @@
   "providers": {
     "openrouter": {
       // Routing guard, added 2026-11-24 after an $18 bill over two days on
-      // ~790M tokens. `:floor` sorts by prompt price only. Baidu is the
-      // cheapest host on every axis (cache read $0.001/M), but the next host in
-      // that sort is Wafer ($0.051 prompt, $0.018/M cache read — 18x). Cache
-      // reads are 99% of the tokens in a long session, so one Baidu timeout
-      // re-prices the whole turn. Implied cache price per session before this:
-      // $0.001-$0.034, median $0.0153. These are the expensive-cache hosts;
-      // every model in use keeps at least one endpoint without them, and the
-      // deepseek floor lane additionally pins its order below.
+      // ~790M tokens. Cache reads are 99% of the tokens in a long session, so
+      // these are the expensive-cache hosts: Wafer at 0.018/M is 18x Baidu's
+      // 0.001, and one timeout on the cheap host re-prices the whole turn.
+      // Every model in use keeps several endpoints without them. This block is
+      // now the only endpoint mechanism on the OpenRouter lanes: the deepseek
+      // `:floor` pin it used to work alongside is retired below.
       "body": {
         "provider": {
           "ignore": [
@@ -215,55 +213,34 @@
         },
       },
       "models": {
-        // :floor is a routing variant, not a catalogue entry: it is absent from
-        // models.dev and GET /api/v1/models/{id}, so the openrouter preset's
-        // floor lanes must be hand-declared with their cost kept in sync.
-        // Re-check the cheapest endpoint with
-        // GET /api/v1/models/{id}/endpoints when the lane's price moves.
+        // The DeepSeek `:floor` declaration is gone (2026-11-26, owner pick B).
+        // It was restored 2026-11-22, pinned on 11-24, and retired again once
+        // per-message costs showed the mechanism was the problem, not its
+        // constant: `:floor` sorts by prompt price, so the cache-read-heavy ds
+        // lane rode Wafer's 0.018/M cache read under load ($14.4 over 11-23/24),
+        // and the `provider.order` pin that replaced it put Baidu first — 0.300
+        // prompt, 6x the cheapest endpoint — for a per-message cost of $0.0035
+        // against $0.0040 before. The lanes now use the plain catalogue entry on
+        // the default router, which balances cost, speed and reliability and is
+        // already guarded by the provider-level `ignore` above (Wafer,
+        // Cloudflare, Modal, Mancer, Ionstream, vertex/global). Fitted rates for
+        // the floor week and the alternatives are in oh-my-opencode-slim-models.md
+        // § Measured cash spend.
         //
-        // Restored 2026-11-22 shortly after their retirement, by owner decision.
-        // Re-measured 2026-11-24: `:floor` alone does not hold the floor under
-        // load. It sorts by prompt price, so Baidu is first but Wafer is second
-        // (0.051 prompt, 0.018/M cache read) and absorbs every Baidu 429 —
-        // which is where most of an $18 two-day bill went. The deepseek entry
-        // now pins `provider.order` to the cheap-cache hosts; the provider-level
-        // `ignore` above covers the other models.
-        "deepseek/deepseek-v4.1-flash:floor": {
-          "modelID": "deepseek/deepseek-v4.1-flash:floor",
-          "name": "DeepSeek V4.1 Flash (:floor)",
-          // Cache reads run at 0.0010 / 0.0018 / 0.0020 here. Order replaces
-          // `:floor`'s price sort, so it also drops flex-tier admission; that
-          // is intended — the tier is not where the savings are.
-          "body": {
-            "provider": {
-              "order": ["baidu/fp8", "alibaba", "coreweave/fp8"],
-            },
-          },
-          "capabilities": {
-            "tools": true,
-            "input": ["text", "image"],
-            "output": ["text"],
-            // Required: a declared model gets no variants from models.dev, and
-            // the host rejects an unknown variant. This rebuilds the plain
-            // model's ladder (models.dev: none|low|high|max) so omo-slim's
-            // `high`/`low` resolve instead of erroring at model resolution.
-            "reasoning": {
-              "supported": true,
-              "toggle": true,
-              "effort": ["low", "high", "max"],
-            },
-          },
-          // Cheapest eligible endpoint: Baidu, fp8, 1M ctx, max output 393216.
-          "limit": { "context": 1048576, "output": 393216 },
-          "cost": {
-            "input": 0.0498,
-            "output": 0.1992,
-            "cache": { "read": 0.000996 },
-          },
-        },
-        // Backs the openrouter designer lane. Cheapest endpoints: StreamLake and
-        // Wafer, both fp8, 0.135/0.54/cache 0.0135 — the same rate models.dev
-        // reports for the plain catalogue entry. Max output 512000 (models.dev).
+        // The minimax floor below is the last hand-declared endpoint pin.
+        //
+        // Backs the openrouter designer lane. 2026-11-26: `limit.output` cut
+        // from 512000 to 131072, which is what the floor was always meant to
+        // reach. OpenRouter drops an endpoint whose max output cannot satisfy the
+        // requested max_tokens, and the host sends max_tokens = this limit, so a
+        // cap of 512000 excluded Inferact vLLM (maxout 131072, 0.075/0.30/cache
+        // 0.0075) on every turn and `:floor` fell to Wafer nvfp4 at exactly twice
+        // that — the week's designer cost fit 0.135/0.54/0.0135 to three
+        // decimals. Probed at the boundary: max_tokens 131072 → Inferact, 131073
+        // → Wafer. The lane's own worst message generated 27,820 tokens, so the
+        // cap truncates nothing that has ever happened. Same week at Inferact
+        // rates: $0.93 instead of $1.67. Re-check with
+        // GET /api/v1/models/{id}/endpoints when the lane's cost moves.
         "minimax/minimax-m3.1-flash:floor": {
           "modelID": "minimax/minimax-m3.1-flash:floor",
           "name": "MiniMax-M3.1-Flash (:floor)",
@@ -271,18 +248,22 @@
             "tools": true,
             "input": ["text", "image", "video"],
             "output": ["text"],
-            // Same reason as the ds floor: rebuild the plain model's ladder
-            // (models.dev: low|medium|high|xhigh|max) so `medium` resolves.
+            // Required, not optional: a hand-declared model gets no variants
+            // from models.dev and the host rejects an unknown variant, so this
+            // rebuilds the plain model's ladder (low|medium|high|xhigh|max) for
+            // the preset's `medium`.
             "reasoning": {
               "supported": true,
               "effort": ["low", "medium", "high", "xhigh", "max"],
             },
           },
-          "limit": { "context": 1048576, "output": 512000 },
+          // 131072, not models.dev's 512000 — see the comment above: any higher
+          // value makes OpenRouter drop Inferact and the floor doubles in price.
+          "limit": { "context": 1048576, "output": 131072 },
           "cost": {
-            "input": 0.135,
-            "output": 0.54,
-            "cache": { "read": 0.0135 },
+            "input": 0.075,
+            "output": 0.3,
+            "cache": { "read": 0.0075 },
           },
         },
       },
