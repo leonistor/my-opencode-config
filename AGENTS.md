@@ -101,7 +101,7 @@ Standing preferences for projects I own.
 
 `cookbook/README.md` indexes recipes for agentic tools and workflows — agentation
 in a Vite app, OpenPencil wireframes vs full design, OpenSpec roadmap/status sync,
-adversarial docs review, vocabulary standardisation. When a task matches a
+adversarial docs review, vocabulary standardisation, web capture. When a task matches a
 recipe, read it before acting. A recipe that keeps being needed unprompted gets a
 thin global skill pointing at it, never a second copy of the text.
 

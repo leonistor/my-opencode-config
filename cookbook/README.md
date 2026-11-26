@@ -14,6 +14,7 @@ that have already cost time.
 | [openspec-roadmap-sync](openspec-roadmap-sync.md) | A roadmap/status view that follows the change state instead of drifting | Procedure (generated artefact) |
 | [adversarial-docs-review](adversarial-docs-review.md) | Docs that claim more than the code does, found and fixed with evidence | Procedure (review pass) |
 | [vocabulary-standardization](vocabulary-standardization.md) | One concept under several names; retiring a term without half-renames | Procedure (rename + guard) |
+| [web-capture](web-capture.md) | A page as markdown that keeps the content and drops the boilerplate | Procedure (measured tool choice) |
 
 ## How a recipe is written
 

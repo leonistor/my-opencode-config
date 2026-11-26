@@ -20,6 +20,8 @@ setup, verification and the traps already met. Index and writing conventions:
   that claim more than the code does, with evidence.
 - **[Vocabulary standardisation](cookbook/vocabulary-standardization.md)** — one
   word per concept, and how it stays that way.
+- **[Web capture](cookbook/web-capture.md)** — a page as markdown that keeps the
+  content, which fetcher to reach for, and how to prove it.
 
 ## What is here
 
