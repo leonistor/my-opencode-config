@@ -74,6 +74,62 @@ few dollars — not the cache-read term, which is what these rows are for.
   GLM-5.3-Flash era (60% of the fixer's month). Preset tuning moves the Go
   allowance, not the whole bill.
 
+## Measured cash spend — week of 2026-11-22 (2026-11-26)
+
+Read from the same table plus `GET /api/v1/key` on the OpenRouter key, which
+agree within a dollar (`usage_weekly` $21.03 against $21.9 in the DB). This is
+the first week that bills real money on every lane, so it replaces the
+subscription-era projections above rather than adding to them.
+
+| Day | msgs | fresh in | out+reasoning | cache read | cash |
+| --- | --- | --- | --- | --- | --- |
+| 11-22 | 1,975 | 9.6M | 1.4M | 390M | $0.56 |
+| 11-23 | 2,048 | 17.6M | 2.1M | 400M | $8.18 |
+| 11-24 | 1,664 | 19.1M | 1.9M | 294M | $6.20 |
+| 11-25 | 532 | 5.2M | 0.3M | 86M | $1.86 |
+| 11-26 (partial) | 36 | 0.3M | 0.02M | 2M | $0.08 |
+
+Per lane over 11-19…11-26: orchestrator $12.7 (2,961 msgs, 634M cache read),
+oracle `glm-5.3` $2.27 (165), fixer $1.83 (512), designer `minimax-m3.1-flash`
+$1.66 (363, but **287k cache read per message** — the longest-lived context in
+the fleet), explorer $1.09 (429). The account held $17 of credit at 2026-11-26.
+
+- **The preset's own projection is off by an order of magnitude.** The rows
+  above assume every lane bills at the rates declared in `opencode.jsonc`.
+  Fitted from per-message `cost` (least squares over `input`, `output +
+  reasoning`, `cache read`), the real rates on the ds floor lane were
+  **0.0508 / 0.567 / 0.0145 $/M on 11-23** — i.e. `wafer/us`'s published
+  vector (0.051 / 0.567 / 0.018), not the declared 0.0498 / 0.1992 / 0.000996.
+  A `:floor` suffix sorts by *prompt* price, so under load it parks the lane on
+  Wafer, whose cache-read rate is 18× the number in the config. That, not
+  message volume, is where 11-23…11-24's $14.4 went.
+- **The 2026-11-24 `provider.order` pin moved the lane and barely moved the
+  bill.** Post-pin (11-25) the fit is **0.2639 / 0.511 / 0.0040**: cache read
+  down 3.6×, fresh input up 5× — `baidu/fp8` is first in the order and Baidu
+  currently prices prompt at 0.300/M (6× the cheapest endpoint) with 0.006
+  cache read. Per-message cost went from $0.0040 to $0.0035. Verified live with
+  `usage.include: true` requests: CoreWeave answers 0.13/0.59/0.0020, Wafer
+  0.051/0.567/0.018, Baidu 0.30/1.20/0.006.
+- **What the measured shape says to pin.** At the lane's own 9.7k fresh in /
+  162k cache read / 0.55k out per message, a single-endpoint cost is
+  `0.0097·in + 0.162·cache + 0.00055·out` per M: `river` 0.12/0.48/0.0024
+  → $0.0018, `deepinfra/fp8/flex` 0.112/0.336/0.0034 → $0.0018, `coreweave/fp8`
+  0.13/0.59/0.0020 → $0.0019, `wafer/us` → $0.0037, `baidu/fp8` → $0.0045.
+  Fresh input is no longer the rounding error it was when cache read was
+  $0.001, so a cheap-prompt/expensive-cache host is now the wrong default.
+- **The subscription lanes are dark.** Both the `opencode` and `opencode-go`
+  entries in `auth.json` hold the same key and it answers `api_key_expired`
+  (2026-11-26) — the `opencode-go` preset cannot serve a single request, and
+  console usage cannot be read. Nothing in the last week's logs says so,
+  because the active preset never asks for it.
+- **`variant` is recorded as `default` on almost every orchestrator turn.**
+  Subagent lanes carry theirs (`fixer high|max`, `explorer low`, `designer
+  medium`, `oracle high|max`); the orchestrator carried `high` on 148 of 3,100
+  turns. Reasoning tokens per turn differ (706 at `default`, 1,202 at `high`),
+  so this is a real effort difference and not just missing metadata. The
+  `oh-my-opencode-slim.session-preset.v1/read` RPC that returns HTTP 400 at
+  session start is the likely cause; unproven.
+
 ## The `opencode-go` preset
 
 `opencode-go` is a **subscription**, not token-priced. Quota is a separate

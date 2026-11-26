@@ -35,7 +35,7 @@ Standing preferences for projects I own.
   part of the scaffolding unless I opt that project out. Existing repos keep what they have — add
   OpenSpec to one only when I ask. Where `openspec/` exists, use it for change proposals and
   decisions that matter — never a scratch file.
-  - **OpenSpec 2.x (this machine: 2.1.1).** The root holds `openspec/config.yaml` (schema,
+  - **OpenSpec 2.x (this machine: 2.2.0).** The root holds `openspec/config.yaml` (schema,
     project `context:`, per-artifact `rules:`, `operations.<op>.guidance:`) and `openspec/specs/` +
     `openspec/changes/`. There is no `project.md` any more: context that an agent could not infer
     from the code goes under `context:` in `config.yaml`.
@@ -44,14 +44,21 @@ Standing preferences for projects I own.
     `openspec-*` skills (`new-change`, `continue-change`, `ff-change`, `apply-change`,
     `verify-change`, `archive-change`, `sync-specs`, `explore`, `propose`, `update-change`,
     `bulk-archive`, `onboard`) are the entry points and carry the per-schema steps. Author
-    artifacts from `openspec instructions <artifact>` rather than from memory.
+    artifacts from `openspec instructions <artifact>` rather than from memory. Since 2.2.0 the
+    `/openspec` router skill sits in front of all of them: it picks the skill, answers status
+    questions and chains steps, and a skill may ship a `references/` folder the agent opens only
+    when a task needs it. The twelve named skills keep working — reach for the router when the
+    next step is not obvious, a named skill when it is.
   - **Validate before claiming done:** `openspec validate <name> --strict`. `openspec list --json`
     resolves the root; a first `status` error starting with `Declared in` is a broken `store:`
     reference, not an uninitialized project.
   - **After an OpenSpec upgrade:** `openspec update` refreshes the generated instruction files and
     skills (`--dry-run` to preview), then `openspec doctor` for relationship health. The skills
     live in the global inventory (`~/.agents/skills`), so a project never vendors them; do not run
-    `openspec init` in a project that already has a root just to get the skills back.
+    `openspec init` in a project that already has a root just to get the skills back. When a
+    project's skills are global, `openspec update` there writes nothing into the repo — it only
+    refreshes `~/.agents/skills` — so an upgrade of that kind leaves nothing to commit. A release
+    that adds a skill (2.2.0's router) reaches a repo only through that global refresh.
 - **I pick; you bring the options.** Any research-and-evaluation whose result is choosing a package,
   library, tool, or service ends with the candidates compared — trade-offs, maintenance status,
   cost, ecosystem fit — plus your recommendation, and the choice is mine. Nothing gets adopted or
