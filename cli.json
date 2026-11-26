@@ -20,7 +20,7 @@
   "session": {
     "sidebar": "auto",
     "scrollbar": false,
-    "thinking": "show",
+    "thinking": "hide",
     "verbosity": "medium",
     "tps": false
   },
