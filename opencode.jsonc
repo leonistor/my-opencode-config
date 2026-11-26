@@ -1,17 +1,25 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "default_agent": "plan",
-  // Compaction: the bill on this account is turns x context, and a 1M window
-  // lets a session drift to ~500k tokens before the default 15% buffer fires.
-  // The seven heavy sessions of 23-24 Nov averaged 180-260k tokens of context
-  // per turn, 99% of it cache reads. 70% keeps a 1M model at ~300k, roughly
-  // halving the cached tokens a long session pays for, at the cost of one
-  // summary per ~300k tokens. Raise it if summaries start losing detail you
-  // need; lower it for lanes that genuinely need a bigger working set.
+  // Compaction: `buffer` is the room kept free, so a bigger number compacts
+  // EARLIER. The bill on this account is turns x context, and a 1M window lets
+  // a session drift to ~850k before the default 15% buffer fires. The seven
+  // heavy sessions of 23-24 Nov averaged 180-260k tokens of context per turn,
+  // 99% of it cache reads, so 70% (compact at ~300k) was chosen to halve the
+  // cached tokens a long session pays for.
+  //
+  // Now 50% (compact at ~500k) to buy working set back, funded by moving the Go
+  // designer lane off claude-haiku-5-5 — 65% of that lane's turns crossed
+  // Haiku's 100k context tier, where Go quintuples it (0.05 cache read, 2.50
+  // output), making one 1,072-message lane 16% of the whole monthly allowance.
+  // Cost of this buffer: ~+5 Go allowance points for the same turn count on
+  // deepseek-v4.1-flash, and ~+14% on the OpenRouter cash orchestrator lane.
+  // Raise back toward 70% if the 5h/weekly Go windows start throttling, or if
+  // summaries start losing detail you need.
   "compaction": {
     "auto": true,
     "keep": { "tokens": 15000 },
-    "buffer": "70%",
+    "buffer": "50%",
   },
   "plugins": [
     // opencode-history-search: V1-only upstream (its V2 PRs sit unmerged). Superseded

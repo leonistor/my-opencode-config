@@ -2,16 +2,17 @@
 
 Presets for `~/.config/opencode/oh-my-opencode-slim.json`. The active preset is
 whatever its `preset` key names — that key is authoritative (currently
-`openrouter`, since 2026-11-22). Three presets exist:
+`opencode-go`, since 2026-11-26; `openrouter` was active 11-22 → 11-26). Three
+presets exist:
 
-- **`openrouter`** — the daily driver since 2026-11-22. All-cash; the deepseek
-  lanes are the plain catalogue entry with a model-level `provider.order` pin to
-  cheap-cache hosts (since 2026-11-26; the `:floor` was retired that day, and
-  the default router was retired as the routing mechanism the same day after it
-  billed 1.3–2.7× catalogue). Only the designer's minimax floor is left, and the
-  oracle runs Inkling 2 Small.
-- **`opencode-go`** — the subscription lane set. Everything on the Go
-  subscription, balance leaning cheap.
+- **`opencode-go`** — the subscription lane set and the daily driver since
+  2026-11-26. Everything on the Go subscription, balance leaning cheap.
+- **`openrouter`** — the all-cash alternative, active 2026-11-22 → 11-26. The
+  deepseek lanes are the plain catalogue entry with a model-level
+  `provider.order` pin to cheap-cache hosts (since 2026-11-26; the `:floor` was
+  retired that day, and the default router was retired as the routing mechanism
+  the same day after it billed 1.3–2.7× catalogue). Only the designer's minimax
+  floor is left, and the oracle runs Inkling 2 Small.
 - **`nomoney`** — Go-quota relief. The plan and designer lanes stay on Go's
   cheapest credible models; the oracle and both volume lanes run on OpenRouter
   cash (plain routing plus Mistral tails). The only preset that deliberately
@@ -191,24 +192,83 @@ been known not to reconcile.
 | orchestrator | `opencode-go/deepseek-v4.1-flash` | `max` | Highest-token lane; cheapest cache read of any non-Contributor model ($0.003/M as of 2026-11-13), 1M ctx, vision, proven `none\|low\|high\|max` ladder. Bills 2× in Go peak windows (see Gotchas). `max` since 2026-11-17 — same rates, more reasoning on the lane that drives every turn. |
 | oracle | `opencode-go/deepseek-v4-pro` | `max` | Flagship reasoning on the cheapest lane. Measured volume is tiny — ~$0.42/mo, nowhere near its allowance. |
 | explorer | `opencode-go/muse-spark-1.3-contributor` | `low` | Volume lane. Cheapest model in the catalogue on all three rates; the only cheap-tier model exposing `minimal`. **Contributes training data** — owner-accepted trade. Contributor tier stays off the lanes that write plans and code. |
-| designer | `opencode-go/claude-haiku-5-5` | `medium` | Multimodal UI work; measured burn ~20–25% of its $60 allowance (see above). Escalate to `high` if polish suffers; the cheap lever is below. |
+| designer | `opencode-go/minimax-m3.1-flash` | `medium` | Multimodal UI work. Flat rates (0.15/0.60/0.015), full `low\|medium\|high\|xhigh\|max` ladder, **no context tier**, 1M ctx, $80 allowance — measured 4.1% of the allowance at the designer's own mix. Replaced `claude-haiku-5-5 @ medium` on 2026-11-26; see § Measured Go allowance for why. Haiku stays the polish-critical option if minimax's UI judgment disappoints. |
 | fixer | `opencode-go/deepseek-v4.1-flash` | `max` | Scoped implementation from a concrete plan; same cheap volume profile as the orchestrator, same peak windows. `max` since 2026-11-17 — the lane measured ~$1.4/mo, so the extra reasoning is nearly free against its $200 allowance. |
 
 Observer is unconfigured: `deepseek-v4.1-flash` declares image input, so
 images ride inline and a separate reader would waste quota.
+
+### Measured Go allowance — billing period 2026-10-26 → 11-26
+
+Priced from `session_message` at Go's own token rates (`GET
+/inference/go/v1/models`: per-model prices, context-tier overrides, and the 2×
+peak multiplier on the two DeepSeek models). **% allow** is spend ÷ that
+model's Go Plus monthly limit, which is how the shared allowance is actually
+consumed — a $400-limit model and a $60-limit model do not cost the same per
+dollar.
+
+| agent | model | msgs | spend | $/msg | limit | % allow | turns >100k |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| designer | `claude-haiku-5-5` @medium | 1,072 | $9.69 | $0.0090 | $60 | **16.1%** | 699 (65%) |
+| orchestrator | `deepseek-v4.1-flash` | 10,143 | $22.10 | $0.0022 | $200 | **11.1%** | 7,990 |
+| build (host) | `glm-5.3` | 906 | $42.36 | $0.0468 | $400 | 10.6% | 579 |
+| fixer (manual) | `kimi-k3.1-pro` | 229 | $7.81 | $0.0341 | $120 | 6.5% | 197 |
+| orchestrator (retired) | `gpt-6-luna` @medium | 424 | $3.25 | $0.0077 | $60 | 5.4% | 283 |
+| fixer (manual) | `mimo-v2.6-pro` | 466 | $2.48 | $0.0053 | $60 | 4.1% | 287 |
+| oracle | `deepseek-v4-pro` @max | 257 | $2.41 | $0.0094 | $60 | 4.0% | 85 |
+| fixer | `deepseek-v4.1-flash` | 3,908 | $5.12 | $0.0013 | $200 | 2.6% | 1,588 |
+| explorer | `muse-spark-1.3-contributor` @low | 478 | $0.55 | $0.0012 | $120 | 0.5% | 26 |
+
+Reconstructed total: **$108.12 raw, 69.6% of the allowance**. The live meter
+read **98%** just before the 06:11 reset, so the reconstruction under-counts by
+roughly a third — the same API-vs-table non-reconciliation noted above. Read
+the **shares** as reliable and the absolute headroom as smaller than 70%
+suggests.
+
+Two findings from the table:
+
+- **The designer was the most expensive lane in the fleet, and the tier was the
+  reason.** Flat-rate Haiku at the same volume prices at $2.35 (3.9%);
+  65% of its turns crossed 100k, where Go quintuples it to 0.50 / 2.50 / 0.05,
+  and the lane became $9.69 (16.1%). Designer cache read averages 154k per
+  turn, so the tier was the normal case, not a cliff. This is the whole case
+  for the 2026-11-26 swap.
+- **The preset is not where the remaining fat is.** Preset-owned lanes sum to
+  ~36%; manual picks on host agents (`glm-5.3` on build/plan/pencil,
+  `kimi-k3.1-pro` and `mimo-v2.6-pro` on fixer) are **~22%** — more than the
+  entire orchestrator lane. `glm-5.3` costs $0.0468/message, 21× the
+  orchestrator's, almost all of it cache read at 0.26/M.
+
+No model swap buys more performance on this preset. Repriced at the measured
+orchestrator mix (4.6k in / 0.64k out / 189k cache per turn, 10,143 turns):
+`muse-spark-1.3` 0.59×, `gpt-6-luna` and `claude-haiku-5-5` 1.63×,
+`mimo-v2.6-pro` 1.98×, `longcat-2.5` 2.00×, `minimax-m3.1-flash` 2.38×,
+`qwen3.8-flash` 2.44×, `glm-5.3-flash` 4.07×, `deepseek-v4-pro` 5.15× (143% of
+its own limit), `glm-5.3` 35.5×. The cheap end of that list is weaker than
+`deepseek-v4.1-flash`; the strong end is unaffordable. Context, by contrast, is
+cheap: at ds-flash rates cache read is only ~34% of the per-message cost, so
+189k → 500k per turn is ~8.3 → 13.1 allowance points for the same turn count.
+That is what the 2026-11-26 `compaction.buffer` 70% → 50% change buys.
 
 ### Levers
 
 - **Cheaper:** orchestrator `@ high` is the previous default and a proven
   trim; `@ low` is proven-safe too (`deepseek-v4.1-flash @ low` is fine — it
   is GLM that degenerates there). Drop to `high` when the weekly window bites.
-- **More performance:** already at `max` since 2026-11-17. The next step would
-  have to be a different model, and none is affordable on this lane (below).
-- **Designer cost:** swap to `mimo-v2.6-flash` (no ladder, lowest cache-read
-  in the catalogue, $120 allowance — the `nomoney` designer pick): roughly an
-  order of magnitude cheaper at the measured volume; keep Haiku for
-  polish-critical passes. `qwen3.8-flash @ medium` is a middle option on a
-  smaller ($90) allowance.
+- **More performance: there is none in a model swap.** `deepseek-v4.1-flash`
+  is already the best capability-per-allowance model for a 1M-context
+  high-volume lane; every stronger Go model costs 1.6×–35× more allowance per
+  turn at the measured mix, and the only genuine step up (`deepseek-v4-pro`)
+  would burn 143% of its own $60 limit on the orchestrator's volume alone
+  (§ Measured Go allowance). The lane's `max` is also **not** set by this
+  preset — see Gotchas (variants).
+- **Designer cost — taken 2026-11-26.** The lane moved to
+  `minimax-m3.1-flash @ medium`. It was 16.1% of the whole monthly allowance,
+  not because Haiku's headline rates are high but because 65% of its turns ran
+  past the 100k context tier where Go quintuples it. Cheaper still:
+  `mimo-v2.6-flash` (no ladder, lowest cache-read in the catalogue, $120
+  allowance — the `nomoney` designer pick) at 0.7%; `qwen3.8-flash` at 3.7% is
+  toggle-only.
 - **Explorer cost:** `muse-spark @ minimal` trims further.
 - **Family diversity on the plan lane:** `minimax-m3.1-flash @ high` (flat
   rates, no peak row, no context tier, full ladder — the lane `lowmoney` ran
@@ -261,7 +321,7 @@ a chain entry's and survives a deep merge — `opencode-go` pins
 reject. And the provider mix *is* the content: five explicit lanes keep it
 visible, exactly as `openrouter` is written.
 
-## The `openrouter` preset (all-cash, active since 2026-11-22)
+## The `openrouter` preset (all-cash, active 2026-11-22 → 11-26)
 
 The subscription-independent daily driver: every lane on OpenRouter cash. The
 deepseek lanes are the plain catalogue entry with a **model-level
@@ -410,11 +470,27 @@ its floor and its declaration is the one thing left to keep in sync.
 - **Context tiers are a hidden 5× multiplier.** `claude-haiku-5-5` (100k),
   `gpt-6-luna` / `gpt-5.6-luna` (272k), `qwen3.7-plus` (256k), `minimax-m3`
   (512k), `grok-4.7` (200k) reprice above a threshold, and agent lanes pass
-  100k almost immediately. Compare the tier rate, not the headline. Haiku
-  stays a designer-only pick for exactly this reason.
+  100k almost immediately. Compare the tier rate, not the headline. Measured
+  cost of getting this wrong: the Go designer lane on Haiku was 16.1% of the
+  whole monthly allowance for 1,072 messages, 4.1× its own flat-rate price,
+  because 65% of its turns sat above 100k (§ Measured Go allowance).
 
 ## Gotchas (variants)
 
+- **A preset cannot set the primary agent's effort.** The plugin's session
+  binding declares `affects: "future-children-only"` — a preset applies to the
+  session's *team* (oracle, explorer, designer, fixer, pencil), never to the
+  orchestrator. The orchestrator's model and variant come from the session's
+  selected model, i.e. the TUI picker or the top-level `model` key. Evidence in
+  the records: `fixer` shows `high` and `max` and its reasoning moves with them
+  (280 → 487 tokens per turn), while `orchestrator` on the same model shows only
+  `default` and `high`, reasoning flat at ~350/turn, and **no step at the
+  2026-11-17 switch to `max`**. So the `max` in the preset's orchestrator row is
+  aspirational. To get it, pick the variant in the picker, or set
+  `"model": { "providerID": "opencode-go", "model": "deepseek-v4.1-flash",
+  "variant": "max" }` at the top of `opencode.jsonc` — but note that is a
+  *session default*, so it also applies while another preset is active, and a
+  variant the selected model does not declare is rejected by the host.
 - **A valid `variant` is not a working `variant`.** `GLM-5.3-Flash @ low`
   satisfies the schema but degenerates into an unbounded reasoning loop or
   empty output — verified on three distinct agents, so it is a property of
@@ -639,3 +715,40 @@ history (`git log -- oh-my-opencode-slim-models.md`).
   review that cited the right sections of this file and argued against the
   change it was asked to audit. The `variant: high` resolves against models.dev's
   Inkling ladder.
+- **2026-11-26 — Go designer moved `claude-haiku-5-5 @ medium` →
+  `minimax-m3.1-flash @ medium`, and `compaction.buffer` 70% → 50%.** A
+  per-model allowance reconstruction of the 2026-10-26 → 11-26 billing period
+  put the designer at **16.1% of the whole monthly allowance for 1,072
+  messages** — the most expensive lane in the fleet, ahead of the orchestrator
+  (11.1% for 10,143) — because 65% of its turns ran past Haiku's 100k tier
+  where Go quintuples it. Flat-rate Haiku at the same volume prices at 3.9%, so
+  the tier was 4.1× of the lane's cost and the model was never the problem.
+  Minimax at the designer's own measured mix is 4.1% of an $80 limit, keeps a
+  full ladder and has no context tier, and it is already the `openrouter`
+  preset's designer model. It is a small quality step down from Haiku on
+  polish-critical passes — the lane was on Haiku by owner decision — so keep
+  Haiku as the escalation if minimax's UI judgment disappoints. The freed ~12
+  allowance points pay for the larger working set: `buffer` 50% compacts a 1M
+  model at ~500k instead of ~300k, which costs ~5 points on the orchestrator
+  lane and ~14% on the OpenRouter cash orchestrator lane. Verified: JSON parses,
+  `model-table.ts --preset opencode-go --validate` reports every model
+  available and the preset on one provider. Not verified: a designer canary on
+  a real UI task (do that before trusting it), and the 5h/weekly window
+  behaviour at the bigger buffer.
+- **2026-11-26 — recorded, not fixed: the preset cannot set the orchestrator's
+  effort.** The session binding is `future-children-only`, so the `max` in this
+  file's orchestrator row never reaches the request; the records show
+  `orchestrator` only ever at `default`/`high` with reasoning flat at ~350
+  tokens/turn, against `fixer`'s clear 280 → 487 between `high` and `max`. The
+  workaround is a session-level `model` variant in `opencode.jsonc` or the
+  picker, and it was deliberately not applied: a session default would also
+  govern sessions running another preset, and a model that does not declare
+  `max` would have the turn rejected. See Gotchas (variants).
+- **2026-11-26 — global default preset switched `openrouter` →
+  `opencode-go`** (owner). The subscription is sunk, so a Go lane costs $0 at
+  the margin, and the two changes above (designer off the Haiku context tier,
+  wider working set) bring the preset's own burn down at the same time. The
+  `openrouter` preset stays as the all-cash fallback for when the Go 5h/weekly
+  windows throttle. The orchestrator's effort is *not* part of this — see the
+  entry above; it comes from the session's selected model, so a new session
+  still needs the variant picked.

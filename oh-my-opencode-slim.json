@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@latest/oh-my-opencode-slim.schema.json",
-  "preset": "openrouter",
+  "preset": "opencode-go",
   "presets": {
     "opencode-go": {
       "orchestrator": {
@@ -33,7 +33,7 @@
         ]
       },
       "designer": {
-        "model": "opencode-go/claude-haiku-5-5",
+        "model": "opencode-go/minimax-m3.1-flash",
         "variant": "medium",
         "skills": [],
         "mcps": []

@@ -27,7 +27,7 @@ setup, verification and the traps already met. Index and writing conventions:
 | --- | --- |
 | `opencode.jsonc` | Providers, plugins, policies, permissions |
 | `cli.json` | TUI: theme, keybinds, `attention` (notifications, sound) |
-| `oh-my-opencode-slim.json` | Model presets: `openrouter` (active), `opencode-go`, `nomoney`; custom agents |
+| `oh-my-opencode-slim.json` | Model presets: `opencode-go` (active), `openrouter`, `nomoney`; custom agents |
 | `oh-my-opencode-slim/` | Agent prompts; `pencil.md` is the wireframe agent |
 | `opencode-mem.jsonc` | Memory tuning: embeddings, capture lane, scope, retention |
 | `model-table.ts` | Backs `/suggest-models <preset>` |
