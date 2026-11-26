@@ -31,6 +31,7 @@ setup, verification and the traps already met. Index and writing conventions:
 | `oh-my-opencode-slim/` | Agent prompts; `pencil.md` is the wireframe agent |
 | `opencode-mem.jsonc` | Memory tuning: embeddings, capture lane, scope, retention |
 | `model-table.ts` | Backs `/suggest-models <preset>` |
+| `lane-rates.ts` | What each lane actually paid, vs its catalogue vector |
 | `commands/` | Slash commands |
 | `skills/` | Skills available in every project |
 | `cookbook/` | Recipes for tools and workflows |
@@ -38,6 +39,31 @@ setup, verification and the traps already met. Index and writing conventions:
 
 `AGENTS.md` holds the instructions and house rules. `RESOURCES.md` holds external
 tools and links.
+
+## Model routing and cost
+
+The bill is the **endpoint**, not the model. An agent session re-sends its whole
+context every turn, so ~99% of the tokens are cache reads; OpenRouter's default
+router balances price against speed and reliability, and on this workload it
+billed 1.3–2.7× the catalogue vector (one cold turn landed on a host charging
+0.375/M prompt). A fixed `provider.order` of cheap-prompt *and* cheap-cache hosts
+bills 0.25–0.86× instead — so the deepseek lanes and the oracle lane carry
+model-level `body.provider.order` pins in `opencode.jsonc`, with the
+provider-level `ignore` list as the fallback net. On the traffic measured here,
+model choice is the smaller lever.
+
+```sh
+bun lane-rates.ts --days 1                        # billed vs catalogue, median/p90 per lane
+bun model-table.ts --preset openrouter --validate # availability + current prices
+```
+
+Changing a model ID is a live operation: sessions persist the model they were
+created with, so publish first, audit the session DB's `session_v2` table for
+pins to the old ID, cut over, canary a *fresh* session on the changed lane, and
+only then remove the old
+ID — in its own commit. A `:floor` alias left in `opencode.jsonc` keeps older
+pinned sessions resolvable. Measurement, endpoint tables and the decision log:
+[oh-my-opencode-slim-models.md](oh-my-opencode-slim-models.md).
 
 ## Working with agents
 
