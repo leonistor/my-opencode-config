@@ -111,7 +111,8 @@
             "variant": "high"
           },
           {
-            "id": "openrouter/qwen/qwen3.8-flash"
+            "id": "openrouter/z-ai/glm-5.3",
+            "variant": "high"
           }
         ],
         "variant": "high",
@@ -165,7 +166,7 @@
             "variant": "medium"
           },
           {
-            "id": "openrouter/qwen/qwen3.8-flash"
+            "id": "openrouter/xiaomi/mimo-v2.6-flash"
           }
         ],
         "variant": "medium",
@@ -179,7 +180,7 @@
             "variant": "high"
           },
           {
-            "id": "openrouter/qwen/qwen3.8-flash"
+            "id": "openrouter/xiaomi/mimo-v2.6-flash"
           }
         ],
         "variant": "high",

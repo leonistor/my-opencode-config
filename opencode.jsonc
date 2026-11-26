@@ -213,20 +213,89 @@
         },
       },
       "models": {
-        // The DeepSeek `:floor` declaration is gone (2026-11-26, owner pick B).
-        // It was restored 2026-11-22, pinned on 11-24, and retired again once
-        // per-message costs showed the mechanism was the problem, not its
-        // constant: `:floor` sorts by prompt price, so the cache-read-heavy ds
-        // lane rode Wafer's 0.018/M cache read under load ($14.4 over 11-23/24),
-        // and the `provider.order` pin that replaced it put Baidu first — 0.300
-        // prompt, 6x the cheapest endpoint — for a per-message cost of $0.0035
-        // against $0.0040 before. The lanes now use the plain catalogue entry on
-        // the default router, which balances cost, speed and reliability and is
-        // already guarded by the provider-level `ignore` above (Wafer,
-        // Cloudflare, Modal, Mancer, Ionstream, vertex/global). Fitted rates for
-        // the floor week and the alternatives are in oh-my-opencode-slim-models.md
-        // § Measured cash spend.
-        //
+        // 2026-11-26, second pass: the default router was measured, not assumed.
+        // Three fresh orchestrator canaries on the plain catalogue entry billed
+        // 2.68x / 1.39x / 1.29x the catalogue vector — Together/us (0.375
+        // prompt), Cohere (0.195), Alibaba (0.18) — on a 25k first turn, and
+        // OpenRouter keeps a conversation on the provider it picked while its
+        // cache is warm. So the order pin comes back: not as `:floor` (sorts by
+        // prompt price and rode Wafer's 0.018/M cache read) and not as a hand
+        // declaration (the catalogue entry is correct), but as a model-level
+        // `body` override on the plain ID. `order` bypasses default routing and
+        // tries these hosts in sequence; every one is cheap on prompt AND cache,
+        // unlike the 0.30-prompt block the router picked. The provider-level
+        // `ignore` above stays as the fallback net. Same 11-23..26 traffic at
+        // river's vector is $9.18 against the $16.52 measured.
+        "deepseek/deepseek-v4.1-flash": {
+          "body": {
+            "provider": {
+              "order": [
+                "river",
+                "coreweave/fp8",
+                "deepinfra/fp8/flex",
+                "relace/fp4",
+                "streamlake/fp8",
+                "novita/fp8",
+              ],
+            },
+          },
+        },
+        // The oracle's new primary, pinned to its cheap tier. Default routing
+        // billed it at 1.00x catalogue (0.30/1.00/0.030) with the review load;
+        // PrimeIntellect's endpoints are 0.075/0.25/0.015 and 0.15/0.50/0.030,
+        // and the first canary after the pin billed primeintellect/flex
+        // exactly — 0.25x catalogue.
+        "thinkingmachines/inkling-2-small": {
+          "body": {
+            "provider": {
+              "order": [
+                "primeintellect/flex",
+                "primeintellect/fp4",
+                "deepinfra/fp4",
+              ],
+            },
+          },
+        },
+        // Legacy pin, kept resolvable for one release. 127 sessions in
+        // `session_v2` still hold `deepseek/deepseek-v4.1-flash:floor`; deleting
+        // the ID outright made each one fail with `ModelUnavailable` on resume
+        // (that is the 04:41 no-route above). This alias sends the plain model
+        // ID on the same order, and declares what models.dev would have supplied
+        // for the alias key. Remove it once those sessions age out.
+        "deepseek/deepseek-v4.1-flash:floor": {
+          "modelID": "deepseek/deepseek-v4.1-flash",
+          "name": "DeepSeek V4.1 Flash (legacy pin)",
+          "body": {
+            "provider": {
+              "order": [
+                "river",
+                "coreweave/fp8",
+                "deepinfra/fp8/flex",
+                "relace/fp4",
+                "streamlake/fp8",
+                "novita/fp8",
+              ],
+            },
+          },
+          "capabilities": {
+            "tools": true,
+            "input": ["text", "image"],
+            "output": ["text"],
+            // The alias key is not in models.dev, so its ladder is rebuilt from
+            // the plain entry (none|low|high|max) for the old pins' variants.
+            "reasoning": {
+              "supported": true,
+              "toggle": true,
+              "effort": ["low", "high", "max"],
+            },
+          },
+          "limit": { "context": 1048576, "output": 393216 },
+          "cost": {
+            "input": 0.14,
+            "output": 0.42,
+            "cache": { "read": 0.0042 },
+          },
+        },
         // The minimax floor below is the last hand-declared endpoint pin.
         //
         // Backs the openrouter designer lane. 2026-11-26: `limit.output` cut
@@ -257,8 +326,10 @@
               "effort": ["low", "medium", "high", "xhigh", "max"],
             },
           },
-          // 131072, not models.dev's 512000 — see the comment above: any higher
-          // value makes OpenRouter drop Inferact and the floor doubles in price.
+          // models.dev now reports the plain entry at the same 131072 output
+          // limit and the same 0.075/0.30/0.0075 vector this declaration
+          // carries, so the two agree; any value above 131072 would make
+          // OpenRouter drop Inferact and double the lane's price.
           "limit": { "context": 1048576, "output": 131072 },
           "cost": {
             "input": 0.075,
