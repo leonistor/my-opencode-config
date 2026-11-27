@@ -447,6 +447,20 @@ its floor and its declaration is the one thing left to keep in sync.
   them is not a quality change either way.
 - **Scope:** `opencode-go` has no OpenRouter lanes; `nomoney`'s ds lanes and the
   `opencode-mem` capture lane stayed plain and are unchanged.
+- **24 h after the pins (2026-11-27 08:00, scheduled re-measure).** Endpoint
+  attribution from per-message cost, since the 07:42 edit: **ds plain 15/18
+  River** (1 Alibaba, 1 Cohere, 1 unmatched), **legacy alias 17/17 River**,
+  **designer 2/2 Inferact** (the 17,016-token row predicts $0.001322 at
+  0.075/0.30 and bills $0.001322), **oracle zero turns since the pin** — its
+  106 rows all predate it, and they are exactly what the pin targets (mean
+  $0.00304/msg at 1.00× catalogue, Together-class, against GLM's $0.0138),
+  while three raw
+  requests carrying the declared order answer `PrimeIntellect` on the flex tier
+  at 0.075/0.25 (0.25× catalogue). `lane-rates.ts` agrees: no lane warns.
+  Read the small counts: 18 + 17 + 2 + 0 turns against 281 on the host
+  `build`/`plan` agents and 115 on the Go subscription, so the pinned lanes
+  have been nearly idle — this confirms the routing, it does not yet price it
+  on real load. The oracle pin is the one still to exercise.
 
 ## Gotchas (pricing)
 
